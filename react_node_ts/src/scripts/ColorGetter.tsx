@@ -44,54 +44,39 @@ export default class ColorGetter extends React.Component<{}, {
     gl: WebGLRenderingContext = null as any;
 
     /**
-     * 着色程序
-     */
+    * 着色程序
+    */
     program: WebGLProgram = null as any;
-
-    /**
-     * 顶点数据
-     */
-    verticesColors: Float32Array = null as any;
-
-    /**
-     * 绘制点的排列表
-     */
-    indices: Uint8Array = null as any;
-
+     
     /**
      * 绘制点的派列表的缓冲区
      */
     indexBuffer: WebGLBuffer = null as any;
-
-    /**
-     * mvp 在内存中的位置
-     */
+ 
+     /**
+      * mvp 在内存中的位置
+      */
     u_MvpMatrix: WebGLUniformLocation = null as any;
-
-    /**
-     * 模型、视图、投影矩阵
-     */
+  
+     /**
+      * 模型、视图、投影矩阵
+      */
     mvpMatrix: CuonMatrix4 = null as any;
-
-    /**
-     * 顶点数据的缓冲区
-     */
+  
+     /**
+      * 顶点数据的缓冲区
+      */
     vertexColorBuffer: WebGLBuffer = null as any;
-
+    
     /**
      * 着色属性—位置
      */
-    a_Position: number = 0;
-
-    /**
-     * 着色属性—颜色
-     */
-    a_Color: number = 0;
-
-    /**
-     * 着色元数据的尺寸
-     */
-    FSIZE: number = 0;
+     a_Position: number = 0;
+ 
+     /**
+      * 着色属性—颜色
+      */
+     a_Color: number = 0;
 
     public constructor (p: {}) {
         super(p);
@@ -104,43 +89,13 @@ export default class ColorGetter extends React.Component<{}, {
     public override componentDidMount () {
         let canvas = document.getElementsByTagName(`canvas`)[0];
         this.gl = cuonUtils.getWebGLContext(canvas);
+
+        // 生成着色程序
         this.program = cuonUtils.createProgram(this.gl, VSHADER_SOURCE, FSHADER_SOURCE);
-        
         if (!this.program) {
             console.error(`Failed to initialize shaders`);
             return;
         };
-
-        // 坐标、颜色
-        this.verticesColors = new Float32Array([
-            // Vertex coordinates and color
-             CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v0 White
-            -CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v1 Magenta
-            -CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v2 Red
-             CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v3 Yellow
-             CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v4 Green
-             CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v5 Cyan
-            -CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v6 Blue
-            -CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v7 Black
-        ]);
-
-        // 顶点索引
-        this.indices = new Uint8Array([
-            0, 1, 
-            1, 2,
-            2, 3,
-            3, 0,
-
-            4, 5,
-            5, 6,
-            6, 7,
-            7, 4,
-
-            0, 5,
-            1, 6,
-            2, 7,
-            3, 4
-        ]);
 
         // 创建顶点缓冲区对象
         this.vertexColorBuffer = this.gl.createBuffer() as WebGLBuffer;
@@ -155,9 +110,6 @@ export default class ColorGetter extends React.Component<{}, {
             console.error(`Failed to create the buffer object`);
             return -1;
         };
-
-        // 记录元数据的尺寸
-        this.FSIZE = this.verticesColors.BYTES_PER_ELEMENT;
 
         // 将缓冲区内顶点坐标数据分配给 a_Position 并开启之
         this.a_Position = this.gl.getAttribLocation(this.program, `a_Position`);
@@ -174,7 +126,7 @@ export default class ColorGetter extends React.Component<{}, {
         };
 
         // 设置背景颜色
-        this.gl.clearColor(0, 0, 0, 1);
+        this.gl.clearColor(0.16862745098039217, 0.16862745098039217, 0.16862745098039217, 1);
         this.gl.enable(this.gl.DEPTH_TEST);
 
         // 获取存储地址
@@ -212,51 +164,46 @@ export default class ColorGetter extends React.Component<{}, {
         // 设置裁切面
         this.mvpMatrix.setOrtho(-border, border, -border, border,  0, watchDepth);
         this.mvpMatrix.lookAt(CUBE_SIDE_LENGTH / 2, CUBE_SIDE_LENGTH / 2, CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
-
-        // 进行一次绘制
-        this.drawCube();
+        
+        // 绘制线框立方体
+        this.componentDidUpdate();
     }
 
     public override componentDidUpdate () {
-        // 及时更新
-        this.drawCube();
-    }
-
-    onSliderValChanged (val: number) {
-        this.setState({
-            ...this.state,
-            color: val / 100
-        });
-    }
-    
-    /**
-     * 把立方体绘制出来
-     */
-    drawCube () {
         // 清空颜色缓冲区和深度缓冲区
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        
+
+        // 进行颜色同步
+        let indCount = this.cubeFrameVerticesColors.length / 6;
+        for (let i = 0; i < indCount; i++) {
+            this.cubeFrameVerticesColors[i * 6 + 3] = this.state.color;
+            this.cubeFrameVerticesColors[i * 6 + 4] = this.state.color;
+            this.cubeFrameVerticesColors[i * 6 + 5] = this.state.color;
+        };
+
+        // 绘制立方体线框
+        this.drawByElementData(this.cubeFrameVerticesColors, this.cubeFrameindices, this.gl.LINES);
+    }
+
+    /**
+     * 绘制传入的顶点数据
+     * @param verticesColors 
+     * @param indices 
+     */
+    drawByElementData (verticesColors: Float32Array, indices: Uint8Array, shapeType: number) {
         // 使用某个应用程序
         this.gl.useProgram(this.program);
 
-        // 进行颜色同步
-        let indCount = this.verticesColors.length / 6;
-        for (let i = 0; i < indCount; i++) {
-            this.verticesColors[i * 6 + 3] = this.state.color;
-            this.verticesColors[i * 6 + 4] = this.state.color;
-            this.verticesColors[i * 6 + 5] = this.state.color;
-        };
-  
         // 将缓冲区对象绑定到目标
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexColorBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, this.verticesColors, this.gl.STATIC_DRAW);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, verticesColors, this.gl.STATIC_DRAW);
 
         // 填充 a_Position 需要的数据
-        this.gl.vertexAttribPointer(this.a_Position, 3, this.gl.FLOAT, false, this.FSIZE * 6, 0);
+        this.gl.vertexAttribPointer(this.a_Position, 3, this.gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 6, 0);
         this.gl.enableVertexAttribArray(this.a_Position);
     
         // 填充 a_Color 需要的数据
-        this.gl.vertexAttribPointer(this.a_Color, 3, this.gl.FLOAT, false, this.FSIZE * 6, this.FSIZE * 3);
+        this.gl.vertexAttribPointer(this.a_Color, 3, this.gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 6, Float32Array.BYTES_PER_ELEMENT * 3);
         this.gl.enableVertexAttribArray(this.a_Color);
 
         // 设置视点和视线
@@ -264,10 +211,52 @@ export default class ColorGetter extends React.Component<{}, {
         
         // 传入顶点索引数据
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, this.indices, this.gl.STATIC_DRAW);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, indices, this.gl.STATIC_DRAW);
+        
+        // 绘制图形
+        this.gl.drawElements(shapeType, this.cubeFrameindices.length, this.gl.UNSIGNED_BYTE, 0);
+    }
 
-        // 绘制三角形
-        this.gl.drawElements(this.gl.LINES, this.indices.length, this.gl.UNSIGNED_BYTE, 0);
+    /**
+     * 线框立方体的顶点数据
+     */
+    cubeFrameVerticesColors: Float32Array = new Float32Array([
+        // Vertex coordinates and color
+         CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v0 White
+        -CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v1 Magenta
+        -CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v2 Red
+         CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v3 Yellow
+         CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v4 Green
+         CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v5 Cyan
+        -CUBE_SIDE_LENGTH / 2,  CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v6 Blue
+        -CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2, -CUBE_SIDE_LENGTH / 2,     0.0, 0.0, 0.0,  // v7 Black
+    ]);
+ 
+    /**
+     * 线框立方体绘制点的排列表
+     */
+    cubeFrameindices: Uint8Array = new Uint8Array([
+        0, 1, 
+        1, 2,
+        2, 3,
+        3, 0,
+
+        4, 5,
+        5, 6,
+        6, 7,
+        7, 4,
+
+        0, 5,
+        1, 6,
+        2, 7,
+        3, 4
+    ]);
+
+    onSliderValChanged (val: number) {
+        this.setState({
+            ...this.state,
+            color: val / 100
+        });
     }
 
     public override render () {
