@@ -1,4 +1,5 @@
 import React from "react";
+import { Slider, Switch } from 'antd';
 import CuonMatrix4 from "../lib/webgl/CuonMatrix4";
 import cuonUtils from "../lib/webgl/CuonUtils";
 import CuonVector3 from "../lib/webgl/CuonVector3";
@@ -236,8 +237,11 @@ export default class ColorGetter extends React.Component{
 
     public override render () {
         return (
-            <canvas width="400" height="400">
-            </canvas>
+            <div style={{width: `440px`, padding: `20px`, margin: `20px`, boxShadow: `2px 2px 5px #000`}}>
+                <canvas width="400" height="400">
+                </canvas>
+                <Slider defaultValue={30} disabled={false} />
+            </div>
         )
     }
 }
