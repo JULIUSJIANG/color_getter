@@ -1,5 +1,5 @@
 import React from "react";
-import { Slider, Switch } from 'antd';
+import { Slider } from 'antd';
 import CuonMatrix4 from "../lib/webgl/CuonMatrix4";
 import cuonUtils from "../lib/webgl/CuonUtils";
 import CuonVector3 from "../lib/webgl/CuonVector3";
@@ -35,7 +35,9 @@ const CUBE_SIDE_LENGTH = 1;
 /**
  * 拾色器
  */
-export default class ColorGetter extends React.Component{
+export default class ColorGetter extends React.Component<{}, {
+    color: number
+}>{
     /**
      * webgl 对象
      */
@@ -90,6 +92,14 @@ export default class ColorGetter extends React.Component{
      * 着色元数据的尺寸
      */
     FSIZE: number = 0;
+
+    public constructor (p: {}) {
+        super(p);
+
+        this.state = {
+            color: 1
+        };
+    }
 
     public override componentDidMount () {
         let canvas = document.getElementsByTagName(`canvas`)[0];
@@ -164,7 +174,7 @@ export default class ColorGetter extends React.Component{
         };
 
         // 设置背景颜色
-        this.gl.clearColor(1, 1, 1, 1);
+        this.gl.clearColor(0, 0, 0, 1);
         this.gl.enable(this.gl.DEPTH_TEST);
 
         // 获取存储地址
@@ -180,17 +190,27 @@ export default class ColorGetter extends React.Component{
         // 计算出恰好满足需要的远裁切平面
         let watchDepth = Math.sqrt(CUBE_SIDE_LENGTH ** 2 * 3);
 
-        // 计算出裁切高度
+        // 得到 mv 矩阵
         this.mvpMatrix.setLookAt(CUBE_SIDE_LENGTH / 2, CUBE_SIDE_LENGTH / 2, CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
         let anglePoint = new CuonVector3();
+
+        // 求囊括立方体的上下边界
         anglePoint.elements[0] = - CUBE_SIDE_LENGTH / 2;
         anglePoint.elements[1] = CUBE_SIDE_LENGTH / 2;
         anglePoint.elements[2] = -CUBE_SIDE_LENGTH / 2;
         anglePoint = this.mvpMatrix.multiplyVector3(anglePoint);
+        let topBottom = Math.abs( anglePoint.elements[1] );
 
-        // 设置正交裁切面
-        let watchSideLenght = anglePoint.elements[1];
-        this.mvpMatrix.setOrtho(-watchSideLenght, watchSideLenght, -watchSideLenght, watchSideLenght,  0, watchDepth);
+        // 求囊括立方体的左右边界
+        anglePoint.elements[0] = - CUBE_SIDE_LENGTH / 2;
+        anglePoint.elements[1] = CUBE_SIDE_LENGTH / 2;
+        anglePoint.elements[2] = CUBE_SIDE_LENGTH / 2;
+        anglePoint = this.mvpMatrix.multiplyVector3(anglePoint);
+        let leftRight = Math.abs( anglePoint.elements[0]);
+
+        let border = topBottom * 2 - leftRight;
+        // 设置裁切面
+        this.mvpMatrix.setOrtho(-border, border, -border, border,  0, watchDepth);
         this.mvpMatrix.lookAt(CUBE_SIDE_LENGTH / 2, CUBE_SIDE_LENGTH / 2, CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
 
         // 进行一次绘制
@@ -202,6 +222,13 @@ export default class ColorGetter extends React.Component{
         this.drawCube();
     }
 
+    onSliderValChanged (val: number) {
+        this.setState({
+            ...this.state,
+            color: val / 100
+        });
+    }
+    
     /**
      * 把立方体绘制出来
      */
@@ -212,6 +239,14 @@ export default class ColorGetter extends React.Component{
         // 使用某个应用程序
         this.gl.useProgram(this.program);
 
+        // 进行颜色同步
+        let indCount = this.verticesColors.length / 6;
+        for (let i = 0; i < indCount; i++) {
+            this.verticesColors[i * 6 + 3] = this.state.color;
+            this.verticesColors[i * 6 + 4] = this.state.color;
+            this.verticesColors[i * 6 + 5] = this.state.color;
+        };
+  
         // 将缓冲区对象绑定到目标
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexColorBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, this.verticesColors, this.gl.STATIC_DRAW);
@@ -219,11 +254,11 @@ export default class ColorGetter extends React.Component{
         // 填充 a_Position 需要的数据
         this.gl.vertexAttribPointer(this.a_Position, 3, this.gl.FLOAT, false, this.FSIZE * 6, 0);
         this.gl.enableVertexAttribArray(this.a_Position);
-
+    
         // 填充 a_Color 需要的数据
         this.gl.vertexAttribPointer(this.a_Color, 3, this.gl.FLOAT, false, this.FSIZE * 6, this.FSIZE * 3);
         this.gl.enableVertexAttribArray(this.a_Color);
-    
+
         // 设置视点和视线
         this.gl.uniformMatrix4fv(this.u_MvpMatrix, false, this.mvpMatrix.elements);
         
@@ -240,7 +275,7 @@ export default class ColorGetter extends React.Component{
             <div style={{width: `440px`, padding: `20px`, margin: `20px`, boxShadow: `2px 2px 5px #000`}}>
                 <canvas width="400" height="400">
                 </canvas>
-                <Slider defaultValue={30} disabled={false} />
+                <Slider defaultValue={this.state.color * 100} disabled={false} onChange={this.onSliderValChanged.bind(this)}/>
             </div>
         )
     }
