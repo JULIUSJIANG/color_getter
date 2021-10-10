@@ -2,10 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-import { Exam } from './scripts/Exam';
+import ColorGetter from './scripts/ColorGetter';
 ReactDOM.render(
   <React.StrictMode>
-    <Exam/>
+    <ColorGetter/>
   </React.StrictMode>,
   document.getElementById('root')
 );
