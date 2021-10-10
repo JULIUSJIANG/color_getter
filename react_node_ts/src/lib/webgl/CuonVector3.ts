@@ -20,7 +20,7 @@ export default class CuonVector3 {
         var v = this.elements;
         var c = v[0], d = v[1], e = v[2], g = Math.sqrt(c*c+d*d+e*e);
         if(g){
-            if(g == 1) {
+            if(g === 1) {
                 return this;
             };
         } 

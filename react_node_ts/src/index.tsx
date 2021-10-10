@@ -2,9 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
+import { Exam } from './scripts/Exam';
 ReactDOM.render(
   <React.StrictMode>
-    Hello World!
+    <Exam/>
   </React.StrictMode>,
   document.getElementById('root')
 );

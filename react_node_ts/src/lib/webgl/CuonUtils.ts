@@ -1,6 +1,6 @@
 import webglUtils from "./WebglUtils";
 
-namespace CuonUtils {
+namespace cuonUtils {
     /**
      * Create a program object and make current
      * @param gl GL context
@@ -26,18 +26,18 @@ namespace CuonUtils {
     * @param fshader a fragment shader program (string)
     * @return created program object, or null if the creation has failed
     */
-    export function createProgram(gl: WebGLRenderingContext, vshader: string, fshader: string) {
+    export function createProgram(gl: WebGLRenderingContext, vshader: string, fshader: string): WebGLProgram {
         // Create shader object
         var vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
         var fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
         if (!vertexShader || !fragmentShader) {
-            return null;
+            return null as any;
         }
 
         // Create a program object
         var program = gl.createProgram();
         if (!program) {
-            return null;
+            return null as any;
         }
 
         // Attach the shader objects
@@ -55,7 +55,7 @@ namespace CuonUtils {
             gl.deleteProgram(program);
             gl.deleteShader(fragmentShader);
             gl.deleteShader(vertexShader);
-            return null;
+            return null as any;
         }
         return program;
     }
@@ -99,12 +99,12 @@ namespace CuonUtils {
      * @param opt_debug flag to initialize the context for debugging
      * @return the rendering context for WebGL
      */
-    export function getWebGLContext(canvas: HTMLCanvasElement) {
+    export function getWebGLContext(canvas: HTMLCanvasElement): WebGLRenderingContext {
       // Get the rendering context for WebGL
       var gl = webglUtils.setupWebGL(canvas, null, null as any);
-      if (!gl) return null;
-      return gl;
+      if (!gl) return null as any;
+      return gl as any;
     }
 };
 
-export default CuonUtils;
+export default cuonUtils;

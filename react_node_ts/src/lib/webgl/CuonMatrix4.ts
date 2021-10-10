@@ -225,11 +225,12 @@ class CuonMatrix4 {
      * @param far 
      * @returns 
      */
-    public setOrtho (left: number, right: number, bottom: number, top: number, near: number, far: number) {
+    public setOrtho (left: number, right: number, bottom: number, top: number, near: number, far: number): CuonMatrix4 {
       var e, rw, rh, rd;
     
       if (left === right || bottom === top || near === far) {
-        throw 'null frustum';
+        console.error('null frustum');
+        return null as any;
       }
     
       rw = 1 / (right - left);
@@ -285,17 +286,20 @@ class CuonMatrix4 {
      * @param far 
      * @returns 
      */
-    public setFrustum (left: number, right: number, bottom: number, top: number, near: number, far: number) {
+    public setFrustum (left: number, right: number, bottom: number, top: number, near: number, far: number): CuonMatrix4 {
       var e, rw, rh, rd;
     
       if (left === right || top === bottom || near === far) {
-        throw 'null frustum';
+        console.error('null frustum');
+        return null as any;
       }
       if (near <= 0) {
-        throw 'near <= 0';
+        console.error('near <= 0');
+        return null as any;
       }
       if (far <= 0) {
-        throw 'far <= 0';
+        console.error('far <= 0');
+        return null as any;
       }
     
       rw = 1 / (right - left);
@@ -339,6 +343,77 @@ class CuonMatrix4 {
      */
     public frustum (left: number, right: number, bottom: number, top: number, near: number, far: number) {
       return this.concat(new CuonMatrix4().setFrustum(left, right, bottom, top, near, far));
+    };
+
+    /**
+     * 设置为透视投影矩阵
+     * @param fovy 
+     * @param aspect 
+     * @param near 
+     * @param far 
+     * @returns 
+     */
+    public setPerspective (fovy: number, aspect: number, near: number, far: number): CuonMatrix4 {
+      var e, rd, s, ct;
+    
+      if (near === far || aspect === 0) {
+        console.error('null frustum');
+        return null as any;
+      }
+      if (near <= 0) {
+        console.error('near <= 0');
+        return null as any;
+      }
+      if (far <= 0) {
+        console.error('far <= 0');
+        return null as any;
+      }
+    
+      fovy = Math.PI * fovy / 180 / 2;
+      s = Math.sin(fovy);
+      if (s === 0) {
+        console.error('null frustum');
+        return null as any;
+      }
+    
+      rd = 1 / (far - near);
+      ct = Math.cos(fovy) / s;
+    
+      e = this.elements;
+    
+      e[0]  = ct / aspect;
+      e[1]  = 0;
+      e[2]  = 0;
+      e[3]  = 0;
+    
+      e[4]  = 0;
+      e[5]  = ct;
+      e[6]  = 0;
+      e[7]  = 0;
+    
+      e[8]  = 0;
+      e[9]  = 0;
+      e[10] = -(far + near) * rd;
+      e[11] = -1;
+    
+      e[12] = 0;
+      e[13] = 0;
+      e[14] = -2 * near * far * rd;
+      e[15] = 0;
+    
+      return this;
+    };
+
+    /**
+     * 左乘透视投影矩阵
+     * @param fovy 
+     * @param aspect 
+     * @param near 
+     * @param far 
+     * @returns 
+     */
+    public perspective (fovy: number, aspect: number, near: number, far: number) {
+      return this.concat(new CuonMatrix4().setPerspective(fovy, aspect, near, far));
     };
 
     /**

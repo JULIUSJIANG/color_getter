@@ -7,13 +7,6 @@ namespace webglUtils {
     export function makeFailHTML(msg: string) {
         return '' +
             '<div style="margin: auto; width:500px;z-index:10000;margin-top:20em;text-align:center;">' + msg + '</div>';
-        return '' +
-            '<table style="background-color: #8CE; width: 100%; height: 100%;"><tr>' +
-            '<td align="center">' +
-            '<div style="display: table-cell; vertical-align: middle;">' +
-            '<div style="">' + msg + '</div>' +
-            '</div>' +
-            '</td></tr></table>';
     };
 
     /**
