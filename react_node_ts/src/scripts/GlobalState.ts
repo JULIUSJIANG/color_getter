@@ -3,17 +3,30 @@
  */
 export interface GlobalState {
     /**
-     * 红开启
+     * x 方向开启
      */
-    redEnable: boolean;
+    xEnable: boolean;
+    /**
+     * y 方向开启
+     */
+    yEnable: boolean;
+    /**
+     * z 方向开启
+     */
+    zEnable: boolean;
 
     /**
-     * 绿开启
+     * 颜色—红
      */
-    greenEnable: boolean;
+    posX: number;
 
     /**
-     * 蓝开启
+     * 颜色—绿
      */
-    blueEnable: boolean;
+    posY: number;
+
+    /**
+     * 颜色—蓝
+     */
+    posZ: number;
 }

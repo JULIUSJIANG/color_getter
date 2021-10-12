@@ -65,7 +65,12 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
     /**
      * 模型、视图、投影矩阵
      */
-    mvpMatrix: CuonMatrix4 = null as any;
+    vpMatrix: CuonMatrix4 = null as any;
+
+    /**
+     * 拖拽矩阵
+     */
+    dragCubeMvpMatrix: CuonMatrix4 = null as any;
 
     /**
      * 顶点数据的缓冲区
@@ -91,9 +96,13 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
         super(p);
 
         this.state = {
-            redEnable: false,
-            greenEnable: false,
-            blueEnable: false
+            xEnable: false,
+            yEnable: false,
+            zEnable: false,
+
+            posX: 0,
+            posY: 0,
+            posZ: 0
         };
     }
 
@@ -148,33 +157,38 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
         };
 
         // 创建矩阵实例
-        this.mvpMatrix = new CuonMatrix4();
+        this.vpMatrix = new CuonMatrix4();
 
         // 计算出恰好满足需要的远裁切平面
         let watchDepth = Math.sqrt(FRAME_CUBE_SIDE_LENGTH ** 2 * 3);
 
         // 得到 mv 矩阵
-        this.mvpMatrix.setLookAt(FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
+        this.vpMatrix.setLookAt(FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
         let anglePoint = new CuonVector3();
 
         // 求囊括立方体的上下边界
         anglePoint.elements[0] = - FRAME_CUBE_SIDE_LENGTH / 2;
         anglePoint.elements[1] = FRAME_CUBE_SIDE_LENGTH / 2;
         anglePoint.elements[2] = -FRAME_CUBE_SIDE_LENGTH / 2;
-        anglePoint = this.mvpMatrix.multiplyVector3(anglePoint);
+        anglePoint = this.vpMatrix.multiplyVector3(anglePoint);
         let topBottom = Math.abs(anglePoint.elements[1]);
 
         // 求囊括立方体的左右边界
         anglePoint.elements[0] = - FRAME_CUBE_SIDE_LENGTH / 2;
         anglePoint.elements[1] = FRAME_CUBE_SIDE_LENGTH / 2;
         anglePoint.elements[2] = FRAME_CUBE_SIDE_LENGTH / 2;
-        anglePoint = this.mvpMatrix.multiplyVector3(anglePoint);
+        anglePoint = this.vpMatrix.multiplyVector3(anglePoint);
         let leftRight = Math.abs(anglePoint.elements[0]);
 
         let border = topBottom * 2 - leftRight;
         // 设置裁切面
-        this.mvpMatrix.setOrtho(-border, border, -border, border, 0, watchDepth);
-        this.mvpMatrix.lookAt(FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
+        this.vpMatrix.setOrtho(-border, border, -border, border, 0, watchDepth);
+        this.vpMatrix.lookAt(FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
+
+        // 初始化小立方体的 mvp 矩阵
+        this.dragCubeMvpMatrix = new CuonMatrix4();
+        this.dragCubeMvpMatrix.set(this.vpMatrix);
+        this.dragCubeMvpMatrix.translate(this.state.posX, this.state.posY, this.state.posZ);
 
         // 绘制线框立方体
         this.componentDidUpdate();
@@ -185,35 +199,20 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         // 绘制外立方体线框
-        this.drawByElementData(this.borderCubeVerticesColors, this.cubeFrameindices, this.gl.LINES);
+        this.drawByElementData(this.vpMatrix, this.borderCubeVerticesColors, this.cubeFrameindices, this.gl.LINES);
 
-        // 绘制内立方体线框
-        this.drawByElementData(this.dragCubeVerticesColors, this.cubeFrameindices, this.gl.LINES);
-
-        if (this.state.redEnable) {
+        if (this.state.xEnable) {
             // 绘制内立方体线框
-            this.drawByElementData(this.hitTestVerticesColorsRed, this.hitTestIndices, this.gl.TRIANGLES);
+            this.drawByElementData(this.dragCubeMvpMatrix, this.xRect, this.rectIndices, this.gl.LINES);
         };
-        if (this.state.greenEnable) {
+        if (this.state.yEnable) {
             // 绘制内立方体线框
-            this.drawByElementData(this.hitTestVerticesColorsGreen, this.hitTestIndices, this.gl.TRIANGLES);
+            this.drawByElementData(this.dragCubeMvpMatrix, this.yRect, this.rectIndices, this.gl.LINES);
         };
-        if (this.state.blueEnable) {
+        if (this.state.zEnable) {
             // 绘制内立方体线框
-            this.drawByElementData(this.hitTestVerticesColorsBlue, this.hitTestIndices, this.gl.TRIANGLES);
+            this.drawByElementData(this.dragCubeMvpMatrix, this.zRect, this.rectIndices, this.gl.LINES);
         };
-    }
-
-    drawRGB () {
-        // 清空颜色缓冲区和深度缓冲区
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-        // 绘制内立方体线框
-        this.drawByElementData(this.hitTestVerticesColorsRed, this.hitTestIndices, this.gl.TRIANGLES);
-        // 绘制内立方体线框
-        this.drawByElementData(this.hitTestVerticesColorsGreen, this.hitTestIndices, this.gl.TRIANGLES);
-        // 绘制内立方体线框
-        this.drawByElementData(this.hitTestVerticesColorsBlue, this.hitTestIndices, this.gl.TRIANGLES);
     }
 
     /**
@@ -221,7 +220,7 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
      * @param verticesColors 
      * @param indices 
      */
-    drawByElementData(verticesColors: Float32Array, indices: Uint8Array, shapeType: number) {
+    drawByElementData(mvpMatrix: CuonMatrix4, verticesColors: Float32Array, indices: Uint8Array, shapeType: number) {
         // 使用某个应用程序
         this.gl.useProgram(this.program);
 
@@ -238,7 +237,7 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
         this.gl.enableVertexAttribArray(this.a_Color);
 
         // 设置视点和视线
-        this.gl.uniformMatrix4fv(this.u_MvpMatrix, false, this.mvpMatrix.elements);
+        this.gl.uniformMatrix4fv(this.u_MvpMatrix, false, mvpMatrix.elements);
 
         // 传入顶点索引数据
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
@@ -299,33 +298,33 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
     ]);
 
     /**
-     * 红面
+     * 碰撞检测—x
      */
-    hitTestVerticesColorsRed: Float32Array = new Float32Array([
+    hitTestVerticesColorsX: Float32Array = new Float32Array([
         DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v0 White
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v1 Magenta
-        -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v2 Red
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0  // v3 Yellow
+        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v1 Magenta
+        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v2 Red
+        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0  // v3 Yellow
     ]);
 
     /**
-     * 绿面
+     * 碰撞检测—y
      */
-    hitTestVerticesColorsGreen: Float32Array = new Float32Array([
+    hitTestVerticesColorsY: Float32Array = new Float32Array([
         DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v0 White
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v1 Magenta
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v2 Red
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0  // v3 Yellow
+        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v2 Red
+        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v3 Yellow
+        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v1 Magenta
     ]);
 
     /**
-     * 蓝面
+     * 碰撞检测—z
      */
-    hitTestVerticesColorsBlue: Float32Array = new Float32Array([
+    hitTestVerticesColorsZ: Float32Array = new Float32Array([
         DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v0 White
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v2 Red
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v3 Yellow
         -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v1 Magenta
+        -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v2 Red
+        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0  // v3 Yellow
     ]);
 
     /**
@@ -336,57 +335,113 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
     ]);
 
     /**
+     * 框—x
+     */
+    xRect: Float32Array = new Float32Array([
+        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v0 White
+        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v1 Magenta
+        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v2 Red
+        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5  // v3 Yellow
+    ]);
+
+    /**
+     * 框—y
+     */
+    yRect: Float32Array = new Float32Array([
+        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v0 White
+        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v2 Red
+        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v3 Yellow
+        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v1 Magenta
+    ]);
+    
+    /**
+     * 框—z
+     */
+     zRect: Float32Array = new Float32Array([
+        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v0 White
+        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v1 Magenta
+        -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v2 Red
+        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0  // v3 Yellow
+    ]);
+
+    /**
+     * 框
+     */
+     rectIndices = new Uint8Array([
+        0, 1, 
+        1, 2,
+        2, 3,
+        3, 0
+    ]);
+
+    /**
      * 存储读来的颜色值
      */
     pixels = new Uint8Array(4);
 
     onMouseOver(args: any) {
-        let state = {
+        let state = this.getStateByMouseEvent(args);
+        this.setState(state);
+        this.componentDidUpdate();
+    }
+
+    onMouseDown (args: any) {
+
+    }
+
+    onMouseUp (args: any) {
+
+    }
+
+    getStateByMouseEvent (mouseEvent: MouseEvent) {
+        let state: GlobalState = {
             ...this.state,
-            redEnable: false,
-            greenEnable: false,
-            blueEnable: false
+            xEnable: false,
+            yEnable: false,
+            zEnable: false
         };
 
-        let mouseEvent: MouseEvent = args;
+        let touchLocation = this.getTouchLocation(mouseEvent);
+        if (0 <= touchLocation[0] && touchLocation[0] <= CANVAS_SIZE && 0 <= touchLocation[1] && touchLocation[1] <= CANVAS_SIZE) {
+            // 清空颜色缓冲区和深度缓冲区
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+
+            // 绘制后面
+            this.drawByElementData(this.dragCubeMvpMatrix, this.hitTestVerticesColorsZ, this.hitTestIndices, this.gl.TRIANGLES);
+
+            // 绘制绿面
+            this.drawByElementData(this.dragCubeMvpMatrix, this.hitTestVerticesColorsY, this.hitTestIndices, this.gl.TRIANGLES);
+
+            // 绘制蓝面
+            this.drawByElementData(this.dragCubeMvpMatrix, this.hitTestVerticesColorsX, this.hitTestIndices, this.gl.TRIANGLES);
+
+            // 碰撞检测
+            this.gl.readPixels(touchLocation[0], touchLocation[1], 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.pixels);
+            if (this.pixels[0] === 255) {
+                state.xEnable = true;
+            };
+            if (this.pixels[1] === 255) {
+                state.yEnable = true;
+            };
+            if (this.pixels[2] === 255) {
+                state.zEnable = true;
+            };
+        };
+        return state;
+    }
+
+    getTouchLocation (mouseEvent: MouseEvent) {
         let x = mouseEvent.clientX;
         let y = mouseEvent.clientY;
         let rect = this.canvas.getBoundingClientRect();
         let xInCanvas = x - rect.left;
         let yInCanvas = rect.bottom - y;
-
-        if (0 <= xInCanvas && xInCanvas <= CANVAS_SIZE && 0 <= yInCanvas && yInCanvas <= CANVAS_SIZE) {
-            // 清空颜色缓冲区和深度缓冲区
-            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-            // 绘制后面
-            this.drawByElementData(this.hitTestVerticesColorsRed, this.hitTestIndices, this.gl.TRIANGLES);
-
-            // 绘制绿面
-            this.drawByElementData(this.hitTestVerticesColorsGreen, this.hitTestIndices, this.gl.TRIANGLES);
-
-            // 绘制蓝面
-            this.drawByElementData(this.hitTestVerticesColorsBlue, this.hitTestIndices, this.gl.TRIANGLES);
-
-            // 碰撞检测
-            this.gl.readPixels(xInCanvas, yInCanvas, 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.pixels);
-            if (this.pixels[0] === 255) {
-                state.redEnable = true;
-            };
-            if (this.pixels[1] === 255) {
-                state.greenEnable = true;
-            };
-            if (this.pixels[2] === 255) {
-                state.blueEnable = true;
-            };
-        };
-        this.setState(state);
-        this.componentDidUpdate();
+        return [xInCanvas, yInCanvas];
     }
 
     public override render() {
         return (
-            <div onMouseMove={this.onMouseOver.bind(this)} style={{ width: `${CANVAS_SIZE + 40}px`, padding: `20px`, margin: `20px`, boxShadow: `2px 2px 5px #000` }}>
+            <div onMouseDown={this.onMouseDown.bind(this)} onMouseUp={this.onMouseUp.bind(this)} onMouseMove={this.onMouseOver.bind(this)} style={{ width: `${CANVAS_SIZE + 40}px`, padding: `20px`, margin: `20px`, boxShadow: `2px 2px 5px #000` }}>
                 <canvas width={CANVAS_SIZE} height={CANVAS_SIZE}>
                 </canvas>
             </div>
