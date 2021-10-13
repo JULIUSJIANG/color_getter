@@ -68,6 +68,11 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
     vpMatrix: CuonMatrix4 = null as any;
 
     /**
+     * mvp 逆矩阵
+     */
+    vpR: CuonMatrix4 = null as any;
+
+    /**
      * 拖拽矩阵
      */
     dragCubeMvpMatrix: CuonMatrix4 = null as any;
@@ -184,6 +189,10 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
         // 设置裁切面
         this.vpMatrix.setOrtho(-border, border, -border, border, 0, watchDepth);
         this.vpMatrix.lookAt(FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
+
+        this.vpR = new CuonMatrix4();
+        this.vpR.set(this.vpMatrix);;
+        this.vpR.invert();
 
         // 初始化小立方体的 mvp 矩阵
         this.dragCubeMvpMatrix = new CuonMatrix4();
@@ -386,7 +395,32 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
     }
 
     onMouseDown (args: any) {
+        let state = this.getStateByMouseEvent(args);
+        let touchLocation = this.getTouchLocation(args);
+        let touchPosBegin = new CuonVector3();
+        touchPosBegin.elements[0] = touchLocation[0] / CANVAS_SIZE - 0.5;
+        touchPosBegin.elements[1] = touchLocation[1] / CANVAS_SIZE - 0.5;
+        touchPosBegin.elements[2] = 0;
 
+        let touchPosEnd = new CuonVector3();
+        touchPosBegin.elements[0] = touchLocation[0] / CANVAS_SIZE - 0.5;
+        touchPosBegin.elements[1] = touchLocation[1] / CANVAS_SIZE - 0.5;
+        touchPosBegin.elements[2] = -1;
+
+        touchPosBegin = this.vpR.multiplyVector3(touchPosBegin);
+        touchPosEnd = this.vpR.multiplyVector3(touchPosEnd);
+
+        let vec = new CuonVector3();
+        vec.elements[0] = touchPosEnd.elements[0] - touchPosBegin.elements[0];
+        vec.elements[1] = touchPosEnd.elements[1] - touchPosBegin.elements[1];
+        vec.elements[2] = touchPosEnd.elements[2] - touchPosBegin.elements[2];
+
+        let n = (this.state.posX + DRAG_CUBE_SIDE_LENGTH / 2 - touchPosBegin.elements[0]) / vec.elements[0];
+        let hitTestPoint = new CuonVector3();
+        hitTestPoint.elements[0] = touchPosBegin.elements[0] + vec.elements[0] * n;
+        hitTestPoint.elements[1] = touchPosBegin.elements[1] + vec.elements[1] * n;
+        hitTestPoint.elements[2] = touchPosBegin.elements[2] + vec.elements[2] * n;
+        console.log(`x[${hitTestPoint.elements[0]}] y[${hitTestPoint.elements[1]}] z[${hitTestPoint.elements[2]}]`);
     }
 
     onMouseUp (args: any) {
