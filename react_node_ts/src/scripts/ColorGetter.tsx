@@ -6,7 +6,7 @@ import { GlobalState } from "./GlobalState";
 
 // 顶点着色器
 let VSHADER_SOURCE =
-    `
+`
 attribute vec4 a_Position;
 attribute vec4 a_Color;
 uniform mat4 u_MvpMatrix;
@@ -33,7 +33,7 @@ void main () {
 const FRAME_CUBE_SIDE_LENGTH = 1;
 
 // 用于拖拽的立方体边长
-const DRAG_CUBE_SIDE_LENGTH = 0.1;
+const DRAG_CUBE_SIDE_LENGTH = 1;
 
 // 画布尺寸
 const CANVAS_SIZE = 400;
@@ -395,32 +395,27 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
     }
 
     onMouseDown (args: any) {
-        let state = this.getStateByMouseEvent(args);
         let touchLocation = this.getTouchLocation(args);
         let touchPosBegin = new CuonVector3();
-        touchPosBegin.elements[0] = touchLocation[0] / CANVAS_SIZE - 0.5;
-        touchPosBegin.elements[1] = touchLocation[1] / CANVAS_SIZE - 0.5;
+        touchPosBegin.elements[0] = (touchLocation[0] / CANVAS_SIZE - 0.5) * 2;
+        touchPosBegin.elements[1] = (touchLocation[1] / CANVAS_SIZE - 0.5) * 2;
         touchPosBegin.elements[2] = 0;
 
-        let touchPosEnd = new CuonVector3();
-        touchPosBegin.elements[0] = touchLocation[0] / CANVAS_SIZE - 0.5;
-        touchPosBegin.elements[1] = touchLocation[1] / CANVAS_SIZE - 0.5;
-        touchPosBegin.elements[2] = -1;
-
         touchPosBegin = this.vpR.multiplyVector3(touchPosBegin);
-        touchPosEnd = this.vpR.multiplyVector3(touchPosEnd);
 
         let vec = new CuonVector3();
-        vec.elements[0] = touchPosEnd.elements[0] - touchPosBegin.elements[0];
-        vec.elements[1] = touchPosEnd.elements[1] - touchPosBegin.elements[1];
-        vec.elements[2] = touchPosEnd.elements[2] - touchPosBegin.elements[2];
+        vec.elements[0] = 0;
+        vec.elements[1] = 0;
+        vec.elements[2] = 1;
+        vec = this.vpR.multiplyVector3(vec);
 
         let n = (this.state.posX + DRAG_CUBE_SIDE_LENGTH / 2 - touchPosBegin.elements[0]) / vec.elements[0];
         let hitTestPoint = new CuonVector3();
         hitTestPoint.elements[0] = touchPosBegin.elements[0] + vec.elements[0] * n;
         hitTestPoint.elements[1] = touchPosBegin.elements[1] + vec.elements[1] * n;
         hitTestPoint.elements[2] = touchPosBegin.elements[2] + vec.elements[2] * n;
-        console.log(`x[${hitTestPoint.elements[0]}] y[${hitTestPoint.elements[1]}] z[${hitTestPoint.elements[2]}]`);
+
+        console.log(`touch[${hitTestPoint.elements[0]},${hitTestPoint.elements[1]},${hitTestPoint.elements[2]}]`);
     }
 
     onMouseUp (args: any) {
