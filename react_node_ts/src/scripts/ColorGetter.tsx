@@ -2,7 +2,9 @@ import React from "react";
 import CuonMatrix4 from "../lib/webgl/CuonMatrix4";
 import cuonUtils from "../lib/webgl/CuonUtils";
 import CuonVector3 from "../lib/webgl/CuonVector3";
+import globalConfig from "./GlobalConfig";
 import { GlobalState } from "./GlobalState";
+import TouchMachine from "./touch_machine/TouchMachine";
 
 // 顶点着色器
 let VSHADER_SOURCE =
@@ -29,19 +31,14 @@ void main () {
 }
 `;
 
-// 立方体边长
-const FRAME_CUBE_SIDE_LENGTH = 1;
-
-// 用于拖拽的立方体边长
-const DRAG_CUBE_SIDE_LENGTH = 1;
-
-// 画布尺寸
-const CANVAS_SIZE = 400;
-
 /**
  * 拾色器
  */
 export default class ColorGetter extends React.Component<{}, GlobalState> {
+    /**
+     * 交互状态机
+     */
+    machine: TouchMachine = null as any;
     /**
      * webgl 对象
      */
@@ -97,13 +94,23 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
      */
     canvas: HTMLCanvasElement = null as any;
 
+    /**
+     * 相机方向
+     */
+    cameraVec: CuonVector3 = null as any;
+
     public constructor(p: {}) {
         super(p);
 
+        this.machine = new TouchMachine(this);
         this.state = {
             xEnable: false,
             yEnable: false,
             zEnable: false,
+
+            xDrag: false,
+            yDrag: false,
+            zDrag: false,
 
             posX: 0,
             posY: 0,
@@ -165,34 +172,41 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
         this.vpMatrix = new CuonMatrix4();
 
         // 计算出恰好满足需要的远裁切平面
-        let watchDepth = Math.sqrt(FRAME_CUBE_SIDE_LENGTH ** 2 * 3);
+        let watchDepth = Math.sqrt(globalConfig.FRAME_CUBE_SIDE_LENGTH ** 2 * 3);
 
         // 得到 mv 矩阵
-        this.vpMatrix.setLookAt(FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
+        this.vpMatrix.setLookAt(globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
         let anglePoint = new CuonVector3();
 
         // 求囊括立方体的上下边界
-        anglePoint.elements[0] = - FRAME_CUBE_SIDE_LENGTH / 2;
-        anglePoint.elements[1] = FRAME_CUBE_SIDE_LENGTH / 2;
-        anglePoint.elements[2] = -FRAME_CUBE_SIDE_LENGTH / 2;
+        anglePoint.elements[0] = - globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+        anglePoint.elements[1] = globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+        anglePoint.elements[2] = -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
         anglePoint = this.vpMatrix.multiplyVector3(anglePoint);
         let topBottom = Math.abs(anglePoint.elements[1]);
 
         // 求囊括立方体的左右边界
-        anglePoint.elements[0] = - FRAME_CUBE_SIDE_LENGTH / 2;
-        anglePoint.elements[1] = FRAME_CUBE_SIDE_LENGTH / 2;
-        anglePoint.elements[2] = FRAME_CUBE_SIDE_LENGTH / 2;
+        anglePoint.elements[0] = - globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+        anglePoint.elements[1] = globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+        anglePoint.elements[2] = globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
         anglePoint = this.vpMatrix.multiplyVector3(anglePoint);
         let leftRight = Math.abs(anglePoint.elements[0]);
 
         let border = topBottom * 2 - leftRight;
         // 设置裁切面
         this.vpMatrix.setOrtho(-border, border, -border, border, 0, watchDepth);
-        this.vpMatrix.lookAt(FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
+        this.vpMatrix.lookAt(globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 0, 0, 0, 0, 1, 0);
 
         this.vpR = new CuonMatrix4();
         this.vpR.set(this.vpMatrix);;
         this.vpR.invert();
+
+        // 相机方向
+        this.cameraVec = new CuonVector3();
+        this.cameraVec.elements[0] = 0;
+        this.cameraVec.elements[1] = 0;
+        this.cameraVec.elements[2] = 1;
+        this.cameraVec = this.machine.colorGetter.vpR.multiplyVector3(this.cameraVec);
 
         // 初始化小立方体的 mvp 矩阵
         this.dragCubeMvpMatrix = new CuonMatrix4();
@@ -210,15 +224,15 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
         // 绘制外立方体线框
         this.drawByElementData(this.vpMatrix, this.borderCubeVerticesColors, this.cubeFrameindices, this.gl.LINES);
 
-        if (this.state.xEnable) {
+        if (this.state.xEnable || this.state.xDrag) {
             // 绘制内立方体线框
             this.drawByElementData(this.dragCubeMvpMatrix, this.xRect, this.rectIndices, this.gl.LINES);
         };
-        if (this.state.yEnable) {
+        if (this.state.yEnable || this.state.yDrag) {
             // 绘制内立方体线框
             this.drawByElementData(this.dragCubeMvpMatrix, this.yRect, this.rectIndices, this.gl.LINES);
         };
-        if (this.state.zEnable) {
+        if (this.state.zEnable || this.state.zDrag) {
             // 绘制内立方体线框
             this.drawByElementData(this.dragCubeMvpMatrix, this.zRect, this.rectIndices, this.gl.LINES);
         };
@@ -261,14 +275,14 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
      */
     borderCubeVerticesColors: Float32Array = new Float32Array([
         // Vertex coordinates and color
-        FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v0 White
-        -FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v1 Magenta
-        -FRAME_CUBE_SIDE_LENGTH / 2, -FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v2 Red
-        FRAME_CUBE_SIDE_LENGTH / 2, -FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v3 Yellow
-        FRAME_CUBE_SIDE_LENGTH / 2, -FRAME_CUBE_SIDE_LENGTH / 2, -FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v4 Green
-        FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, -FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v5 Cyan
-        -FRAME_CUBE_SIDE_LENGTH / 2, FRAME_CUBE_SIDE_LENGTH / 2, -FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v6 Blue
-        -FRAME_CUBE_SIDE_LENGTH / 2, -FRAME_CUBE_SIDE_LENGTH / 2, -FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v7 Black
+        globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v0 White
+        -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v1 Magenta
+        -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v2 Red
+        globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v3 Yellow
+        globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v4 Green
+        globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v5 Cyan
+        -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v6 Blue
+        -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, -globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v7 Black
     ]);
 
     /**
@@ -276,14 +290,14 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
      */
     dragCubeVerticesColors: Float32Array = new Float32Array([
         // Vertex coordinates and color
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v0 White
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v1 Magenta
-        -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v2 Red
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v3 Yellow
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v4 Green
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v5 Cyan
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v6 Blue
-        -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v7 Black
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v0 White
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v1 Magenta
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v2 Red
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v3 Yellow
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v4 Green
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v5 Cyan
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v6 Blue
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v7 Black
     ]);
 
     /**
@@ -310,30 +324,30 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
      * 碰撞检测—x
      */
     hitTestVerticesColorsX: Float32Array = new Float32Array([
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v0 White
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v1 Magenta
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v2 Red
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0  // v3 Yellow
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v0 White
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v1 Magenta
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0,  // v2 Red
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.0, 0.0  // v3 Yellow
     ]);
 
     /**
      * 碰撞检测—y
      */
     hitTestVerticesColorsY: Float32Array = new Float32Array([
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v0 White
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v2 Red
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v3 Yellow
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v1 Magenta
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v0 White
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v2 Red
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v3 Yellow
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 1.0, 0.0,  // v1 Magenta
     ]);
 
     /**
      * 碰撞检测—z
      */
     hitTestVerticesColorsZ: Float32Array = new Float32Array([
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v0 White
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v1 Magenta
-        -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v2 Red
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0  // v3 Yellow
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v0 White
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v1 Magenta
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0,  // v2 Red
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.0, 1.0  // v3 Yellow
     ]);
 
     /**
@@ -347,30 +361,30 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
      * 框—x
      */
     xRect: Float32Array = new Float32Array([
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v0 White
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v1 Magenta
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v2 Red
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5  // v3 Yellow
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v0 White
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v1 Magenta
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v2 Red
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5  // v3 Yellow
     ]);
 
     /**
      * 框—y
      */
     yRect: Float32Array = new Float32Array([
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v0 White
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v2 Red
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v3 Yellow
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v1 Magenta
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v0 White
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v2 Red
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v3 Yellow
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v1 Magenta
     ]);
     
     /**
      * 框—z
      */
      zRect: Float32Array = new Float32Array([
-        DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v0 White
-        -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v1 Magenta
-        -DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v2 Red
-        DRAG_CUBE_SIDE_LENGTH / 2, -DRAG_CUBE_SIDE_LENGTH / 2, DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0  // v3 Yellow
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v0 White
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v1 Magenta
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v2 Red
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0  // v3 Yellow
     ]);
 
     /**
@@ -389,89 +403,21 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
     pixels = new Uint8Array(4);
 
     onMouseOver(args: any) {
-        let state = this.getStateByMouseEvent(args);
-        this.setState(state);
-        this.componentDidUpdate();
+        this.machine.currState.onMouseHover(args);
     }
 
     onMouseDown (args: any) {
-        let touchLocation = this.getTouchLocation(args);
-        let touchPosBegin = new CuonVector3();
-        touchPosBegin.elements[0] = (touchLocation[0] / CANVAS_SIZE - 0.5) * 2;
-        touchPosBegin.elements[1] = (touchLocation[1] / CANVAS_SIZE - 0.5) * 2;
-        touchPosBegin.elements[2] = 0;
-
-        touchPosBegin = this.vpR.multiplyVector3(touchPosBegin);
-
-        let vec = new CuonVector3();
-        vec.elements[0] = 0;
-        vec.elements[1] = 0;
-        vec.elements[2] = 1;
-        vec = this.vpR.multiplyVector3(vec);
-
-        let n = (this.state.posX + DRAG_CUBE_SIDE_LENGTH / 2 - touchPosBegin.elements[0]) / vec.elements[0];
-        let hitTestPoint = new CuonVector3();
-        hitTestPoint.elements[0] = touchPosBegin.elements[0] + vec.elements[0] * n;
-        hitTestPoint.elements[1] = touchPosBegin.elements[1] + vec.elements[1] * n;
-        hitTestPoint.elements[2] = touchPosBegin.elements[2] + vec.elements[2] * n;
-
-        console.log(`touch[${hitTestPoint.elements[0]},${hitTestPoint.elements[1]},${hitTestPoint.elements[2]}]`);
+        this.machine.currState.onMouseDown(args);    
     }
 
     onMouseUp (args: any) {
-
-    }
-
-    getStateByMouseEvent (mouseEvent: MouseEvent) {
-        let state: GlobalState = {
-            ...this.state,
-            xEnable: false,
-            yEnable: false,
-            zEnable: false
-        };
-
-        let touchLocation = this.getTouchLocation(mouseEvent);
-        if (0 <= touchLocation[0] && touchLocation[0] <= CANVAS_SIZE && 0 <= touchLocation[1] && touchLocation[1] <= CANVAS_SIZE) {
-            // 清空颜色缓冲区和深度缓冲区
-            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-            // 绘制后面
-            this.drawByElementData(this.dragCubeMvpMatrix, this.hitTestVerticesColorsZ, this.hitTestIndices, this.gl.TRIANGLES);
-
-            // 绘制绿面
-            this.drawByElementData(this.dragCubeMvpMatrix, this.hitTestVerticesColorsY, this.hitTestIndices, this.gl.TRIANGLES);
-
-            // 绘制蓝面
-            this.drawByElementData(this.dragCubeMvpMatrix, this.hitTestVerticesColorsX, this.hitTestIndices, this.gl.TRIANGLES);
-
-            // 碰撞检测
-            this.gl.readPixels(touchLocation[0], touchLocation[1], 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.pixels);
-            if (this.pixels[0] === 255) {
-                state.xEnable = true;
-            };
-            if (this.pixels[1] === 255) {
-                state.yEnable = true;
-            };
-            if (this.pixels[2] === 255) {
-                state.zEnable = true;
-            };
-        };
-        return state;
-    }
-
-    getTouchLocation (mouseEvent: MouseEvent) {
-        let x = mouseEvent.clientX;
-        let y = mouseEvent.clientY;
-        let rect = this.canvas.getBoundingClientRect();
-        let xInCanvas = x - rect.left;
-        let yInCanvas = rect.bottom - y;
-        return [xInCanvas, yInCanvas];
+        this.machine.currState.onMouseUp(args);
     }
 
     public override render() {
         return (
-            <div onMouseDown={this.onMouseDown.bind(this)} onMouseUp={this.onMouseUp.bind(this)} onMouseMove={this.onMouseOver.bind(this)} style={{ width: `${CANVAS_SIZE + 40}px`, padding: `20px`, margin: `20px`, boxShadow: `2px 2px 5px #000` }}>
-                <canvas width={CANVAS_SIZE} height={CANVAS_SIZE}>
+            <div onMouseDown={this.onMouseDown.bind(this)} onMouseUp={this.onMouseUp.bind(this)} onMouseMove={this.onMouseOver.bind(this)} style={{ width: `${globalConfig.CANVAS_SIZE + 40}px`, padding: `20px`, margin: `20px`, boxShadow: `2px 2px 5px #000` }}>
+                <canvas width={globalConfig.CANVAS_SIZE} height={globalConfig.CANVAS_SIZE}>
                 </canvas>
             </div>
         )

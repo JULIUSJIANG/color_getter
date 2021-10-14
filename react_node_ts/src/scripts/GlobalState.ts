@@ -16,6 +16,19 @@ export interface GlobalState {
     zEnable: boolean;
 
     /**
+     * 正在拖拽 x
+     */
+    xDrag: boolean;
+    /**
+     * 正在拖拽 y
+     */
+    yDrag: boolean;
+    /**
+     * 正在拖拽 z
+     */
+    zDrag: boolean;
+
+    /**
      * 颜色—红
      */
     posX: number;
