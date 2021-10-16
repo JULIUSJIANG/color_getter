@@ -225,18 +225,118 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
         this.dragCubeMvpMatrix.set(this.vpMatrix);
         this.dragCubeMvpMatrix.translate(this.state.posX, this.state.posY, this.state.posZ);
 
+        let unitCout = this.xRect.length / 6;
         if (this.state.xEnable || this.state.xDrag) {
+            for (let i = 0; i < unitCout; i++) {
+                this.xRect[i * 6 + 3] = 1;
+                this.xRect[i * 6 + 4] = 1;
+                this.xRect[i * 6 + 5] = 1;
+            };
             // 绘制内立方体线框
             this.drawByElementData(this.dragCubeMvpMatrix, this.xRect, this.rectIndices, this.gl.LINES);
         };
+
         if (this.state.yEnable || this.state.yDrag) {
+            for (let i = 0; i < unitCout; i++) {
+                this.yRect[i * 6 + 3] = 1;
+                this.yRect[i * 6 + 4] = 1;
+                this.yRect[i * 6 + 5] = 1;
+            };
             // 绘制内立方体线框
             this.drawByElementData(this.dragCubeMvpMatrix, this.yRect, this.rectIndices, this.gl.LINES);
         };
+
         if (this.state.zEnable || this.state.zDrag) {
+            for (let i = 0; i < unitCout; i++) {
+                this.zRect[i * 6 + 3] = 1;
+                this.zRect[i * 6 + 4] = 1;
+                this.zRect[i * 6 + 5] = 1;
+            };
             // 绘制内立方体线框
             this.drawByElementData(this.dragCubeMvpMatrix, this.zRect, this.rectIndices, this.gl.LINES);
         };
+
+        for (let i = 0; i < unitCout; i++) {
+            this.xRect[i * 6 + 3] = 1;
+            this.xRect[i * 6 + 4] = 0;
+            this.xRect[i * 6 + 5] = 0;
+        };
+        // 绘制内立方体线框
+        this.drawByElementData(this.dragCubeMvpMatrix, this.xRect, this.rectIndices, this.gl.LINES);
+
+        for (let i = 0; i < unitCout; i++) {
+            this.yRect[i * 6 + 3] = 0;
+            this.yRect[i * 6 + 4] = 1;
+            this.yRect[i * 6 + 5] = 0;
+        };
+        // 绘制内立方体线框
+        this.drawByElementData(this.dragCubeMvpMatrix, this.yRect, this.rectIndices, this.gl.LINES);
+
+        for (let i = 0; i < unitCout; i++) {
+            this.zRect[i * 6 + 3] = 0;
+            this.zRect[i * 6 + 4] = 0;
+            this.zRect[i * 6 + 5] = 1;
+        };
+        // 绘制内立方体线框
+        this.drawByElementData(this.dragCubeMvpMatrix, this.zRect, this.rectIndices, this.gl.LINES);
+
+        this.xPlane[0] = globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+        this.xPlane[1] = this.state.posY;
+        this.xPlane[2] = this.state.posZ + globalConfig.DRAG_CUBE_SIDE_LENGTH / 2;
+
+        this.xPlane[6] = globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+        this.xPlane[7] = this.state.posY;
+        this.xPlane[8] = this.state.posZ - globalConfig.DRAG_CUBE_SIDE_LENGTH / 2;
+
+        this.xPlane[12] = - globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+        this.xPlane[13] = this.state.posY;
+        this.xPlane[14] = this.state.posZ - globalConfig.DRAG_CUBE_SIDE_LENGTH / 2;
+
+        this.xPlane[18] = - globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+        this.xPlane[19] = this.state.posY;
+        this.xPlane[20] = this.state.posZ + globalConfig.DRAG_CUBE_SIDE_LENGTH / 2;
+
+        for (let i = 0; i < 4; i++) {
+            // 对范围进行约束
+            this.xPlane[i * 6 + 0] = Math.max(- globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, Math.min(this.xPlane[i * 6 + 0], globalConfig.FRAME_CUBE_SIDE_LENGTH / 2));
+            this.xPlane[i * 6 + 1] = Math.max(- globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, Math.min(this.xPlane[i * 6 + 1], globalConfig.FRAME_CUBE_SIDE_LENGTH / 2));
+            this.xPlane[i * 6 + 2] = Math.max(- globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, Math.min(this.xPlane[i * 6 + 2], globalConfig.FRAME_CUBE_SIDE_LENGTH / 2));
+
+            this.xPlane[i * 6 + 3] = this.xPlane[i * 6 + 0] / globalConfig.FRAME_CUBE_SIDE_LENGTH + 0.5;
+            this.xPlane[i * 6 + 4] = this.xPlane[i * 6 + 1] / globalConfig.FRAME_CUBE_SIDE_LENGTH + 0.5;
+            this.xPlane[i * 6 + 5] = this.xPlane[i * 6 + 2] / globalConfig.FRAME_CUBE_SIDE_LENGTH + 0.5;
+        };
+        // 绘制内立方体线框
+        this.drawByElementData(this.vpMatrix, this.xPlane, this.hitTestIndices, this.gl.TRIANGLES);
+
+        this.zPlane[0] = this.state.posX + globalConfig.DRAG_CUBE_SIDE_LENGTH / 2;
+        this.zPlane[1] = this.state.posY;
+        this.zPlane[2] = globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+
+        this.zPlane[6] = this.state.posX + globalConfig.DRAG_CUBE_SIDE_LENGTH / 2;
+        this.zPlane[7] = this.state.posY;
+        this.zPlane[8] = - globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+
+        this.zPlane[12] = this.state.posX - globalConfig.DRAG_CUBE_SIDE_LENGTH / 2;
+        this.zPlane[13] = this.state.posY;
+        this.zPlane[14] = - globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+
+        this.zPlane[18] = this.state.posX - globalConfig.DRAG_CUBE_SIDE_LENGTH / 2;
+        this.zPlane[19] = this.state.posY;
+        this.zPlane[20] = globalConfig.FRAME_CUBE_SIDE_LENGTH / 2;
+
+        for (let i = 0; i < 4; i++) {
+            // 对范围进行约束
+            this.zPlane[i * 6 + 0] = Math.max(- globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, Math.min(this.zPlane[i * 6 + 0], globalConfig.FRAME_CUBE_SIDE_LENGTH / 2));
+            this.zPlane[i * 6 + 1] = Math.max(- globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, Math.min(this.zPlane[i * 6 + 1], globalConfig.FRAME_CUBE_SIDE_LENGTH / 2));
+            this.zPlane[i * 6 + 2] = Math.max(- globalConfig.FRAME_CUBE_SIDE_LENGTH / 2, Math.min(this.zPlane[i * 6 + 2], globalConfig.FRAME_CUBE_SIDE_LENGTH / 2));
+
+            this.zPlane[i * 6 + 3] = this.zPlane[i * 6 + 0] / globalConfig.FRAME_CUBE_SIDE_LENGTH + 0.5;
+            this.zPlane[i * 6 + 4] = this.zPlane[i * 6 + 1] / globalConfig.FRAME_CUBE_SIDE_LENGTH + 0.5;
+            this.zPlane[i * 6 + 5] = this.zPlane[i * 6 + 2] / globalConfig.FRAME_CUBE_SIDE_LENGTH + 0.5;
+        };
+        // 绘制内立方体线框
+        this.drawByElementData(this.vpMatrix, this.zPlane, this.hitTestIndices, this.gl.TRIANGLES);
     }
 
     /**
@@ -362,40 +462,68 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
      * 框—x
      */
     xRect: Float32Array = new Float32Array([
-        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v0 White
-        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v1 Magenta
-        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5,  // v2 Red
-        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 0.5, 0.5  // v3 Yellow
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v0 White
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v1 Magenta
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v2 Red
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0  // v3 Yellow
     ]);
 
     /**
      * 框—y
      */
     yRect: Float32Array = new Float32Array([
-        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v0 White
-        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v2 Red
-        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v3 Yellow
-        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.5, 1.0, 0.5,  // v1 Magenta
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v0 White
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v2 Red
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v3 Yellow
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v1 Magenta
     ]);
     
     /**
      * 框—z
      */
      zRect: Float32Array = new Float32Array([
-        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v0 White
-        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v1 Magenta
-        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0,  // v2 Red
-        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 0.0, 0.5, 1.0  // v3 Yellow
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v0 White
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v1 Magenta
+        -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0,  // v2 Red
+        globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, -globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, globalConfig.DRAG_CUBE_SIDE_LENGTH / 2, 1.0, 1.0, 1.0  // v3 Yellow
     ]);
 
     /**
      * 框
      */
-     rectIndices = new Uint8Array([
+    rectIndices = new Uint8Array([
         0, 1, 
         1, 2,
         2, 3,
         3, 0
+    ]);
+    
+    /**
+     * 片-x
+     */
+    xPlane: Float32Array = new Float32Array([
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0
+    ]);
+    
+    /**
+     * 片-y
+     */
+    yPlane: Float32Array = new Float32Array([
+        
+    ]);
+
+    
+    /**
+     * 片-z
+     */
+    zPlane: Float32Array = new Float32Array([
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0
     ]);
 
     /**

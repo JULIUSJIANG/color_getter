@@ -1,4 +1,4 @@
-import CuonVector3 from "../../lib/webgl/CuonVector3";
+import globalConfig from "../GlobalConfig";
 import { GlobalState } from "../GlobalState";
 import TouchMachineState from "./TouchMachineState";
 
@@ -44,9 +44,10 @@ export default class TouchMachineStateDragY extends TouchMachineState {
     public onMouseHover (mouseEvent: MouseEvent) {
         let hoverPos = this.getTouchYPos(mouseEvent);
         let relY = hoverPos - this.touchBegin;
+        let willY: number = this.initPos + relY;
         let state: GlobalState = {
             ...this.machine.colorGetter.state,
-            posY: this.initPos + relY
+            posY: Math.max(-globalConfig.FRAME_CUBE_SIDE_LENGTH/2, Math.min(willY,globalConfig.FRAME_CUBE_SIDE_LENGTH/2))
         }
         this.machine.colorGetter.setState(state);
     }
