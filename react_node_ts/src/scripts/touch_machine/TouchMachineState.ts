@@ -48,20 +48,47 @@ export default abstract class TouchMachineState {
         let rect = this.machine.colorGetter.canvas.getBoundingClientRect();
         let xInCanvas = x - rect.left;
         let yInCanvas = rect.bottom - y;
+        let touchLocation = new CuonVector3();
+        touchLocation.elements[0] = xInCanvas;
+        touchLocation.elements[1] = yInCanvas;
+        touchLocation.elements[2] = 0;
+        return touchLocation;
+    }
 
-        return [xInCanvas, yInCanvas];
+    getTouchViewPos (mouseEvent: MouseEvent) {
+        let touchLocation = this.getTouchCanvasPos(mouseEvent);
+        touchLocation.elements[0] = (touchLocation.elements[0] / globalConfig.CANVAS_SIZE - 0.5) * 2;
+        touchLocation.elements[1] = (touchLocation.elements[1] / globalConfig.CANVAS_SIZE - 0.5) * 2;
+        return touchLocation;
     }
 
     getTouchWorldPos (mouseEvent: MouseEvent) {
-        let touchLocation = this.getTouchCanvasPos(mouseEvent);
+        let touchLocation = this.getTouchViewPos(mouseEvent);
+        touchLocation = this.machine.colorGetter.vpR.multiplyVector3(touchLocation);
+        return touchLocation;
+    }
 
-        let touchPos = new CuonVector3();
-        touchPos.elements[0] = (touchLocation[0] / globalConfig.CANVAS_SIZE - 0.5) * 2;
-        touchPos.elements[1] = (touchLocation[1] / globalConfig.CANVAS_SIZE - 0.5) * 2;
-        touchPos.elements[2] = 0;
+    getTouchXYPos (mouseEvent: MouseEvent) {
+        let touchLocation = this.getTouchWorldPos(mouseEvent);
+        let n = - touchLocation.elements[2] / this.machine.colorGetter.cameraVec.elements[2];
+        touchLocation.elements[0] += n * this.machine.colorGetter.cameraVec.elements[0];
+        touchLocation.elements[1] += n * this.machine.colorGetter.cameraVec.elements[1];
+        touchLocation.elements[2] += n * this.machine.colorGetter.cameraVec.elements[2];
+        return touchLocation;
+    }
 
-        touchPos = this.machine.colorGetter.vpR.multiplyVector3(touchPos);
+    getTouchYZPos (mouseEvent: MouseEvent) {
+        let touchLocation = this.getTouchWorldPos(mouseEvent);
+        let n = - touchLocation.elements[0] / this.machine.colorGetter.cameraVec.elements[0];
+        touchLocation.elements[0] += n * this.machine.colorGetter.cameraVec.elements[0];
+        touchLocation.elements[1] += n * this.machine.colorGetter.cameraVec.elements[1];
+        touchLocation.elements[2] += n * this.machine.colorGetter.cameraVec.elements[2];
+        return touchLocation;
+    }
 
-        return touchPos;
+    getTouchYPos (mouseEvent: MouseEvent) {
+        let xyPos = this.getTouchXYPos(mouseEvent);
+        let yzPos = this.getTouchYZPos(mouseEvent);
+        return (xyPos.elements[1] + yzPos.elements[1]) / 2;
     }
 }

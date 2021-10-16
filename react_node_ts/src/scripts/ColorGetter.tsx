@@ -210,8 +210,6 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
 
         // 初始化小立方体的 mvp 矩阵
         this.dragCubeMvpMatrix = new CuonMatrix4();
-        this.dragCubeMvpMatrix.set(this.vpMatrix);
-        this.dragCubeMvpMatrix.translate(this.state.posX, this.state.posY, this.state.posZ);
 
         // 绘制线框立方体
         this.componentDidUpdate();
@@ -223,6 +221,9 @@ export default class ColorGetter extends React.Component<{}, GlobalState> {
 
         // 绘制外立方体线框
         this.drawByElementData(this.vpMatrix, this.borderCubeVerticesColors, this.cubeFrameindices, this.gl.LINES);
+
+        this.dragCubeMvpMatrix.set(this.vpMatrix);
+        this.dragCubeMvpMatrix.translate(this.state.posX, this.state.posY, this.state.posZ);
 
         if (this.state.xEnable || this.state.xDrag) {
             // 绘制内立方体线框

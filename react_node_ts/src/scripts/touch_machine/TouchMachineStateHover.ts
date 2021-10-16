@@ -15,7 +15,11 @@ export default class TouchMachineStateHover extends TouchMachineState {
         };
 
         let touchLocation = this.getTouchCanvasPos(mouseEvent);
-        if (0 <= touchLocation[0] && touchLocation[0] <= globalConfig.CANVAS_SIZE && 0 <= touchLocation[1] && touchLocation[1] <= globalConfig.CANVAS_SIZE) {
+        if (
+            0 <= touchLocation.elements[0] && touchLocation.elements[0] <= globalConfig.CANVAS_SIZE 
+            && 0 <= touchLocation.elements[1] 
+            && touchLocation.elements[1] <= globalConfig.CANVAS_SIZE
+        ) {
             // 清空颜色缓冲区和深度缓冲区
             this.machine.colorGetter.gl.clear(this.machine.colorGetter.gl.COLOR_BUFFER_BIT | this.machine.colorGetter.gl.DEPTH_BUFFER_BIT);
 
@@ -29,7 +33,7 @@ export default class TouchMachineStateHover extends TouchMachineState {
             this.machine.colorGetter.drawByElementData(this.machine.colorGetter.dragCubeMvpMatrix, this.machine.colorGetter.hitTestVerticesColorsX, this.machine.colorGetter.hitTestIndices, this.machine.colorGetter.gl.TRIANGLES);
 
             // 碰撞检测
-            this.machine.colorGetter.gl.readPixels(touchLocation[0], touchLocation[1], 1, 1, this.machine.colorGetter.gl.RGBA, this.machine.colorGetter.gl.UNSIGNED_BYTE, this.machine.colorGetter.pixels);
+            this.machine.colorGetter.gl.readPixels(touchLocation.elements[0], touchLocation.elements[1], 1, 1, this.machine.colorGetter.gl.RGBA, this.machine.colorGetter.gl.UNSIGNED_BYTE, this.machine.colorGetter.pixels);
             if (this.machine.colorGetter.pixels[0] === 255) {
                 state.xEnable = true;
             };

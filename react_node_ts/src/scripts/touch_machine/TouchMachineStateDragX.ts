@@ -1,5 +1,4 @@
 import CuonVector3 from "../../lib/webgl/CuonVector3";
-import globalConfig from "../GlobalConfig";
 import { GlobalState } from "../GlobalState";
 import TouchMachineState from "./TouchMachineState";
 
@@ -7,6 +6,16 @@ import TouchMachineState from "./TouchMachineState";
  * 交互状态-正在拖拽 x
  */
 export default class TouchMachineStateDragX extends TouchMachineState {
+    /**
+     * 触摸的位置
+     */
+     touchBegin: CuonVector3 = null as any;
+    
+     /**
+      * 进入该状态时候的中心点位置
+      */
+    initPos: number = 0;
+
     public onEnter () {
         let state: GlobalState = {
             ...this.machine.colorGetter.state,
@@ -14,6 +23,7 @@ export default class TouchMachineStateDragX extends TouchMachineState {
             yDrag: false,
             zDrag: false
         };
+        this.initPos = state.posX;
         this.machine.colorGetter.setState(state);
     }
 
@@ -28,14 +38,20 @@ export default class TouchMachineStateDragX extends TouchMachineState {
     }
 
     public onMouseDown (mouseEvent: MouseEvent) {
-        let touchWorldPos = this.getTouchWorldPos(mouseEvent);
-        let n = (this.machine.colorGetter.state.posX + globalConfig.DRAG_CUBE_SIDE_LENGTH / 2 - touchWorldPos.elements[0]) / this.machine.colorGetter.cameraVec.elements[0];
-        let hitTestPoint = new CuonVector3();
-        hitTestPoint.elements[0] = touchWorldPos.elements[0] + this.machine.colorGetter.cameraVec.elements[0] * n;
-        hitTestPoint.elements[1] = touchWorldPos.elements[1] + this.machine.colorGetter.cameraVec.elements[1] * n;
-        hitTestPoint.elements[2] = touchWorldPos.elements[2] + this.machine.colorGetter.cameraVec.elements[2] * n;
+        this.touchBegin = this.getTouchXYPos(mouseEvent);
+    }
 
-        console.log(`touch[${hitTestPoint.elements[0]}, ${hitTestPoint.elements[1]}, ${hitTestPoint.elements[2]}]`);
+    public onMouseHover (mouseEvent: MouseEvent) {
+        let hoverPos = this.getTouchXYPos(mouseEvent);
+        let relVec = new CuonVector3();
+        relVec.elements[0] = hoverPos.elements[0] - this.touchBegin.elements[0];
+        relVec.elements[1] = hoverPos.elements[1] - this.touchBegin.elements[1];
+        relVec.elements[2] = hoverPos.elements[2] - this.touchBegin.elements[2];
+        let state: GlobalState = {
+            ...this.machine.colorGetter.state,
+            posX: this.initPos + relVec.elements[0]
+        }
+        this.machine.colorGetter.setState(state);
     }
 
     public onMouseUp () {
