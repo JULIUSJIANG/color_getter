@@ -8,9 +8,40 @@ import BlockIndex from "./BlockIndex";
  */
 class BlockRectangle extends ObjectRefInst<BlockIndex> {
     /**
-     * 对应的矩形
+     * 设置格子位置 x
      */
-    public rect = new cc.Rect();
+    public gridX: number;
+    /**
+     * 设置格子位置 y
+     */
+    public gridY: number;
+
+    /**
+     * 上
+     */
+    public top: number;
+    /**
+     * 右
+     */
+    public right: number;
+    /**
+     * 下
+     */
+    public bottom: number;
+    /**
+     * 左
+     */
+    public left: number;
+
+    /**
+     * 初始化的时候
+     */
+    public override OnInit () {
+        this.top = (this.gridY + 0.5) * this.relIndex.gridPixels;
+        this.right = (this.gridX + 0.5) * this.relIndex.gridPixels;
+        this.bottom = (this.gridY - 0.5) * this.relIndex.gridPixels;
+        this.left = (this.gridX - 0.5) * this.relIndex.gridPixels;
+    }
 
     /**
      * 对象池类型对象
@@ -28,18 +59,14 @@ namespace BlockRectangle {
      */
     export class Ref extends ObjectRefType<BlockIndex, BlockRectangle> {
         public override Create (
-            x: number,
-            y: number,
-            w: number,
-            h: number
+            gridX: number,
+            gridY: number
         ) 
         {
             let id = super.Create(
                 (inst: BlockRectangle) => {
-                    inst.rect.x = x;
-                    inst.rect.y = y;
-                    inst.rect.width = w;
-                    inst.rect.height = h;
+                    inst.gridX = gridX;
+                    inst.gridY = gridY;
                 }
             );
             return id;

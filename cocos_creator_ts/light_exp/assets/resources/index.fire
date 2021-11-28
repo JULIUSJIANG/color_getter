@@ -257,7 +257,7 @@
       }
     ],
     "_prefab": null,
-    "_opacity": 50,
+    "_opacity": 100,
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
@@ -561,7 +561,7 @@
       "height": 1136
     },
     "_fitWidth": true,
-    "_fitHeight": true,
+    "_fitHeight": false,
     "_id": "06zJ8kFDFAP7qZLl/3u0Wz"
   },
   {

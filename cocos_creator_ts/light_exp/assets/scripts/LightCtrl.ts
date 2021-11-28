@@ -1,3 +1,4 @@
+import Eventer from "../libs/Eventer";
 import utilNode from "../libs/UtilNode";
 import Index from "./Index";
 
@@ -8,6 +9,11 @@ const {ccclass, property} = cc._decorator;
  */
 @ccclass
 export default class LightCtrl extends cc.Component {
+    /**
+     * 事件派发器-发生变化
+     */
+    public evterOnChanged = new Eventer();
+
     /**
      * 用于位置编辑的节点
      */
@@ -68,6 +74,7 @@ export default class LightCtrl extends cc.Component {
                 // 实现拖拽
                 this.node.x = touchMovePos.x;
                 this.node.y = touchMovePos.y;
+                this.evterOnChanged.Call();
             };
             this.dragPos.parent.on(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
             let onTouchEnd = (evt: cc.Event.EventTouch) => {
@@ -91,6 +98,7 @@ export default class LightCtrl extends cc.Component {
                 touchMoveRelPos.x = touchMovePos.x - this.node.x;
                 touchMoveRelPos.y = touchMovePos.y - this.node.y;
                 this.node.angle = utilNode.ParseVec2ToCCAngle(touchMoveRelPos);
+                this.evterOnChanged.Call();
             };
             this.dragAngle.parent.on(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
             let onTouchEnd = (evt: cc.Event.EventTouch) => {
@@ -118,6 +126,7 @@ export default class LightCtrl extends cc.Component {
                 power = Math.max(this.powerMin, power);
                 power = Math.min(this.powerMax, power);
                 this.dragPower.y = power;
+                this.evterOnChanged.Call();
             };
             this.dragPower.parent.on(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
             let onTouchEnd = (evt: cc.Event.EventTouch) => {
@@ -146,5 +155,13 @@ export default class LightCtrl extends cc.Component {
         out.x -= this.relIndex.node.width;
         out.y -= this.relIndex.node.height;
         out.transformMat4(this.relIndex.containerLightCtrl.getWorldMatrix(this._mat), out);
+    }
+
+    /**
+     * 获取强度
+     * @returns 
+     */
+    public GetPower () {
+        return (this.dragPower.y - this.powerMin) / (this.powerMax - this.powerMin);
     }
 }
