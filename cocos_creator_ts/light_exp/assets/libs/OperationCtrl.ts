@@ -63,4 +63,15 @@ export default class OperationCtrl<InstType> {
         let inst = this._instMap.get(id);
         return op(inst, ...args);
     }
+
+    /**
+     * 遍历一次
+     * @param op 
+     * @param args 
+     */
+    public Exec (op: (t: InstType, ...args) => void, ...args) {
+        this._instMap.forEach(( val ) => {
+            op(val, ...args)
+        });
+    }
 }

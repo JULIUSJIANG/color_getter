@@ -1,7 +1,6 @@
-import ObjectPool from "../../object_pool/ObjectPool";
-import ObjectRefType from "../../object_ref/ObjectRefType";
+import ObjectPool from "../object_pool/ObjectPool";
+import ObjectRefType from "../object_ref/ObjectRefType";
 import BlockRectangle from "./BlockRectangle";
-import BlockVis from "../visualization/BlockVisualization";
 
 
 /**
@@ -11,12 +10,7 @@ export default class BlockIndex {
     /**
      * 对象池
      */
-    public pool = new ObjectPool();
-
-    /**
-     * 可视化内容
-     */
-    public vis: BlockVis;
+    public pool;
 
     /**
      * 类型-矩形
@@ -24,10 +18,10 @@ export default class BlockIndex {
     public refRectangle: BlockRectangle.Ref;
 
     public constructor (
-        vis: BlockVis
+        pool: ObjectPool,
     ) 
     {
-        this.vis = vis;
+        this.pool = pool;
         this.refRectangle = new BlockRectangle.Ref(
             this,
             this.pool.GetRec(BlockRectangle.poolType)

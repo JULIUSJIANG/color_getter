@@ -1,7 +1,6 @@
-import Rectangle from "../../math/Rectangle";
-import ObjectPoolType from "../../object_pool/ObjectPoolType";
-import ObjectRefInst from "../../object_ref/ObjectRefInst";
-import ObjectRefType from "../../object_ref/ObjectRefType";
+import ObjectPoolType from "../object_pool/ObjectPoolType";
+import ObjectRefInst from "../object_ref/ObjectRefInst";
+import ObjectRefType from "../object_ref/ObjectRefType";
 import BlockIndex from "./BlockIndex";
 
 /**
@@ -11,11 +10,11 @@ class BlockRectangle extends ObjectRefInst<BlockIndex> {
     /**
      * 对应的矩形
      */
-    public rect = new Rectangle();
+    public rect = new cc.Rect();
 
     /**
      * 对象池类型对象
-     */
+     */ 
     public static poolType = new ObjectPoolType<BlockRectangle>(
         () => {
             return new BlockRectangle();
@@ -37,10 +36,10 @@ namespace BlockRectangle {
         {
             let id = super.Create(
                 (inst: BlockRectangle) => {
-                    inst.rect.pos.x = x;
-                    inst.rect.pos.y = y;
-                    inst.rect.w = w;
-                    inst.rect.h = h;
+                    inst.rect.x = x;
+                    inst.rect.y = y;
+                    inst.rect.width = w;
+                    inst.rect.height = h;
                 }
             );
             return id;
