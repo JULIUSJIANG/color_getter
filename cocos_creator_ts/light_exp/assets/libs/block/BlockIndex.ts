@@ -42,6 +42,43 @@ export default class BlockIndex {
         this.refRay = new BlockRay.Ref(
             this,
             this.pool.GetRec(BlockRay.poolType)
-        )
+        );
+    }
+
+    /**
+     * 获取对应的格子位置
+     * @param x 
+     * @returns 
+     */
+    public GetGridLoc (x: number) {
+        return Math.floor( x / this.gridPixels + 0.5 );
+    }
+
+    public GetHorGridHit (pos: cc.Vec2, direction: cc.Vec2) {
+        let gridLocX = this.GetGridLoc(pos.x);
+        let rateRight = ((gridLocX + 0.5) * this.gridPixels - pos.x) / direction.x;
+        let rateLeft = ((gridLocX - 0.5) * this.gridPixels - pos.x) / direction.x;
+        return 0 < rateRight ? rateRight : rateLeft;
+    }
+
+    public GetHorGridHitRev (pos: cc.Vec2, direction: cc.Vec2) {
+        let gridLocX = this.GetGridLoc(pos.x);
+        let rateRight = ((gridLocX + 0.5) * this.gridPixels - pos.x) / direction.x;
+        let rateLeft = ((gridLocX - 0.5) * this.gridPixels - pos.x) / direction.x;
+        return 0 < rateRight ? rateLeft : rateRight;
+    }
+
+    public GetVerGridHit (pos: cc.Vec2, direction: cc.Vec2) {
+        let gridLocY = this.GetGridLoc(pos.y);
+        let rateTop = ((gridLocY + 0.5) * this.gridPixels - pos.y) / direction.y;
+        let rateBottom = ((gridLocY - 0.5) * this.gridPixels - pos.y) / direction.y;
+        return 0 < rateTop ? rateTop : rateBottom;
+    }
+
+    public GetVerGridHitRev (pos: cc.Vec2, direction: cc.Vec2) {
+        let gridLocY = this.GetGridLoc(pos.y);
+        let rateTop = ((gridLocY + 0.5) * this.gridPixels - pos.y) / direction.y;
+        let rateBottom = ((gridLocY - 0.5) * this.gridPixels - pos.y) / direction.y;
+        return 0 < rateTop ? rateBottom : rateTop;
     }
 }

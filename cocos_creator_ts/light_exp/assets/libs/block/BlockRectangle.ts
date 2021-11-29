@@ -49,7 +49,9 @@ class BlockRectangle extends ObjectRefInst<BlockIndex> {
     public static poolType = new ObjectPoolType<BlockRectangle>(
         () => {
             return new BlockRectangle();
-        }
+        },
+        null,
+        null
     )
 }
 

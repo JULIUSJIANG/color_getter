@@ -68,9 +68,9 @@ export default class LightCtrl extends cc.Component {
 
         // 位置
         this.dragPos.on(cc.Node.EventType.TOUCH_START, (evt: cc.Event.EventTouch) => {
-            this.ParseTouchPosToContainerPos(touchStartPos, evt.getLocation());
+            this.relIndex.ParseTouchPosToContainerPos(touchStartPos, evt.getLocation());
             let onTouchMove = (evt: cc.Event.EventTouch) => {
-                this.ParseTouchPosToContainerPos(touchMovePos, evt.getLocation());
+                this.relIndex.ParseTouchPosToContainerPos(touchMovePos, evt.getLocation());
                 // 实现拖拽
                 this.node.x = touchMovePos.x;
                 this.node.y = touchMovePos.y;
@@ -78,7 +78,7 @@ export default class LightCtrl extends cc.Component {
             };
             this.dragPos.parent.on(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
             let onTouchEnd = (evt: cc.Event.EventTouch) => {
-                this.ParseTouchPosToContainerPos(touchEndPos, evt.getLocation());
+                this.relIndex.ParseTouchPosToContainerPos(touchEndPos, evt.getLocation());
                 this.dragPos.parent.off(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
                 this.dragPos.parent.off(cc.Node.EventType.TOUCH_END, onTouchEnd);
                 this.dragPos.parent.off(cc.Node.EventType.TOUCH_CANCEL, onTouchEnd);
@@ -91,9 +91,9 @@ export default class LightCtrl extends cc.Component {
         let touchMoveRelPos = new cc.Vec2();
         // 角度
         this.dragAngle.on(cc.Node.EventType.TOUCH_START, (evt: cc.Event.EventTouch) => {
-            this.ParseTouchPosToContainerPos(touchStartPos, evt.getLocation());
+            this.relIndex.ParseTouchPosToContainerPos(touchStartPos, evt.getLocation());
             let onTouchMove = (evt: cc.Event.EventTouch) => {
-                this.ParseTouchPosToContainerPos(touchMovePos, evt.getLocation());
+                this.relIndex.ParseTouchPosToContainerPos(touchMovePos, evt.getLocation());
                 // 实现拖拽
                 touchMoveRelPos.x = touchMovePos.x - this.node.x;
                 touchMoveRelPos.y = touchMovePos.y - this.node.y;
@@ -102,7 +102,7 @@ export default class LightCtrl extends cc.Component {
             };
             this.dragAngle.parent.on(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
             let onTouchEnd = (evt: cc.Event.EventTouch) => {
-                this.ParseTouchPosToContainerPos(touchEndPos, evt.getLocation());
+                this.relIndex.ParseTouchPosToContainerPos(touchEndPos, evt.getLocation());
                 this.dragAngle.parent.off(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
                 this.dragAngle.parent.off(cc.Node.EventType.TOUCH_END, onTouchEnd);
                 this.dragAngle.parent.off(cc.Node.EventType.TOUCH_CANCEL, onTouchEnd);
@@ -115,10 +115,10 @@ export default class LightCtrl extends cc.Component {
         let currNodeVec2 = new cc.Vec2();
         // 强度
         this.dragPower.on(cc.Node.EventType.TOUCH_START, (evt: cc.Event.EventTouch) => {
-            this.ParseTouchPosToContainerPos(touchStartPos, evt.getLocation());
+            this.relIndex.ParseTouchPosToContainerPos(touchStartPos, evt.getLocation());
             utilNode.ParseAngleToVec2(currNodeVec2, this.node.angle);
             let onTouchMove = (evt: cc.Event.EventTouch) => {
-                this.ParseTouchPosToContainerPos(touchMovePos, evt.getLocation());
+                this.relIndex.ParseTouchPosToContainerPos(touchMovePos, evt.getLocation());
                 // 实现拖拽
                 touchMoveRelPos.x = touchMovePos.x - this.node.x;
                 touchMoveRelPos.y = touchMovePos.y - this.node.y;
@@ -130,7 +130,7 @@ export default class LightCtrl extends cc.Component {
             };
             this.dragPower.parent.on(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
             let onTouchEnd = (evt: cc.Event.EventTouch) => {
-                this.ParseTouchPosToContainerPos(touchEndPos, evt.getLocation());
+                this.relIndex.ParseTouchPosToContainerPos(touchEndPos, evt.getLocation());
                 this.dragPower.parent.off(cc.Node.EventType.TOUCH_MOVE, onTouchMove);
                 this.dragPower.parent.off(cc.Node.EventType.TOUCH_END, onTouchEnd);
                 this.dragPower.parent.off(cc.Node.EventType.TOUCH_CANCEL, onTouchEnd);
@@ -138,23 +138,6 @@ export default class LightCtrl extends cc.Component {
             this.dragPower.parent.on(cc.Node.EventType.TOUCH_END, onTouchEnd);
             this.dragPower.parent.on(cc.Node.EventType.TOUCH_CANCEL, onTouchEnd);
         });
-    }
-
-    /**
-     * 用于变换的矩阵
-     */
-    private _mat: cc.Mat4 = new cc.Mat4();
-
-    /**
-     * 交互位置转换为容器位置
-     * @param touchPos 
-     */
-    private ParseTouchPosToContainerPos (out: cc.Vec2, touchPos: cc.Vec2) {
-        out.x = touchPos.x;
-        out.y = touchPos.y;
-        out.x -= this.relIndex.node.width;
-        out.y -= this.relIndex.node.height;
-        out.transformMat4(this.relIndex.containerLightCtrl.getWorldMatrix(this._mat), out);
     }
 
     /**

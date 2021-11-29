@@ -14,28 +14,28 @@ class BlockRay extends ObjectRefInst<BlockIndex> {
     /**
      * 方向以及强度
      */
-    public power = new cc.Vec2();
+    public vec = new cc.Vec2();
 
     /**
      * 重新填充数据
      * @param inst 
      * @param posX 
      * @param posY 
-     * @param powerX 
-     * @param powerY 
+     * @param vecX 
+     * @param vecY 
      */
     public static ReFill (
         inst: BlockRay,
         posX: number,
         posY: number,
-        powerX: number,
-        powerY: number
+        vecX: number,
+        vecY: number
     )
     {
         inst.pos.x = posX;
         inst.pos.y = posY;
-        inst.power.x = powerX;
-        inst.power.y = powerY;
+        inst.vec.x = vecX;
+        inst.vec.y = vecY;
     }
 
     /**
@@ -44,7 +44,9 @@ class BlockRay extends ObjectRefInst<BlockIndex> {
     public static poolType = new ObjectPoolType<BlockRay>(
         () => {
             return new BlockRay();
-        }
+        },
+        null,
+        null
     )
 }
 

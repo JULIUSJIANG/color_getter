@@ -25,12 +25,17 @@ export default class ObjectPoolRec<T> {
      * 提取实例
      */
     public Pop (): T {
+        let t: T;
         // 没有缓存，那么直接创建实例
         if (this._instArr.length == 0) {
-            return this._poolType.Create();
+            t = this._poolType.Create();
+        }
+        else {
+            // 直接从集合中提取
+            t = this._instArr.pop();
         };
-        // 直接从集合中提取
-        return this._instArr.pop();
+        this._poolType.OnPop(t);
+        return t;
     }
 
     /**
@@ -43,5 +48,6 @@ export default class ObjectPoolRec<T> {
             return;
         };
         this._instArr.push(t);
+        this._poolType.OnPush(t);
     }
 }
