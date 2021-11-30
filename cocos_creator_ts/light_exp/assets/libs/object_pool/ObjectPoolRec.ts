@@ -14,6 +14,11 @@ export default class ObjectPoolRec<T> {
      */
     private _instArr: Array<T> = [];
 
+    /**
+     * 当前正在使用的记录
+     */
+    private _activeArr: Array<T> = [];
+
     public constructor (
         poolType: ObjectPoolType<T>
     )
@@ -34,6 +39,7 @@ export default class ObjectPoolRec<T> {
             // 直接从集合中提取
             t = this._instArr.pop();
         };
+        this._activeArr.push(t);
         this._poolType.OnPop(t);
         return t;
     }
@@ -47,7 +53,23 @@ export default class ObjectPoolRec<T> {
         if (0 <= this._instArr.indexOf(t)) {
             return;
         };
+        this._activeArr.splice(this._activeArr.indexOf(t), 1);
         this._instArr.push(t);
         this._poolType.OnPush(t);
+    }
+
+    /**
+     * 当前正在使用的记录
+     */
+    private _tempArr: Array<T> = [];
+    /**
+     * 回收全部
+     */
+    public RecoverAll () {
+        this._tempArr.length = 0;
+        this._tempArr.push(...this._activeArr);
+        this._tempArr.forEach(( val ) => {
+            this.Push(val);
+        });
     }
 }

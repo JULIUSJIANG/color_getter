@@ -69,6 +69,11 @@ export default class Index extends cc.Component {
      */
     _pool = new ObjectPool();
 
+    /**
+     * 临时变量的对象池
+     */
+    tempPool = new ObjectPool();
+
     public override onLoad () {
         let localData = localStorage.getItem(LOCAL_STORAGE_KEY);
         // 确实有存数据
@@ -165,7 +170,29 @@ export default class Index extends cc.Component {
         }
     )
 
-    _pos = new cc.Vec2();
+    /**
+     * 点集合的对象池类型
+     */
+    static poolTypeList = new ObjectPoolType<cc.Vec2[]> (
+        () => {
+            return [];
+        },
+        (t) => {
+            t.length = 0;
+        },
+        null
+    )
+
+    /**
+     * 点的对象池类型
+     */
+    static poolTypePos = new ObjectPoolType<cc.Vec2>(
+        () => {
+            return new cc.Vec2();
+        },
+        null,
+        null
+    )
 
     /**
      * 重新绘制
@@ -200,17 +227,16 @@ export default class Index extends cc.Component {
         // 绘制射线
         this.graphics.strokeColor = cc.Color.RED;
         this._blockIndex.refRay.Exec(( inst ) => {
+            // 点集合
+            let posList = this.tempPool.Pop(Index.poolTypeList);
             // 清空一遍
-            this._gridAbleMap.forEach(( val ) => {
-                this._pool.Push(Index._gridAbleMapListPoolType, val);
-            });
             this._gridAbleMap.clear();
 
             // 添加格子记录
             let addGridRec = (gridx: number, gridY: number) => {
                 // 确保集合存在
                 if (!this._gridAbleMap.has(gridx)) {
-                    this._gridAbleMap.set(gridx, this._pool.Pop(Index._gridAbleMapListPoolType));
+                    this._gridAbleMap.set(gridx, this.tempPool.Pop(Index._gridAbleMapListPoolType));
                 };
                 // 确保记录下来
                 if (this._gridAbleMap.get(gridx).indexOf(gridY) < 0) {
@@ -231,14 +257,15 @@ export default class Index extends cc.Component {
             this._horVec.y = 0;
             if (0 < this._horVec.len()) {
                 let horHit = this._blockIndex.GetHorGridHit(inst.pos, inst.vec);
-                inst.vec.mul(horHit, this._pos);
-                this._pos.x += inst.pos.x + inst.vec.x * 0.0001;
-                this._pos.y += inst.pos.y + inst.vec.y * 0.0001;
+                let pos = this.tempPool.Pop(Index.poolTypePos);
+                inst.vec.mul(horHit - 0.0001, pos);
+                pos.addSelf(inst.pos);
+                posList.push(pos);
                 // 每次推进的向量长度
                 let unitRate = Math.abs( this._blockIndex.gridPixels / this._horVec.x );
                 this._horVec.normalizeSelf();
-                let currGridX = this._blockIndex.GetGridLoc(this._pos.x);
-                let currGridY = this._blockIndex.GetGridLoc(this._pos.y);
+                let currGridX = this._blockIndex.GetGridLoc(pos.x);
+                let currGridY = this._blockIndex.GetGridLoc(pos.y);
                 // 当前推进次数
                 let unitCount = 0;
                 // 还在范围里面，继续推进
@@ -254,8 +281,14 @@ export default class Index extends cc.Component {
                     
                     // 推进次数 +1
                     unitCount++;
+                    
+                    let hitPos = this.tempPool.Pop(Index.poolTypePos);
+                    inst.vec.mul(unitRate * unitCount, hitPos);
+                    hitPos.addSelf(pos);
+                    posList.push(hitPos);
+
                     currGridX += this._horVec.x;
-                    currGridY = this._blockIndex.GetGridLoc( this._pos.y + inst.vec.y * unitRate * unitCount );
+                    currGridY = this._blockIndex.GetGridLoc( hitPos.y );
                 };
             };
 
@@ -263,14 +296,15 @@ export default class Index extends cc.Component {
             this._verVec.y = inst.vec.y;
             if (0 < this._verVec.len()) {
                 let verHit = this._blockIndex.GetVerGridHit(inst.pos, inst.vec);
-                inst.vec.mul(verHit, this._pos);
-                this._pos.x += inst.pos.x + inst.vec.x * 0.0001;
-                this._pos.y += inst.pos.y + inst.vec.y * 0.0001;
+                let pos = this.tempPool.Pop(Index.poolTypePos);
+                inst.vec.mul(verHit - 0.0001, pos);
+                pos.addSelf(inst.pos);
+                posList.push(pos);
                 // 每次推进的向量长度
                 let unitRate = Math.abs( this._blockIndex.gridPixels / this._verVec.y);
                 this._verVec.normalizeSelf();
-                let currGridX = this._blockIndex.GetGridLoc(this._pos.x);
-                let currGridY = this._blockIndex.GetGridLoc(this._pos.y);
+                let currGridX = this._blockIndex.GetGridLoc(pos.x);
+                let currGridY = this._blockIndex.GetGridLoc(pos.y);
                 // 当前推进次数
                 let unitCount = 0;
                 // 还在范围里面，继续推进
@@ -286,17 +320,34 @@ export default class Index extends cc.Component {
                     
                     // 推进次数 +1
                     unitCount++;
-                    currGridX = this._blockIndex.GetGridLoc( this._pos.x + inst.vec.x * unitRate * unitCount);
+
+                    let hitPos = this.tempPool.Pop(Index.poolTypePos);
+                    inst.vec.mul(unitRate * unitCount, hitPos);
+                    hitPos.addSelf(pos);
+                    posList.push(hitPos);
+
+                    currGridX = this._blockIndex.GetGridLoc( hitPos.x );
                     currGridY += this._verVec.y;
                 };
             };
             
             this._gridAbleMap.forEach(( yArr, x ) => {
                 yArr.forEach(( y ) => {
-                    this.DrawGrid(x, y, cc.Color.RED);
+                    this.DrawGrid(x, y, cc.Color.BLUE);
                 })
             });
+
+            posList.forEach(( pos ) => {
+                this.DrawMark(
+                    pos.x,
+                    pos.y,
+                    cc.Color.RED,
+                    10
+                );
+            });
         });
+
+        this.tempPool.RecoverAll();
     }
 
     /**
@@ -318,6 +369,24 @@ export default class Index extends cc.Component {
         this.graphics.lineTo(right, top);
         this.graphics.lineTo(left, top);
         this.graphics.lineTo(left, bottom);
+        this.graphics.stroke();
+    }
+
+    /**
+     * 绘制标记
+     * @param posX 
+     * @param posY 
+     * @param color 
+     */
+    DrawMark (posX: number, posY: number, color: cc.Color, size: number) {
+        this.graphics.lineWidth = 2;
+        this.graphics.strokeColor = color;
+        this.graphics.moveTo(posX, posY - size);
+        this.graphics.lineTo(posX, posY + size);
+        this.graphics.stroke();
+
+        this.graphics.moveTo(posX - size, posY);
+        this.graphics.lineTo(posX + size, posY);
         this.graphics.stroke();
     }
 

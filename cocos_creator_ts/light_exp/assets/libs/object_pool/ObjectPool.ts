@@ -23,6 +23,15 @@ export default class ObjectPool {
     }
 
     /**
+     * 回收全部
+     */
+    public RecoverAll () {
+        this._typeInstMap.forEach(( val ) => {
+            val.RecoverAll();
+        });
+    }
+
+    /**
      * 类型以及具体记录的字典
      */
     private _typeInstMap: Map<ObjectPoolType<any>, ObjectPoolRec<any>> = new Map();
