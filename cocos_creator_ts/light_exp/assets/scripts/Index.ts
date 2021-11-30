@@ -230,7 +230,7 @@ export default class Index extends cc.Component {
             this._horVec.x = inst.vec.x;
             this._horVec.y = 0;
             if (0 < this._horVec.len()) {
-                let horHit = this._blockIndex.GetHorGridHitRev(inst.pos, inst.vec);
+                let horHit = this._blockIndex.GetHorGridHit(inst.pos, inst.vec);
                 inst.vec.mul(horHit, this._pos);
                 this._pos.x += inst.pos.x + inst.vec.x * 0.0001;
                 this._pos.y += inst.pos.y + inst.vec.y * 0.0001;
@@ -241,8 +241,6 @@ export default class Index extends cc.Component {
                 let currGridY = this._blockIndex.GetGridLoc(this._pos.y);
                 // 当前推进次数
                 let unitCount = 0;
-                // 是否已初始化
-                let isInited = false;
                 // 还在范围里面，继续推进
                 while (
                     this._leftBottomPos.x <= currGridX
@@ -252,10 +250,7 @@ export default class Index extends cc.Component {
                 ) 
                 {
                     // 为了过滤掉首个
-                    if (isInited) {
-                        addGridRec(currGridX, currGridY);
-                    };
-                    isInited = true;
+                    addGridRec(currGridX, currGridY);
                     
                     // 推进次数 +1
                     unitCount++;
@@ -267,7 +262,7 @@ export default class Index extends cc.Component {
             this._verVec.x = 0;
             this._verVec.y = inst.vec.y;
             if (0 < this._verVec.len()) {
-                let verHit = this._blockIndex.GetVerGridHitRev(inst.pos, inst.vec);
+                let verHit = this._blockIndex.GetVerGridHit(inst.pos, inst.vec);
                 inst.vec.mul(verHit, this._pos);
                 this._pos.x += inst.pos.x + inst.vec.x * 0.0001;
                 this._pos.y += inst.pos.y + inst.vec.y * 0.0001;
@@ -278,8 +273,6 @@ export default class Index extends cc.Component {
                 let currGridY = this._blockIndex.GetGridLoc(this._pos.y);
                 // 当前推进次数
                 let unitCount = 0;
-                // 是否已初始化
-                let isInited = false;
                 // 还在范围里面，继续推进
                 while (
                     this._leftBottomPos.x <= currGridX
@@ -289,10 +282,7 @@ export default class Index extends cc.Component {
                 ) 
                 {
                     // 为了过滤掉首个
-                    if (isInited) {
-                        addGridRec(currGridX, currGridY);
-                    };
-                    isInited = true;
+                    addGridRec(currGridX, currGridY);
                     
                     // 推进次数 +1
                     unitCount++;
