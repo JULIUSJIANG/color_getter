@@ -1,5 +1,7 @@
+import BlockRay from "../libs/block/BlockRay";
 import Eventer from "../libs/Eventer";
 import utilNode from "../libs/UtilNode";
+import dataStorage from "./DataStorage";
 import Index from "./Index";
 
 const {ccclass, property} = cc._decorator;
@@ -57,7 +59,7 @@ export default class LightCtrl extends cc.Component {
      * 进行初始化
      * @param index 
      */
-    public Init (index: Index) {
+    public Init (index: Index, i: number) {
         this.relIndex = index;
         // 交互的起始位置
         let touchStartPos = new cc.Vec2();
@@ -138,6 +140,36 @@ export default class LightCtrl extends cc.Component {
             this.dragPower.parent.on(cc.Node.EventType.TOUCH_END, onTouchEnd);
             this.dragPower.parent.on(cc.Node.EventType.TOUCH_CANCEL, onTouchEnd);
         });
+
+        let targetData = dataStorage.current.editLightList[i];
+        this.node.x = targetData.locPosX;
+        this.node.y = targetData.locPosY;
+        this.node.angle = targetData.locAngle;
+        this.dragPower.y = this.powerMin + (this.powerMax - this.powerMin) * targetData.lcPower;
+
+        this.evterOnChanged.On(() => {
+            targetData.locPosX = this.node.x;
+            targetData.locPosY = this.node.y;
+            targetData.locAngle = this.node.angle;
+            targetData.lcPower = this.GetPower();
+        });
+
+        let blockRay = index._blockIndex.refRay.Create();
+        let vec2 = new cc.Vec2();
+        this.evterOnChanged.On(() => {
+            utilNode.ParseAngleToVec2(vec2, this.node.angle + 180);
+            index._blockIndex.refRay.Op(
+                blockRay,
+                BlockRay.ReFill,
+                this.node.x,
+                this.node.y,
+                vec2.x,
+                vec2.y
+            );
+            index.ReDraw();
+        });
+
+        this.evterOnChanged.Call();
     }
 
     /**

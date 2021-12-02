@@ -10,37 +10,13 @@ import BlockRay from "../libs/block/BlockRay";
 import ObjectPool from "../libs/object_pool/ObjectPool";
 import ObjectPoolType from "../libs/object_pool/ObjectPoolType";
 import utilNode from "../libs/UtilNode";
+import dataStorage from "./DataStorage";
 import LightCtrl from "./LightCtrl";
 
 const {ccclass, property} = cc._decorator;
 
-// 本地存取的键
-const LOCAL_STORAGE_KEY = "data6";
-
 @ccclass
 export default class Index extends cc.Component {
-    /**
-     * 用户数据
-     */
-    public playerData = {
-        /**
-         * 位置 x
-         */
-        lcPosX: 0,
-        /**
-         * 位置 Y
-         */
-        lcPosY: 0,
-        /**
-         * 角度
-         */
-        lcAngle: 0,
-        /**
-         * 光强度
-         */
-        lcPower: 1
-    }
-
     /**
      * 画笔内容
      */
@@ -62,7 +38,7 @@ export default class Index extends cc.Component {
     /**
      * 数据核心
      */
-    private _blockIndex: BlockIndex;
+    public _blockIndex: BlockIndex;
 
     /**
      * 对应对象池
@@ -75,12 +51,6 @@ export default class Index extends cc.Component {
     tempPool = new ObjectPool();
 
     public override onLoad () {
-        let localData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        // 确实有存数据
-        if (localData != null && localData != "") {
-            this.playerData = JSON.parse(localData);
-        };
-
         // 创建数据核心
         this._blockIndex = new BlockIndex(
             this._pool,
@@ -93,41 +63,12 @@ export default class Index extends cc.Component {
             0
         );
 
-        // 光束控制器
-        let lightCtrl = cc.instantiate(this.prefabLightCtrl).getComponent(LightCtrl);
-        this.containerLightCtrl.addChild(lightCtrl.node);
-        lightCtrl.Init(this);
-        lightCtrl.node.x = this.playerData.lcPosX;
-        lightCtrl.node.y = this.playerData.lcPosY;
-        lightCtrl.node.angle = this.playerData.lcAngle;
-        lightCtrl.dragPower.y = lightCtrl.powerMin + (lightCtrl.powerMax - lightCtrl.powerMin) * this.playerData.lcPower;
-        
-        let blockRay = this._blockIndex.refRay.Create();
-        let vec2 = new cc.Vec2();
-        lightCtrl.evterOnChanged.On(() => {
-            utilNode.ParseAngleToVec2(vec2, lightCtrl.node.angle + 180);
-            this._blockIndex.refRay.Op(
-                blockRay,
-                BlockRay.ReFill,
-                lightCtrl.node.x,
-                lightCtrl.node.y,
-                vec2.x,
-                vec2.y
-            );
-            this.ReDraw();
-        });
-
-        // 通知变化
-        lightCtrl.evterOnChanged.Call();
-        
-        // 及时保存数据
-        cc.game.on(cc.game.EVENT_HIDE, () => {
-            this.playerData.lcPosX = lightCtrl.node.x;
-            this.playerData.lcPosY = lightCtrl.node.y;
-            this.playerData.lcAngle = lightCtrl.node.angle;
-            this.playerData.lcPower = lightCtrl.GetPower();
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.playerData))
-        });
+        for (let i = 0; i < dataStorage.current.editLightList.length; i++) {
+            // 光束控制器
+            let lightCtrl = cc.instantiate(this.prefabLightCtrl).getComponent(LightCtrl);
+            this.containerLightCtrl.addChild(lightCtrl.node);
+            lightCtrl.Init(this, i);
+        };
     }
 
     /**
