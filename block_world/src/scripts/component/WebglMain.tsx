@@ -97,6 +97,7 @@ export default class WebglMain extends React.Component {
             0
         );
         this.DrawBgGrid();
+        this.DrawTouch();
     }
 
     /**
@@ -107,7 +108,7 @@ export default class WebglMain extends React.Component {
     /**
      * 用于连线的数据
      */
-    lineConnectNumberData: number[] = [];
+    shapeNumberData: number[] = [];
 
     /**
      * 绘制背景格子
@@ -166,16 +167,48 @@ export default class WebglMain extends React.Component {
             };
         };
 
-        this.lineConnectNumberData.length = 0;
+        this.shapeNumberData.length = 0;
         // 求得顶点数量
         let dotCount = this.vertexNumberData.length / 6;
         for (let dotI = 0; dotI < dotCount; dotI++) {
-            this.lineConnectNumberData.push(dotI);
+            this.shapeNumberData.push(dotI);
         };
         
         this.DrawByElementData(
             this.vertexNumberData,
-            this.lineConnectNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.LINES
+        );
+    }
+
+    /**
+     * 绘制当前交互的格子
+     */
+    DrawTouch () {
+        this.vertexNumberData.length = 0;
+        let left = RootComponet.inst.state.focusGridX * rootConfig.rectSize;
+        let right = (RootComponet.inst.state.focusGridX + 1) * rootConfig.rectSize;
+        let bottom = RootComponet.inst.state.focusGridY * rootConfig.rectSize;
+        let top = (RootComponet.inst.state.focusGridY + 1) * rootConfig.rectSize;
+        let colorObj = TouchMachine.inst.isPressed ? rootConfig.focusFramePressColor : rootConfig.focusFrameReleaseColor;
+        this.vertexNumberData.push(
+            left, bottom, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
+            right, bottom, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
+            right, top, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
+            left, top, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
+        );
+
+        this.shapeNumberData.length = 0;
+        this.shapeNumberData.push(
+            0, 1,
+            1, 2,
+            2, 3,
+            3, 0
+        );
+
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
             WebGLRenderingContext.LINES
         );
     }

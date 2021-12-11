@@ -14,6 +14,9 @@ export default class TopNav extends React.Component {
     }
 
     public override render () {
+        if (RootComponet.inst == null) {
+            return null;
+        };
         return (
             <Radio.Group
                 options={[

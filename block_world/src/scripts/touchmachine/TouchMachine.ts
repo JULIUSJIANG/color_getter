@@ -1,4 +1,6 @@
 import CuonVector3 from "../../lib/webgl/CuonVector3";
+import RootComponet from "../RootComponent";
+import rootConfig from "../RootConfig";
 import TouchStatus from "./TouchStatus";
 import TouchStatusDragScene from "./TouchStatusDragScene";
 import TouchStatusIdle from "./TouchStatusIdle";
@@ -10,7 +12,7 @@ export default class TouchMachine {
     /**
      * 全局的唯一实例
      */
-    private static inst: TouchMachine;
+    public static inst: TouchMachine;
 
     /**
      * 进行初始化
@@ -24,16 +26,31 @@ export default class TouchMachine {
         // 当前交互的 xy
         let x: number, y: number;
 
-        // 通过触摸事件刷新交互的 xy
-        function refreshXYByTouch (evt: TouchEvent) {
-            if (evt.touches.length == 0) {
+        // 交互事件已处理
+        function onTouched () {
+            refreshFocusGrid();
+        };
+
+        // 刷新交互的格子
+        function refreshFocusGrid () {
+            let worldX = RootComponet.inst.state.cameraX - window.innerWidth / 2 + x;
+            let worldY = RootComponet.inst.state.cameraY - window.innerHeight / 2 + y;
+            let currGridX = Math.floor(worldX / rootConfig.rectSize);
+            let currGridY = Math.floor(worldY / rootConfig.rectSize);
+            // 去重
+            if (currGridX == RootComponet.inst.state.focusGridX && currGridY == RootComponet.inst.state.focusGridY) {
                 return;
             };
-            x = evt.touches[0].clientX;
-            y = window.innerHeight - evt.touches[0].clientY;
+            RootComponet.inst.setState({
+                ...RootComponet.inst.state,
+                focusGridX: Math.floor(worldX / rootConfig.rectSize),
+                focusGridY: Math.floor(worldY / rootConfig.rectSize),
+            });
         };
+
         // 重新填充交互的起始位置
         function refillTouchStart () {
+            TouchMachine.inst.isPressed = true;
             TouchMachine.inst.posStart.elements[0] = x;
             TouchMachine.inst.posStart.elements[1] = y;
         };
@@ -44,49 +61,76 @@ export default class TouchMachine {
         };
         // 重新填充交互的结束位置
         function refillTouchEnd () {
+            TouchMachine.inst.isPressed = false;
             TouchMachine.inst.posEnd.elements[0] = x;
             TouchMachine.inst.posEnd.elements[1] = y;
+        };
+
+        // 通知按下
+        function CallMouseDown () {
+            TouchMachine.inst.currStatus.OnMouseDown();
+            onTouched();
+        };
+        // 通知拖拽
+        function CallMouseMove () {
+            TouchMachine.inst.currStatus.OnMouseMove();
+            onTouched();
+        };
+        // 通知抬起
+        function CallMouseUp () {
+            TouchMachine.inst.currStatus.OnMouseUP();
+            onTouched();
+        };
+
+        // 通过触摸事件刷新交互的 xy
+        function refreshXYByTouch (evt: TouchEvent) {
+            if (evt.touches.length == 0) {
+                return;
+            };
+            x = evt.touches[0].clientX;
+            y = window.innerHeight - evt.touches[0].clientY;
         };
         canvas.ontouchstart = (evt: TouchEvent) => {
             refreshXYByTouch(evt);
             refillTouchStart();
-            this.inst.currStatus.OnMouseDown();
+            CallMouseDown();
         };
         canvas.ontouchmove = (evt: TouchEvent) => {
             refreshXYByTouch(evt);
             refillTouchMove();
-            this.inst.currStatus.OnMouseMove();
+            CallMouseMove();
         };
         canvas.ontouchend = (evt: TouchEvent) => {
             refreshXYByTouch(evt);
             refillTouchEnd();
-            this.inst.currStatus.OnMouseUP();
+            CallMouseUp();
         };
         canvas.ontouchcancel = (evt: TouchEvent) => {
             refreshXYByTouch(evt);
             refillTouchEnd();
-            this.inst.currStatus.OnMouseUP();
+            CallMouseUp();
         };
 
         // 通过鼠标事件刷新交互的 xy
         function refreshXYByMouse (evt: MouseEvent) {
             x = evt.x;
             y = window.innerHeight - evt.y;
+            refreshFocusGrid();
         };
         canvas.onmousedown = (evt: MouseEvent) => {
             refreshXYByMouse(evt);
             refillTouchStart();
-            this.inst.currStatus.OnMouseDown();
+            CallMouseDown();
         };
         canvas.onmousemove = (evt: MouseEvent) => {
             refreshXYByMouse(evt);
             refillTouchMove();
-            this.inst.currStatus.OnMouseMove();
+            CallMouseMove();
         };
         canvas.onmouseup = (evt: MouseEvent) => {
             refreshXYByMouse(evt);
             refillTouchEnd();
-            this.inst.currStatus.OnMouseUP();
+            CallMouseUp();
         };
     }
 
@@ -127,6 +171,11 @@ export default class TouchMachine {
      * 当前状态
      */
     public currStatus?: TouchStatus;
+
+    /**
+     * 当前处于按压状态
+     */
+    public isPressed = false;
 
     /**
      * 设置当前状态

@@ -5,7 +5,7 @@ namespace rootConfig {
     /**
      * 本地存储的时候采用的 key
      */
-    export const storageKey = `data16`;
+    export const storageKey = `data19`;
 
     /**
      * 背景格子的深度
@@ -18,9 +18,14 @@ namespace rootConfig {
     export const xyZ = -0.1;
 
     /**
+     * 聚焦框的深度
+     */
+    export const focusFrameZ = 0.1;
+
+    /**
      * 正方形的像素尺寸
      */
-    export const rectSize = 50;
+    export const rectSize = 100;
         
     /**
      * 背景颜色
@@ -53,10 +58,28 @@ namespace rootConfig {
     /**
      * y 轴颜色
      */
-     export const yColor = {
+    export const yColor = {
         r: 0,
         g: 1,
         b: 0
+    };
+
+    /**
+     * 聚焦框颜色-抬起
+     */
+    export const focusFrameReleaseColor = {
+        r: 1,
+        g: 1,
+        b: 1
+    };
+
+    /**
+     * 聚焦框颜色-按压
+     */
+    export const focusFramePressColor = {
+        r: 0,
+        g: 0,
+        b: 1
     };
 };
 
