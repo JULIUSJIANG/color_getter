@@ -168,6 +168,76 @@ export default class Index extends cc.Component {
         // 绘制射线
         this.graphics.strokeColor = cc.Color.RED;
         this._blockIndex.refRay.Exec(( inst ) => {
+            this.graphics.moveTo(inst.pos.x, inst.pos.y);
+            this.graphics.lineTo(inst.pos.x + inst.vec.x * this.node.height, inst.pos.y + inst.vec.y * this.node.height);
+            this.graphics.stroke();
+        });
+
+        // 回收全部的临时变量
+        this.tempPool.RecoverAll();
+    }
+
+    /**
+     * 绘制格子
+     * @param gridX 
+     * @param gridY 
+     */
+    DrawGrid (gridX: number, gridY: number, color: cc.Color) {
+        let top = (gridY + 0.5) * this._blockIndex.gridPixels;
+        let right = (gridX + 0.5) * this._blockIndex.gridPixels;
+        let bottom = (gridY - 0.5) * this._blockIndex.gridPixels;
+        let left = (gridX - 0.5) * this._blockIndex.gridPixels;
+
+        // 绘制方块
+        this.graphics.lineWidth = 2;
+        this.graphics.strokeColor = color;
+        this.graphics.moveTo(left, bottom);
+        this.graphics.lineTo(right, bottom);
+        this.graphics.lineTo(right, top);
+        this.graphics.lineTo(left, top);
+        this.graphics.lineTo(left, bottom);
+        this.graphics.stroke();
+    }
+
+    /**
+     * 绘制标记
+     * @param posX 
+     * @param posY 
+     * @param color 
+     */
+    DrawMark (posX: number, posY: number, color: cc.Color, size: number) {
+        this.graphics.lineWidth = 2;
+        this.graphics.strokeColor = color;
+        this.graphics.moveTo(posX, posY - size);
+        this.graphics.lineTo(posX, posY + size);
+        this.graphics.stroke();
+
+        this.graphics.moveTo(posX - size, posY);
+        this.graphics.lineTo(posX + size, posY);
+        this.graphics.stroke();
+    }
+
+    /**
+     * 用于变换的矩阵
+     */
+    _mat: cc.Mat4 = new cc.Mat4();
+
+    /**
+     * 交互位置转换为容器位置
+     * @param touchPos 
+     */
+    public ParseTouchPosToContainerPos (out: cc.Vec2, touchPos: cc.Vec2) {
+        out.x = touchPos.x;
+        out.y = touchPos.y;
+        out.x -= this.node.width;
+        out.y -= this.node.height;
+        out.transformMat4(this.containerLightCtrl.getWorldMatrix(this._mat), out);
+    }
+
+    DrawHitTest () {
+        // 绘制射线
+        this.graphics.strokeColor = cc.Color.RED;
+        this._blockIndex.refRay.Exec(( inst ) => {
             // 点集合
             let posList = this.tempPool.Pop(Index.poolTypeList);
             // 清空一遍
@@ -287,64 +357,5 @@ export default class Index extends cc.Component {
                 );
             });
         });
-
-        this.tempPool.RecoverAll();
-    }
-
-    /**
-     * 绘制格子
-     * @param gridX 
-     * @param gridY 
-     */
-    DrawGrid (gridX: number, gridY: number, color: cc.Color) {
-        let top = (gridY + 0.5) * this._blockIndex.gridPixels;
-        let right = (gridX + 0.5) * this._blockIndex.gridPixels;
-        let bottom = (gridY - 0.5) * this._blockIndex.gridPixels;
-        let left = (gridX - 0.5) * this._blockIndex.gridPixels;
-
-        // 绘制方块
-        this.graphics.lineWidth = 2;
-        this.graphics.strokeColor = color;
-        this.graphics.moveTo(left, bottom);
-        this.graphics.lineTo(right, bottom);
-        this.graphics.lineTo(right, top);
-        this.graphics.lineTo(left, top);
-        this.graphics.lineTo(left, bottom);
-        this.graphics.stroke();
-    }
-
-    /**
-     * 绘制标记
-     * @param posX 
-     * @param posY 
-     * @param color 
-     */
-    DrawMark (posX: number, posY: number, color: cc.Color, size: number) {
-        this.graphics.lineWidth = 2;
-        this.graphics.strokeColor = color;
-        this.graphics.moveTo(posX, posY - size);
-        this.graphics.lineTo(posX, posY + size);
-        this.graphics.stroke();
-
-        this.graphics.moveTo(posX - size, posY);
-        this.graphics.lineTo(posX + size, posY);
-        this.graphics.stroke();
-    }
-
-    /**
-     * 用于变换的矩阵
-     */
-    _mat: cc.Mat4 = new cc.Mat4();
-
-    /**
-     * 交互位置转换为容器位置
-     * @param touchPos 
-     */
-    public ParseTouchPosToContainerPos (out: cc.Vec2, touchPos: cc.Vec2) {
-        out.x = touchPos.x;
-        out.y = touchPos.y;
-        out.x -= this.node.width;
-        out.y -= this.node.height;
-        out.transformMat4(this.containerLightCtrl.getWorldMatrix(this._mat), out);
     }
 }
