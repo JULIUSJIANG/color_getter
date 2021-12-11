@@ -25,7 +25,10 @@ export default class RootComponet extends React.Component<{}, RootState> {
         }
         // 否则采用存储值
         else {
-            this.state = JSON.parse(storagedData);
+            this.state = {
+                ...JSON.parse(storagedData),
+                shouldCanvasUpdate: false
+            };
         };
         // 每次页面销毁的时候，确保状态保存好
         window.onunload = () => {
@@ -33,10 +36,23 @@ export default class RootComponet extends React.Component<{}, RootState> {
         };
     }
 
+    public componentWillUnmount () {
+        RootComponet.inst = null;
+    }
+
+    public componentDidUpdate () {
+        if (this.state.shouldCanvasUpdate) {
+            this.setState({
+                ...this.state,
+                shouldCanvasUpdate: false
+            });
+        };
+    }
+
     public override render () {
         return (
             <div style={{width: "100%", height: "100%"}}>
-                <WebglMain/>
+                {this.state.shouldCanvasUpdate ? null : <WebglMain/>}
                 <TopNav/>
             </div>
         )

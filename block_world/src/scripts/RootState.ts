@@ -17,9 +17,15 @@ export default class RootState {
      */
     cameraY?: number;
     
+    /**
+     * canvas 应当刷新吗
+     */
+    shouldCanvasUpdate?: boolean;
+    
     static def: RootState = {
         opIndex: 0,
         cameraX: 0,
-        cameraY: 0
+        cameraY: 0,
+        shouldCanvasUpdate: false
     }
 }
