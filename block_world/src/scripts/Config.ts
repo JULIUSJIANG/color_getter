@@ -5,7 +5,7 @@ namespace config {
     /**
      * 本地存储的时候采用的 key
      */
-    export const storageKey = `data24`;
+    export const storageKey = `data25`;
 
     /**
      * 背景格子的深度
@@ -20,7 +20,12 @@ namespace config {
     /**
      * 方块的深度
      */
-    export const blockZ = 0;
+    export const blockBgZ = 0;
+
+    /**
+     * 方块边缘的深度
+     */
+    export const blockPaddingZ = 0.01;
 
     /**
      * 聚焦框的深度
@@ -28,7 +33,12 @@ namespace config {
     export const focusFrameZ = 0.1;
 
     /**
-     * 正方形的像素尺寸
+     * 方块边缘厚度
+     */
+    export const blockPadding = 5;
+
+    /**
+     * 方块尺寸
      */
     export const rectSize = 100;
         
@@ -103,7 +113,7 @@ namespace config {
         r: 1,
         g: 1,
         b: 0
-    }
+    };
 };
 
 export default config;

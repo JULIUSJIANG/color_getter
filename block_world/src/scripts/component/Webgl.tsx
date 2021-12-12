@@ -215,26 +215,172 @@ class Component extends React.Component {
             0, 1, 2,
             0, 2, 3
         );
+        // 都有哪些格子是已占用了的，记录一下
+        let locRec: Map<number, Map<number, boolean>> = new Map();
+        // 绘制背景颜色
         for (let xI = 0; xI < root.store.getState().blockXRec.length; xI++) {
             let xRec = root.store.getState().blockXRec[xI];
+            locRec.set(xRec.gridX, new Map());
             for (let yI = 0; yI < xRec.yCollect.length; yI++) {
                 let yRec = xRec.yCollect[yI];
-                this.vertexNumberData.length = 0;
+                locRec.get(xRec.gridX).set(yRec.gridY, true);
                 let left = xRec.gridX * config.rectSize;
                 let right = (xRec.gridX + 1) * config.rectSize;
                 let bottom = yRec.gridY * config.rectSize;
                 let top = (yRec.gridY + 1) * config.rectSize;
+                this.vertexNumberData.length = 0;
                 this.vertexNumberData.push(
-                    right, top, config.blockZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
-                    left, top, config.blockZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
-                    left, bottom, config.blockZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
-                    right, bottom, config.blockZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
+                    right, top, config.blockBgZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
+                    left, top, config.blockBgZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
+                    left, bottom, config.blockBgZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
+                    right, bottom, config.blockBgZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
                 );
                 this.DrawByElementData(
                     this.vertexNumberData,
                     this.shapeNumberData,
                     WebGLRenderingContext.TRIANGLES
                 );
+            };
+        };
+        // 检查某个格子是否存在
+        let getExist = (gridX: number, gridY: number) => {
+            if (!locRec.has(gridX)) {
+                return false;
+            };
+            if (!locRec.get(gridX).has(gridY)) {
+                return false;
+            };
+            return true;
+        };
+        // 绘制边缘颜色
+        for (let xI = 0; xI < root.store.getState().blockXRec.length; xI++) {
+            let xRec = root.store.getState().blockXRec[xI];
+            for (let yI = 0; yI < xRec.yCollect.length; yI++) {
+                let yRec = xRec.yCollect[yI];
+                let left = xRec.gridX * config.rectSize;
+                let right = (xRec.gridX + 1) * config.rectSize;
+                let bottom = yRec.gridY * config.rectSize;
+                let top = (yRec.gridY + 1) * config.rectSize;
+                // 左侧无格子
+                if (!getExist(xRec.gridX - 1, yRec.gridY)) {
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        left + config.blockPadding, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left + config.blockPadding, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                    );
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.TRIANGLES
+                    );
+                };
+                // 右侧无格子
+                if (!getExist(xRec.gridX + 1, yRec.gridY)) {
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        right, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right - config.blockPadding, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right - config.blockPadding, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                    );
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.TRIANGLES
+                    );
+                };
+                // 下方无格子
+                if (!getExist(xRec.gridX, yRec.gridY - 1)) {
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        right, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                    );
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.TRIANGLES
+                    );
+                };
+                // 上侧无格子
+                if (!getExist(xRec.gridX, yRec.gridY + 1)) {
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        right, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                    );
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.TRIANGLES
+                    );
+                };
+                // 右上侧无格子
+                if (!getExist(xRec.gridX + 1, yRec.gridY + 1)) {
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        right, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right - config.blockPadding, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right - config.blockPadding, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                    );
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.TRIANGLES
+                    );
+                };
+                // 左上侧无格子
+                if (!getExist(xRec.gridX - 1, yRec.gridY + 1)) {
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        left + config.blockPadding, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left + config.blockPadding, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                    );
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.TRIANGLES
+                    );
+                };
+                // 左下侧无格子
+                if (!getExist(xRec.gridX - 1, yRec.gridY - 1)) {
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        left + config.blockPadding, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        left + config.blockPadding, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                    );
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.TRIANGLES
+                    );
+                };
+                // 右下侧无格子
+                if (!getExist(xRec.gridX + 1, yRec.gridY - 1)) {
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        right, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right - config.blockPadding, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right - config.blockPadding, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                        right, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
+                    );
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.TRIANGLES
+                    );
+                };
             };
         };
     }
