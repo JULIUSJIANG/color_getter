@@ -11,6 +11,14 @@ export default class TouchStatusIdle extends TouchStatus {
                 this.machine.SetStatus(this.machine.statusDragScene);
                 break;
             };
+            case 1: {
+                this.machine.SetStatus(this.machine.statusAddBlock);
+                break;
+            };
+            case 2: {
+                this.machine.SetStatus(this.machine.statusRemBlock);
+                break;
+            };
         };
     }
 }

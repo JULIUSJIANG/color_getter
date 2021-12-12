@@ -90,6 +90,7 @@ class Component extends React.Component {
         );
         this.DrawBgGrid();
         this.DrawTouch();
+        this.DrawBlock();
     }
 
     /**
@@ -204,6 +205,39 @@ class Component extends React.Component {
             WebGLRenderingContext.LINES
         );
     }
+
+    /**
+     * 绘制方块
+     */
+    DrawBlock () {
+        this.shapeNumberData.length = 0;
+        this.shapeNumberData.push(
+            0, 1, 2,
+            0, 2, 3
+        );
+        for (let xI = 0; xI < root.store.getState().blockXRec.length; xI++) {
+            let xRec = root.store.getState().blockXRec[xI];
+            for (let yI = 0; yI < xRec.yCollect.length; yI++) {
+                let yRec = xRec.yCollect[yI];
+                this.vertexNumberData.length = 0;
+                let left = xRec.gridX * config.rectSize;
+                let right = (xRec.gridX + 1) * config.rectSize;
+                let bottom = yRec.gridY * config.rectSize;
+                let top = (yRec.gridY + 1) * config.rectSize;
+                this.vertexNumberData.push(
+                    right, top, config.blockZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
+                    left, top, config.blockZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
+                    left, bottom, config.blockZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
+                    right, bottom, config.blockZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
+                );
+                this.DrawByElementData(
+                    this.vertexNumberData,
+                    this.shapeNumberData,
+                    WebGLRenderingContext.TRIANGLES
+                );
+            };
+        };
+    }
     
     /**
      * 顶点数据
@@ -309,5 +343,5 @@ class Component extends React.Component {
     }
 }
 
-const WebglMain = connect(state => state)(Component);
-export default WebglMain;
+const Webgl = connect(state => state)(Component);
+export default Webgl;

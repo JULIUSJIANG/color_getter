@@ -1,7 +1,7 @@
 import React from "react";
-import TopNav from "./component/TopNav";
-import WebglMain from "./component/WebglMain";
-import root from "./Root";
+import TopNav from "./TopNav";
+import Webgl from "./Webgl";
+import root from "../Root";
 import {connect} from 'react-redux';
 import { Provider } from 'react-redux';
 
@@ -19,7 +19,7 @@ class Component extends React.Component {
     public override render () {
         return (
             <div style={{width: "100%", height: "100%"}}>
-                {root.store.getState().disableWebgl ? null : <WebglMain/>}
+                {root.store.getState().disableWebgl ? null : <Webgl/>}
                 <TopNav/>
             </div>
         );

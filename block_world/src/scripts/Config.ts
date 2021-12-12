@@ -5,7 +5,7 @@ namespace config {
     /**
      * 本地存储的时候采用的 key
      */
-    export const storageKey = `data22`;
+    export const storageKey = `data24`;
 
     /**
      * 背景格子的深度
@@ -16,6 +16,11 @@ namespace config {
      * 背景 xy 轴的深度
      */
     export const xyZ = -0.1;
+
+    /**
+     * 方块的深度
+     */
+    export const blockZ = 0;
 
     /**
      * 聚焦框的深度
@@ -68,8 +73,8 @@ namespace config {
      * 聚焦框颜色-抬起
      */
     export const focusFrameReleaseColor = {
-        r: 1,
-        g: 1,
+        r: 0,
+        g: 0,
         b: 1
     };
 
@@ -78,9 +83,27 @@ namespace config {
      */
     export const focusFramePressColor = {
         r: 0,
-        g: 0,
+        g: 1,
         b: 1
     };
+
+    /**
+     * 方块的边缘颜色
+     */
+    export const blockPaddingColor = {
+        r: 0,
+        g: 0,
+        b: 0
+    };
+
+    /**
+     * 方块主体颜色
+     */
+    export const blockBgColor = {
+        r: 1,
+        g: 1,
+        b: 0
+    }
 };
 
 export default config;

@@ -1,76 +1,27 @@
 import { createStore, Action } from 'redux';
 import config from './Config';
+import BlockGridXRec from './struct/BlockGridXRec';
+import MainState from './struct/MainState';
 import TouchMachine from './touchmachine/TouchMachine';
 
 /**
  * 全局的数据中心
  */
 namespace root {
-
+    /**
+     * 交互状态机
+     */
     export const touchMachine = new TouchMachine();
-
-    /**
-     * 全局数据结构
-     */
-    export class State {
-        /**
-         * 当前的操作类型
-         */
-        opIndex: number;
-
-        /**
-         * 相机位置 x
-         */
-        cameraX: number;
-
-        /**
-         * 相机位置 y
-         */
-        cameraY: number;
-
-        /**
-         * 关闭 webgl
-         */
-        disableWebgl: boolean;
-
-        /**
-         * 聚焦的格子 x
-         */
-        focusGridX: number;
-
-        /**
-         * 聚焦的格子 y
-         */
-        focusGridY: number;
-
-        /**
-         * 当前处于按压状态
-         */
-        isPressed: boolean;
-    };
-
-    /**
-     * 默认数据
-     */
-    export const def: State = {
-        opIndex: 0,
-        cameraX: 0,
-        cameraY: 0,
-        disableWebgl: false,
-        focusGridX: 0,
-        focusGridY: 0,
-        isPressed: false
-    };
 
     /**
      * 事务管理中心
      */
     class RootReducer {
-        private _reduceMap: Map<number, (state: State, act: Action<any>) => State> = new Map();
-        Regist<T> (type: number, reduce: (state: State, act: Action<T>) => State) {
+        private _reduceMap: Map<number, (state: MainState, act: Action<any>) => MainState> = new Map();
+        Regist<T> (type: number, reduce: (state: MainState, act: Action<T>) => MainState) {
             this._reduceMap.set(type, reduce);
         }
-        Reduce (state: State, act: Action<any>) {
+        Reduce (state: MainState, act: Action<any>) {
             if (!this._reduceMap.has(act.type)) {
                 return state;
             };
@@ -98,9 +49,9 @@ namespace root {
      */
     class RootAction<T> {
         type: number;
-        action: (state: State, eff: T) => State
+        action: (state: MainState, eff: T) => MainState
         constructor(
-            action: (state: State, eff: T) => State
+            action: (state: MainState, eff: T) => MainState
         ) 
         {
             this.type = ++id;
@@ -130,7 +81,7 @@ namespace root {
     /**
      * 进行数据初始化
      */
-    export const reducerInit = new RootAction<State> (
+    export const reducerInit = new RootAction<MainState> (
         (state, t) => {
             return t;
         }
@@ -208,16 +159,84 @@ namespace root {
                 isPressed: isPressed
             };
         }
+    );
+
+    /**
+     * 添加方块
+     */
+    export const reducerAddBlock = new RootAction<number[]> (
+        (state, gridLoc) => {
+            let xRec = state.blockXRec.find((ele) => {
+                return ele.gridX == gridLoc[0];
+            });
+            // 确保记录存在
+            if (xRec == null) {
+                xRec = {
+                    gridX: gridLoc[0],
+                    yCollect: []
+                };
+                state.blockXRec.push(xRec);
+                state.blockXRec.sort(( recA, recB ) => {
+                    return recA.gridX - recB.gridX
+                });
+            };
+            let yRec = xRec.yCollect.find(( ele ) => {
+                return ele.gridY == gridLoc[1];
+            });
+            // 位置上本来就有东西，忽略该次操作
+            if (yRec != null) {
+                return state;
+            };
+            yRec = {
+                gridY: gridLoc[1]
+            };
+            xRec.yCollect.push(yRec);
+            xRec.yCollect.sort((eleA, eleB) => {
+                return eleA.gridY - eleB.gridY;
+            });
+            let version = state.version + 1;
+            return {
+                ...state,
+                version: version
+            };
+        }
+    );
+
+    /**
+     * 移除方块
+     */
+    export const reducerRemBlock = new RootAction<number[]> (
+        (state, gridLoc) => {
+            let xRec = state.blockXRec.find((ele) => {
+                return ele.gridX == gridLoc[0];
+            });
+            if (xRec == null) {
+                return state;
+            };
+            let yRec = xRec.yCollect.find(( ele ) => {
+                return ele.gridY == gridLoc[1];
+            });
+            // 位置上本来就有东西，忽略该次操作
+            if (yRec == null) {
+                return state;
+            };
+            xRec.yCollect.splice(xRec.yCollect.indexOf(yRec), 1);
+            let version = state.version + 1;
+            return {
+                ...state,
+                version: version
+            };
+        }
     )
 };
 
 // 读取本地存储的数据
 let storagedData = localStorage.getItem(config.storageKey);
 // 初始化的状态
-let initState: root.State;
+let initState: MainState;
 // 如果没有存储过，那么创建为默认值
 if (storagedData == null || storagedData == `` || storagedData == `undefined`) {
-    initState = root.def;
+    initState = MainState.def;
 }
 // 否则采用存储值
 else {

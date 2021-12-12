@@ -1,3 +1,4 @@
+import root from "../Root";
 import TouchMachine from "./TouchMachine";
 
 /**
@@ -35,5 +36,21 @@ export default abstract class TouchStatus {
 
     public OnMouseUP () {
 
+    }
+
+    CheckGridEmpty () {
+        let gridRec = root.store.getState().blockXRec.find((ele) => {
+            return ele.gridX == this.machine.touchGridX;
+        });
+        if (gridRec == null) {
+            return true;
+        };
+        let yRec = gridRec.yCollect.find((ele) => {
+            return ele.gridY == this.machine.touchGridY;
+        });
+        if (yRec == null) {
+            return true;
+        };
+        return false;
     }
 }

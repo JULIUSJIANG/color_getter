@@ -1,10 +1,12 @@
 import CuonVector3 from "../../lib/webgl/CuonVector3";
 import root from "../Root";
-import RootComponet from "../Main";
+import RootComponet from "../component/Main";
 import config from "../Config";
 import TouchStatus from "./TouchStatus";
 import TouchStatusDragScene from "./TouchStatusDragScene";
 import TouchStatusIdle from "./TouchStatusIdle";
+import TouchStatusAddBlock from "./TouchStatusAddBlock";
+import TouchStatusRemBlock from "./TouchStatusRemBlock";
 
 /**
  * 交互状态机
@@ -23,16 +25,16 @@ export default class TouchMachine {
         };
 
         // 刷新交互的格子
-        function refreshFocusGrid () {
+        let refreshFocusGrid = () => {
             let worldX = root.store.getState().cameraX - window.innerWidth / 2 + screenPosX;
             let worldY = root.store.getState().cameraY - window.innerHeight / 2 + screenPosY;
-            let currGridX = Math.floor(worldX / config.rectSize);
-            let currGridY = Math.floor(worldY / config.rectSize);
+            this.touchGridX = Math.floor(worldX / config.rectSize);
+            this.touchGridY = Math.floor(worldY / config.rectSize);
             // 去重
-            if (currGridX == root.store.getState().focusGridX && currGridY == root.store.getState().focusGridY) {
+            if (this.touchGridX == root.store.getState().focusGridX && this.touchGridY == root.store.getState().focusGridY) {
                 return;
             };
-            root.reducerSetFocusGrid.Eff([Math.floor(worldX / config.rectSize), Math.floor(worldY / config.rectSize)]);
+            root.reducerSetFocusGrid.Eff([this.touchGridX, this.touchGridY]);
         };
 
         // 重新填充交互的起始位置
@@ -130,10 +132,20 @@ export default class TouchMachine {
      * 状态-场景拖拽
      */
     public statusDragScene?: TouchStatusDragScene;
+    /**
+     * 状态-放置方块
+     */
+    public statusAddBlock: TouchStatusAddBlock;
+    /**
+     * 状态-移除方块
+     */
+    public statusRemBlock: TouchStatusRemBlock;
 
     public constructor () {
         this.statusIdle = new TouchStatusIdle(this);
         this.statusDragScene = new TouchStatusDragScene(this);
+        this.statusAddBlock = new TouchStatusAddBlock(this);
+        this.statusRemBlock = new TouchStatusRemBlock(this);
 
         // 默认为待机状态
         this.SetStatus(this.statusIdle);
@@ -143,16 +155,23 @@ export default class TouchMachine {
      * 交互的起始位置
      */
     public posStart = new CuonVector3();
-
     /**
      * 交互的拖拽位置
      */
     public posMove = new CuonVector3();
-
     /**
      * 交互的结束位置
      */
     public posEnd = new CuonVector3();
+
+    /**
+     * 交互的格子 x
+     */
+    public touchGridX: number;
+    /**
+     * 交互的格子 y
+     */
+    public touchGridY: number;
 
     /**
      * 当前状态

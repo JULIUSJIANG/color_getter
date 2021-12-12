@@ -4,7 +4,7 @@ import './index.css';
 import ReactDOM from 'react-dom';
 
 import reportWebVitals from './reportWebVitals';
-import RootComponet from './scripts/Main';
+import RootComponet from './scripts/component/Main';
 import { Provider } from 'react-redux';
 import root from './scripts/Root';
 
