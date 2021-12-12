@@ -15,7 +15,7 @@ export default class TouchMachine {
      */
     public ListenTouch (canvas: HTMLCanvasElement) {
         // 当前交互的 xy
-        let x: number, y: number;
+        let screenPosX: number, screenPosY: number;
 
         // 交互事件已处理
         let onTouched = () => {
@@ -24,8 +24,8 @@ export default class TouchMachine {
 
         // 刷新交互的格子
         function refreshFocusGrid () {
-            let worldX = root.store.getState().cameraX - window.innerWidth / 2 + x;
-            let worldY = root.store.getState().cameraY - window.innerHeight / 2 + y;
+            let worldX = root.store.getState().cameraX - window.innerWidth / 2 + screenPosX;
+            let worldY = root.store.getState().cameraY - window.innerHeight / 2 + screenPosY;
             let currGridX = Math.floor(worldX / config.rectSize);
             let currGridY = Math.floor(worldY / config.rectSize);
             // 去重
@@ -38,19 +38,19 @@ export default class TouchMachine {
         // 重新填充交互的起始位置
         let refillTouchStart = () => {
             root.reducerSetPressed.Eff(true);
-            this.posStart.elements[0] = x;
-            this.posStart.elements[1] = y;
+            this.posStart.elements[0] = screenPosX;
+            this.posStart.elements[1] = screenPosY;
         };
         // 重新填充交互的拖拽位置
         let refillTouchMove = () => {
-            this.posMove.elements[0] = x;
-            this.posMove.elements[1] = y;
+            this.posMove.elements[0] = screenPosX;
+            this.posMove.elements[1] = screenPosY;
         };
         // 重新填充交互的结束位置
         let refillTouchEnd = () => {
             root.reducerSetPressed.Eff(false);
-            this.posEnd.elements[0] = x;
-            this.posEnd.elements[1] = y;
+            this.posEnd.elements[0] = screenPosX;
+            this.posEnd.elements[1] = screenPosY;
         };
 
         // 通知按下
@@ -74,8 +74,8 @@ export default class TouchMachine {
             if (evt.touches.length == 0) {
                 return;
             };
-            x = evt.touches[0].clientX;
-            y = window.innerHeight - evt.touches[0].clientY;
+            screenPosX = evt.touches[0].clientX;
+            screenPosY = window.innerHeight - evt.touches[0].clientY;
         };
         canvas.ontouchstart = (evt: TouchEvent) => {
             refreshXYByTouch(evt);
@@ -100,8 +100,8 @@ export default class TouchMachine {
 
         // 通过鼠标事件刷新交互的 xy
         let refreshXYByMouse = (evt: MouseEvent) => {
-            x = evt.x;
-            y = window.innerHeight - evt.y;
+            screenPosX = evt.x;
+            screenPosY = window.innerHeight - evt.y;
             refreshFocusGrid();
         };
         canvas.onmousedown = (evt: MouseEvent) => {
