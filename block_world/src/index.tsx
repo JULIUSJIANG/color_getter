@@ -1,30 +1,15 @@
 import 'antd/dist/antd.css';
 import './index.css';
 
-import React from 'react';
 import ReactDOM from 'react-dom';
 
 import reportWebVitals from './reportWebVitals';
-import RootComponet from './scripts/RootComponent';
-
+import RootComponet from './scripts/Main';
 import { Provider } from 'react-redux';
-import { createStore, Action } from 'redux';
-import rootAction from './scripts/RootAction';
-import RootState from './scripts/RootState';
-
-const store = createStore<RootState, Action<any>, unknown, unknown>((state, actionType) => {
-  switch (actionType.type) {
-    case rootAction.TYPE_RELOAD_WEBGL: {
-      return {
-        ...state,
-        shouldCanvasUpdate: true
-      }
-    };
-  }
-});
+import root from './scripts/Root';
 
 ReactDOM.render(
-  <Provider store={ store }>
+  <Provider store={ root.store }>
     <RootComponet/>
   </Provider>,
   document.getElementById('root')

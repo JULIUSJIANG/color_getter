@@ -1,4 +1,4 @@
-import RootComponet from "../RootComponent";
+import root from "../Root";
 import TouchStatus from "./TouchStatus";
 
 /**
@@ -16,19 +16,15 @@ export default class TouchStatusDragScene extends TouchStatus {
     initCameraY?: number;
 
     public override OnEnter () {
-        this.initCameraX = RootComponet.inst.state.cameraX;
-        this.initCameraY = RootComponet.inst.state.cameraY;
+        this.initCameraX = root.store.getState().cameraX;
+        this.initCameraY = root.store.getState().cameraY;
     }
 
     public override OnMouseMove () {
-        if (!RootComponet.inst) {
-            return;
-        };
-        RootComponet.inst.setState({
-            ...RootComponet.inst.state,
-            cameraX: this.initCameraX - this.machine.posMove.elements[0] + this.machine.posStart.elements[0],
-            cameraY: this.initCameraY - this.machine.posMove.elements[1] + this.machine.posStart.elements[1],
-        });
+        root.reducerSetCameraPos.Eff([
+            this.initCameraX - this.machine.posMove.elements[0] + this.machine.posStart.elements[0],
+            this.initCameraY - this.machine.posMove.elements[1] + this.machine.posStart.elements[1]
+        ]);
     }
 
     public override OnMouseUP () {

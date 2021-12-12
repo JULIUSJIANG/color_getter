@@ -1,4 +1,3 @@
-import RootComponet from "../RootComponent";
 import TouchMachine from "./TouchMachine";
 
 /**

@@ -1,6 +1,7 @@
 import CuonVector3 from "../../lib/webgl/CuonVector3";
-import RootComponet from "../RootComponent";
-import rootConfig from "../RootConfig";
+import root from "../Root";
+import RootComponet from "../Main";
+import config from "../Config";
 import TouchStatus from "./TouchStatus";
 import TouchStatusDragScene from "./TouchStatusDragScene";
 import TouchStatusIdle from "./TouchStatusIdle";
@@ -10,80 +11,66 @@ import TouchStatusIdle from "./TouchStatusIdle";
  */
 export default class TouchMachine {
     /**
-     * 全局的唯一实例
-     */
-    public static inst: TouchMachine;
-
-    /**
      * 进行初始化
      */
-    public static Init (canvas: HTMLCanvasElement) {
-        // 确保状态机存在
-        if (TouchMachine.inst == null) {
-            TouchMachine.inst = new TouchMachine();
-        };
-
+    public ListenTouch (canvas: HTMLCanvasElement) {
         // 当前交互的 xy
         let x: number, y: number;
 
         // 交互事件已处理
-        function onTouched () {
+        let onTouched = () => {
             refreshFocusGrid();
         };
 
         // 刷新交互的格子
         function refreshFocusGrid () {
-            let worldX = RootComponet.inst.state.cameraX - window.innerWidth / 2 + x;
-            let worldY = RootComponet.inst.state.cameraY - window.innerHeight / 2 + y;
-            let currGridX = Math.floor(worldX / rootConfig.rectSize);
-            let currGridY = Math.floor(worldY / rootConfig.rectSize);
+            let worldX = root.store.getState().cameraX - window.innerWidth / 2 + x;
+            let worldY = root.store.getState().cameraY - window.innerHeight / 2 + y;
+            let currGridX = Math.floor(worldX / config.rectSize);
+            let currGridY = Math.floor(worldY / config.rectSize);
             // 去重
-            if (currGridX == RootComponet.inst.state.focusGridX && currGridY == RootComponet.inst.state.focusGridY) {
+            if (currGridX == root.store.getState().focusGridX && currGridY == root.store.getState().focusGridY) {
                 return;
             };
-            RootComponet.inst.setState({
-                ...RootComponet.inst.state,
-                focusGridX: Math.floor(worldX / rootConfig.rectSize),
-                focusGridY: Math.floor(worldY / rootConfig.rectSize),
-            });
+            root.reducerSetFocusGrid.Eff([Math.floor(worldX / config.rectSize), Math.floor(worldY / config.rectSize)]);
         };
 
         // 重新填充交互的起始位置
-        function refillTouchStart () {
-            TouchMachine.inst.isPressed = true;
-            TouchMachine.inst.posStart.elements[0] = x;
-            TouchMachine.inst.posStart.elements[1] = y;
+        let refillTouchStart = () => {
+            root.reducerSetPressed.Eff(true);
+            this.posStart.elements[0] = x;
+            this.posStart.elements[1] = y;
         };
         // 重新填充交互的拖拽位置
-        function refillTouchMove () {
-            TouchMachine.inst.posMove.elements[0] = x;
-            TouchMachine.inst.posMove.elements[1] = y;
+        let refillTouchMove = () => {
+            this.posMove.elements[0] = x;
+            this.posMove.elements[1] = y;
         };
         // 重新填充交互的结束位置
-        function refillTouchEnd () {
-            TouchMachine.inst.isPressed = false;
-            TouchMachine.inst.posEnd.elements[0] = x;
-            TouchMachine.inst.posEnd.elements[1] = y;
+        let refillTouchEnd = () => {
+            root.reducerSetPressed.Eff(false);
+            this.posEnd.elements[0] = x;
+            this.posEnd.elements[1] = y;
         };
 
         // 通知按下
-        function CallMouseDown () {
-            TouchMachine.inst.currStatus.OnMouseDown();
+        let CallMouseDown = () => {
+            this.currStatus.OnMouseDown();
             onTouched();
         };
         // 通知拖拽
-        function CallMouseMove () {
-            TouchMachine.inst.currStatus.OnMouseMove();
+        let CallMouseMove = () => {
+            this.currStatus.OnMouseMove();
             onTouched();
         };
         // 通知抬起
-        function CallMouseUp () {
-            TouchMachine.inst.currStatus.OnMouseUP();
+        let CallMouseUp = () => {
+            this.currStatus.OnMouseUP();
             onTouched();
         };
 
         // 通过触摸事件刷新交互的 xy
-        function refreshXYByTouch (evt: TouchEvent) {
+        let refreshXYByTouch = (evt: TouchEvent) => {
             if (evt.touches.length == 0) {
                 return;
             };
@@ -112,7 +99,7 @@ export default class TouchMachine {
         };
 
         // 通过鼠标事件刷新交互的 xy
-        function refreshXYByMouse (evt: MouseEvent) {
+        let refreshXYByMouse = (evt: MouseEvent) => {
             x = evt.x;
             y = window.innerHeight - evt.y;
             refreshFocusGrid();
@@ -144,7 +131,7 @@ export default class TouchMachine {
      */
     public statusDragScene?: TouchStatusDragScene;
 
-    private constructor () {
+    public constructor () {
         this.statusIdle = new TouchStatusIdle(this);
         this.statusDragScene = new TouchStatusDragScene(this);
 
@@ -171,11 +158,6 @@ export default class TouchMachine {
      * 当前状态
      */
     public currStatus?: TouchStatus;
-
-    /**
-     * 当前处于按压状态
-     */
-    public isPressed = false;
 
     /**
      * 设置当前状态

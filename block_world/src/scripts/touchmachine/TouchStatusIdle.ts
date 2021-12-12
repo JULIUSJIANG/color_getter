@@ -1,4 +1,4 @@
-import RootComponet from "../RootComponent";
+import root from "../Root";
 import TouchStatus from "./TouchStatus";
 
 /**
@@ -6,10 +6,7 @@ import TouchStatus from "./TouchStatus";
  */
 export default class TouchStatusIdle extends TouchStatus {
     public OnMouseDown () {
-        if (!RootComponet.inst) {
-            return;
-        };
-        switch (RootComponet.inst.state.opIndex) {
+        switch (root.store.getState().opIndex) {
             case 0: {
                 this.machine.SetStatus(this.machine.statusDragScene);
                 break;

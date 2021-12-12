@@ -1,19 +1,18 @@
 import React from "react";
 import CuonMatrix4 from "../../lib/webgl/CuonMatrix4";
 import cuonUtils from "../../lib/webgl/CuonUtils";
-import rootConfig from "../RootConfig";
-import RootState from "../RootState";
+import config from "../Config";
 import colorFragment from "../shader/ColorFragment";
 import colorVertex from "../shader/ColorVertex";
 import TouchMachine from "../touchmachine/TouchMachine";
 import {Dispatch} from 'redux';
 import {connect} from 'react-redux';
-import rootAction from "../RootAction";
+import root from "../Root";
 
 /**
  * 绘制-主内容
  */
-class Component extends React.Component<IProps> {
+class Component extends React.Component {
     /**
      * 画布
      */
@@ -54,13 +53,6 @@ class Component extends React.Component<IProps> {
      */
     public attlocMvpMat?: WebGLUniformLocation;
 
-    public constructor (props: IProps) {
-        super(props);
-        window.onresize = () => {
-            this.props.reloadWebgl();
-        };
-    }
-
     public override componentDidMount () {
         this.componentDidUpdate();
     }
@@ -92,8 +84,8 @@ class Component extends React.Component<IProps> {
         );
         // 设置偏移
         this._vpMatrix.translate(
-            -this.props.value.cameraX,
-            -this.props.value.cameraY,
+            -root.store.getState().cameraX,
+            -root.store.getState().cameraY,
             0
         );
         this.DrawBgGrid();
@@ -114,40 +106,40 @@ class Component extends React.Component<IProps> {
      * 绘制背景格子
      */
     DrawBgGrid () {
-        let left = this.props.value.cameraX - window.innerWidth / 2;
-        let right = this.props.value.cameraX + window.innerWidth / 2;
-        let bottom = this.props.value.cameraY - window.innerHeight / 2;
-        let top = this.props.value.cameraY + window.innerHeight / 2;
+        let left = root.store.getState().cameraX - window.innerWidth / 2;
+        let right = root.store.getState().cameraX + window.innerWidth / 2;
+        let bottom = root.store.getState().cameraY - window.innerHeight / 2;
+        let top = root.store.getState().cameraY + window.innerHeight / 2;
         // 水平方向
         let horPosArray: number[] = [];
-        let horPos = Math.floor( right / rootConfig.rectSize ) * rootConfig.rectSize;
+        let horPos = Math.floor( right / config.rectSize ) * config.rectSize;
         while (left < horPos) {
             horPosArray.unshift(horPos);
-            horPos -= rootConfig.rectSize;
+            horPos -= config.rectSize;
         };
-        let horLeft = horPosArray[0] - rootConfig.rectSize;
-        let horRight = horPosArray[horPosArray.length - 1] + rootConfig.rectSize;
+        let horLeft = horPosArray[0] - config.rectSize;
+        let horRight = horPosArray[horPosArray.length - 1] + config.rectSize;
         // 垂直方向
         let verPosArray: number[] = [];
-        let verPos = Math.floor( top / rootConfig.rectSize ) * rootConfig.rectSize;
+        let verPos = Math.floor( top / config.rectSize ) * config.rectSize;
         while (bottom < verPos) {
             verPosArray.unshift(verPos);
-            verPos -= rootConfig.rectSize;
+            verPos -= config.rectSize;
         };
-        let verBottom = verPosArray[0] - rootConfig.rectSize;
-        let verTop = verPosArray[verPosArray.length - 1] + rootConfig.rectSize;
+        let verBottom = verPosArray[0] - config.rectSize;
+        let verTop = verPosArray[verPosArray.length - 1] + config.rectSize;
 
         this.vertexNumberData.length = 0;
         for (let horIndex = 0; horIndex < horPosArray.length; horIndex++) {
             let x = horPosArray[horIndex];
             this.vertexNumberData.push(
-                x, verBottom, rootConfig.bgGridZ, rootConfig.gridColor.r, rootConfig.gridColor.g, rootConfig.gridColor.b,
-                x, verTop, rootConfig.bgGridZ, rootConfig.gridColor.r, rootConfig.gridColor.g, rootConfig.gridColor.b
+                x, verBottom, config.bgGridZ, config.gridColor.r, config.gridColor.g, config.gridColor.b,
+                x, verTop, config.bgGridZ, config.gridColor.r, config.gridColor.g, config.gridColor.b
             );
             if (x == 0) {
                 this.vertexNumberData.push(
-                    x, 0, rootConfig.xyZ, rootConfig.xColor.r, rootConfig.xColor.g, rootConfig.xColor.b,
-                    x, verTop, rootConfig.xyZ, rootConfig.xColor.r, rootConfig.xColor.g, rootConfig.xColor.b
+                    x, 0, config.xyZ, config.xColor.r, config.xColor.g, config.xColor.b,
+                    x, verTop, config.xyZ, config.xColor.r, config.xColor.g, config.xColor.b
                 );
             };
         };
@@ -156,13 +148,13 @@ class Component extends React.Component<IProps> {
         for (let verIndex = 0; verIndex < verPosArray.length; verIndex++) {
             let y = verPosArray[verIndex];
             this.vertexNumberData.push(
-                horLeft, y, rootConfig.bgGridZ, rootConfig.gridColor.r, rootConfig.gridColor.g, rootConfig.gridColor.b,
-                horRight, y, rootConfig.bgGridZ, rootConfig.gridColor.r, rootConfig.gridColor.g, rootConfig.gridColor.b
+                horLeft, y, config.bgGridZ, config.gridColor.r, config.gridColor.g, config.gridColor.b,
+                horRight, y, config.bgGridZ, config.gridColor.r, config.gridColor.g, config.gridColor.b
             );
             if (y == 0) {
                 this.vertexNumberData.push(
-                    0, y, rootConfig.xyZ, rootConfig.yColor.r, rootConfig.yColor.g, rootConfig.yColor.b,
-                    horRight, y, rootConfig.xyZ, rootConfig.yColor.r, rootConfig.yColor.g, rootConfig.yColor.b
+                    0, y, config.xyZ, config.yColor.r, config.yColor.g, config.yColor.b,
+                    horRight, y, config.xyZ, config.yColor.r, config.yColor.g, config.yColor.b
                 );
             };
         };
@@ -186,16 +178,16 @@ class Component extends React.Component<IProps> {
      */
     DrawTouch () {
         this.vertexNumberData.length = 0;
-        let left = this.props.value.focusGridX * rootConfig.rectSize;
-        let right = (this.props.value.focusGridX + 1) * rootConfig.rectSize;
-        let bottom = this.props.value.focusGridY * rootConfig.rectSize;
-        let top = (this.props.value.focusGridY + 1) * rootConfig.rectSize;
-        let colorObj = TouchMachine.inst.isPressed ? rootConfig.focusFramePressColor : rootConfig.focusFrameReleaseColor;
+        let left = root.store.getState().focusGridX * config.rectSize;
+        let right = (root.store.getState().focusGridX + 1) * config.rectSize;
+        let bottom = root.store.getState().focusGridY * config.rectSize;
+        let top = (root.store.getState().focusGridY + 1) * config.rectSize;
+        let colorObj = root.store.getState().isPressed ? config.focusFramePressColor : config.focusFrameReleaseColor;
         this.vertexNumberData.push(
-            left, bottom, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
-            right, bottom, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
-            right, top, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
-            left, top, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
+            left, bottom, config.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
+            right, bottom, config.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
+            right, top, config.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
+            left, top, config.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
         );
 
         this.shapeNumberData.length = 0;
@@ -288,7 +280,7 @@ class Component extends React.Component<IProps> {
                     if (this.canvas == null) {
                         return;
                     };
-                    TouchMachine.Init(this.canvas);
+                    root.touchMachine.ListenTouch(this.canvas);
                     this.gl = cuonUtils.getWebGLContext(ref);
                     this.program = cuonUtils.createProgram(this.gl, colorVertex.shader, colorFragment.shader);
                     this.vbuffer = this.gl.createBuffer();
@@ -297,10 +289,10 @@ class Component extends React.Component<IProps> {
                     this.attlocColor = this.gl.getAttribLocation(this.program, colorVertex.attNameColor);
                     this.attlocMvpMat = this.gl.getUniformLocation(this.program, colorVertex.attNameMvpMat);
                     this.gl.clearColor(
-                        rootConfig.bgColor.r,
-                        rootConfig.bgColor.g,
-                        rootConfig.bgColor.b,
-                        rootConfig.bgColor.a
+                        config.bgColor.r,
+                        config.bgColor.g,
+                        config.bgColor.b,
+                        config.bgColor.a
                     );
                     this.gl.enable(this.gl.DEPTH_TEST);
                 }}
@@ -317,19 +309,5 @@ class Component extends React.Component<IProps> {
     }
 }
 
-interface IProps {
-    value: RootState,
-    reloadWebgl: () => void;
-}
-
-const mapStateToProps = (state: RootState) => ({
-    value: state
-});
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-    reloadWebgl: () => {
-        dispatch(rootAction.reLoadWebgl());
-    }
-});
-
-const WebglMain = connect(mapStateToProps, mapDispatchToProps)(Component);
+const WebglMain = connect(state => state)(Component);
 export default WebglMain;

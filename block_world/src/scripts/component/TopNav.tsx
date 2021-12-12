@@ -1,22 +1,18 @@
 import React from "react";
 import { Radio, RadioChangeEvent } from 'antd';
-import RootComponet from "../RootComponent";
+import {connect} from 'react-redux';
+import {Dispatch} from 'redux';
+import root from "../Root";
 
 /**
  * 顶部栏
  */
-export default class TopNav extends React.Component {
+class Component extends React.Component {
     OnOpChanged (evt: RadioChangeEvent) {
-        RootComponet.inst.setState({
-            ...RootComponet.inst.state,
-            opIndex: evt.target.value
-        });
+        root.reducerSetOp.Eff(evt.target.value);
     }
 
     public override render () {
-        if (RootComponet.inst == null) {
-            return null;
-        };
         return (
             <Radio.Group
                 options={[
@@ -34,7 +30,7 @@ export default class TopNav extends React.Component {
                     }
                 ]}
                 onChange={this.OnOpChanged.bind(this)}
-                value={RootComponet.inst.state.opIndex}
+                value={root.store.getState().opIndex}
                 optionType="button"
                 buttonStyle="solid"
                 style={{
@@ -46,3 +42,6 @@ export default class TopNav extends React.Component {
         )
     }
 }
+
+const TopNav = connect(state => state)(Component);
+export default TopNav;

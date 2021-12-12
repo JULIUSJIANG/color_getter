@@ -1,11 +1,11 @@
 /**
  * 全局环境的配置
  */
-namespace rootConfig {
+namespace config {
     /**
      * 本地存储的时候采用的 key
      */
-    export const storageKey = `data19`;
+    export const storageKey = `data22`;
 
     /**
      * 背景格子的深度
@@ -83,4 +83,4 @@ namespace rootConfig {
     };
 };
 
-export default rootConfig;
+export default config;
