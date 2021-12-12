@@ -1,16 +1,19 @@
 import React from "react";
 import CuonMatrix4 from "../../lib/webgl/CuonMatrix4";
 import cuonUtils from "../../lib/webgl/CuonUtils";
-import RootComponet from "../RootComponent";
 import rootConfig from "../RootConfig";
+import RootState from "../RootState";
 import colorFragment from "../shader/ColorFragment";
 import colorVertex from "../shader/ColorVertex";
 import TouchMachine from "../touchmachine/TouchMachine";
+import {Dispatch} from 'redux';
+import {connect} from 'react-redux';
+import rootAction from "../RootAction";
 
 /**
  * 绘制-主内容
  */
-export default class WebglMain extends React.Component {
+class Component extends React.Component<IProps> {
     /**
      * 画布
      */
@@ -51,13 +54,10 @@ export default class WebglMain extends React.Component {
      */
     public attlocMvpMat?: WebGLUniformLocation;
 
-    public constructor (props: {}) {
+    public constructor (props: IProps) {
         super(props);
         window.onresize = () => {
-            RootComponet.inst.setState({
-                ...RootComponet.inst.state,
-                shouldCanvasUpdate: true
-            });
+            this.props.reloadWebgl();
         };
     }
 
@@ -92,8 +92,8 @@ export default class WebglMain extends React.Component {
         );
         // 设置偏移
         this._vpMatrix.translate(
-            -RootComponet.inst.state.cameraX,
-            -RootComponet.inst.state.cameraY,
+            -this.props.value.cameraX,
+            -this.props.value.cameraY,
             0
         );
         this.DrawBgGrid();
@@ -114,10 +114,10 @@ export default class WebglMain extends React.Component {
      * 绘制背景格子
      */
     DrawBgGrid () {
-        let left = RootComponet.inst.state.cameraX - window.innerWidth / 2;
-        let right = RootComponet.inst.state.cameraX + window.innerWidth / 2;
-        let bottom = RootComponet.inst.state.cameraY - window.innerHeight / 2;
-        let top = RootComponet.inst.state.cameraY + window.innerHeight / 2;
+        let left = this.props.value.cameraX - window.innerWidth / 2;
+        let right = this.props.value.cameraX + window.innerWidth / 2;
+        let bottom = this.props.value.cameraY - window.innerHeight / 2;
+        let top = this.props.value.cameraY + window.innerHeight / 2;
         // 水平方向
         let horPosArray: number[] = [];
         let horPos = Math.floor( right / rootConfig.rectSize ) * rootConfig.rectSize;
@@ -186,10 +186,10 @@ export default class WebglMain extends React.Component {
      */
     DrawTouch () {
         this.vertexNumberData.length = 0;
-        let left = RootComponet.inst.state.focusGridX * rootConfig.rectSize;
-        let right = (RootComponet.inst.state.focusGridX + 1) * rootConfig.rectSize;
-        let bottom = RootComponet.inst.state.focusGridY * rootConfig.rectSize;
-        let top = (RootComponet.inst.state.focusGridY + 1) * rootConfig.rectSize;
+        let left = this.props.value.focusGridX * rootConfig.rectSize;
+        let right = (this.props.value.focusGridX + 1) * rootConfig.rectSize;
+        let bottom = this.props.value.focusGridY * rootConfig.rectSize;
+        let top = (this.props.value.focusGridY + 1) * rootConfig.rectSize;
         let colorObj = TouchMachine.inst.isPressed ? rootConfig.focusFramePressColor : rootConfig.focusFrameReleaseColor;
         this.vertexNumberData.push(
             left, bottom, rootConfig.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
@@ -316,3 +316,20 @@ export default class WebglMain extends React.Component {
         )
     }
 }
+
+interface IProps {
+    value: RootState,
+    reloadWebgl: () => void;
+}
+
+const mapStateToProps = (state: RootState) => ({
+    value: state
+});
+const mapDispatchToProps = (dispatch: Dispatch) => ({
+    reloadWebgl: () => {
+        dispatch(rootAction.reLoadWebgl());
+    }
+});
+
+const WebglMain = connect(mapStateToProps, mapDispatchToProps)(Component);
+export default WebglMain;

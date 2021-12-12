@@ -7,8 +7,26 @@ import ReactDOM from 'react-dom';
 import reportWebVitals from './reportWebVitals';
 import RootComponet from './scripts/RootComponent';
 
+import { Provider } from 'react-redux';
+import { createStore, Action } from 'redux';
+import rootAction from './scripts/RootAction';
+import RootState from './scripts/RootState';
+
+const store = createStore<RootState, Action<any>, unknown, unknown>((state, actionType) => {
+  switch (actionType.type) {
+    case rootAction.TYPE_RELOAD_WEBGL: {
+      return {
+        ...state,
+        shouldCanvasUpdate: true
+      }
+    };
+  }
+});
+
 ReactDOM.render(
-  <RootComponet/>,
+  <Provider store={ store }>
+    <RootComponet/>
+  </Provider>,
   document.getElementById('root')
 );
 
