@@ -53,6 +53,16 @@ class Component extends React.Component {
      */
     public attlocMvpMat?: WebGLUniformLocation;
 
+    public constructor (props: {}) {
+        super (props);
+        this._drawFrameFuncList.push(
+            this.DrawFrameLeft.bind(this),
+            this.DrawFrameRight.bind(this),
+            this.DrawFrameBottom.bind(this),
+            this.DrawFrameTop.bind(this)
+        );
+    }
+
     public override componentDidMount () {
         this.componentDidUpdate();
     }
@@ -89,6 +99,11 @@ class Component extends React.Component {
             0
         );
         this.DrawBgGrid();
+        this.shapeNumberData.length = 0;
+        this.shapeNumberData.push(
+            0, 1, 2,
+            0, 2, 3
+        );
         this.DrawTouch();
         this.DrawBlock();
         this.DrawLight();
@@ -135,13 +150,13 @@ class Component extends React.Component {
         for (let horIndex = 0; horIndex < horPosArray.length; horIndex++) {
             let x = horPosArray[horIndex];
             this.vertexNumberData.push(
-                x, verBottom, config.bgGridZ, config.gridColor.r, config.gridColor.g, config.gridColor.b,
-                x, verTop, config.bgGridZ, config.gridColor.r, config.gridColor.g, config.gridColor.b
+                x, verBottom, config.bgGridZ, config.gridColor[0], config.gridColor[1], config.gridColor[2],
+                x, verTop, config.bgGridZ, config.gridColor[0], config.gridColor[1], config.gridColor[2]
             );
             if (x == 0) {
                 this.vertexNumberData.push(
-                    x, 0, config.xyZ, config.xColor.r, config.xColor.g, config.xColor.b,
-                    x, verTop, config.xyZ, config.xColor.r, config.xColor.g, config.xColor.b
+                    x, 0, config.xyZ, config.xColor[0], config.xColor[1], config.xColor[2],
+                    x, verTop, config.xyZ, config.xColor[0], config.xColor[1], config.xColor[2]
                 );
             };
         };
@@ -150,13 +165,13 @@ class Component extends React.Component {
         for (let verIndex = 0; verIndex < verPosArray.length; verIndex++) {
             let y = verPosArray[verIndex];
             this.vertexNumberData.push(
-                horLeft, y, config.bgGridZ, config.gridColor.r, config.gridColor.g, config.gridColor.b,
-                horRight, y, config.bgGridZ, config.gridColor.r, config.gridColor.g, config.gridColor.b
+                horLeft, y, config.bgGridZ, config.gridColor[0], config.gridColor[1], config.gridColor[2],
+                horRight, y, config.bgGridZ, config.gridColor[0], config.gridColor[1], config.gridColor[2]
             );
             if (y == 0) {
                 this.vertexNumberData.push(
-                    0, y, config.xyZ, config.yColor.r, config.yColor.g, config.yColor.b,
-                    horRight, y, config.xyZ, config.yColor.r, config.yColor.g, config.yColor.b
+                    0, y, config.xyZ, config.yColor[0], config.yColor[1], config.yColor[2],
+                    horRight, y, config.xyZ, config.yColor[0], config.yColor[1], config.yColor[2]
                 );
             };
         };
@@ -179,43 +194,25 @@ class Component extends React.Component {
      * 绘制当前交互的格子
      */
     DrawTouch () {
-        this.vertexNumberData.length = 0;
-        let left = root.store.getState().focusGridX * config.rectSize;
-        let right = (root.store.getState().focusGridX + 1) * config.rectSize;
-        let bottom = root.store.getState().focusGridY * config.rectSize;
-        let top = (root.store.getState().focusGridY + 1) * config.rectSize;
         let colorObj = root.store.getState().isPressed ? config.focusFramePressColor : config.focusFrameReleaseColor;
-        this.vertexNumberData.push(
-            left, bottom, config.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
-            right, bottom, config.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
-            right, top, config.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
-            left, top, config.focusFrameZ, colorObj.r, colorObj.g, colorObj.b,
-        );
-
-        this.shapeNumberData.length = 0;
-        this.shapeNumberData.push(
-            0, 1,
-            1, 2,
-            2, 3,
-            3, 0
-        );
-
-        this.DrawByElementData(
-            this.vertexNumberData,
-            this.shapeNumberData,
-            WebGLRenderingContext.LINES
+        this.DrawFrame(
+            root.store.getState().focusGridX,
+            root.store.getState().focusGridY,
+            config.focusFrameBorderSize,
+            config.focusFrameZ,
+            colorObj
         );
     }
+
+    /**
+     * 需要用到的绘制函数
+     */
+    _drawFuncList: Array<(gridX: number, gridY: number, size: number, z: number, color: number[]) => void> = [];
 
     /**
      * 绘制方块
      */
     DrawBlock () {
-        this.shapeNumberData.length = 0;
-        this.shapeNumberData.push(
-            0, 1, 2,
-            0, 2, 3
-        );
         // 都有哪些格子是已占用了的，记录一下
         let locRec: Map<number, Map<number, boolean>> = new Map();
         // 绘制背景颜色
@@ -225,21 +222,12 @@ class Component extends React.Component {
             for (let yI = 0; yI < xRec.yCollect.length; yI++) {
                 let yRec = xRec.yCollect[yI];
                 locRec.get(xRec.gridX).set(yRec.gridY, true);
-                let left = xRec.gridX * config.rectSize;
-                let right = (xRec.gridX + 1) * config.rectSize;
-                let bottom = yRec.gridY * config.rectSize;
-                let top = (yRec.gridY + 1) * config.rectSize;
-                this.vertexNumberData.length = 0;
-                this.vertexNumberData.push(
-                    right, top, config.blockBgZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
-                    left, top, config.blockBgZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
-                    left, bottom, config.blockBgZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
-                    right, bottom, config.blockBgZ, config.blockBgColor.r, config.blockBgColor.g, config.blockBgColor.b,
-                );
-                this.DrawByElementData(
-                    this.vertexNumberData,
-                    this.shapeNumberData,
-                    WebGLRenderingContext.TRIANGLES
+                this.DrawRectFill(
+                    xRec.gridX,
+                    yRec.gridY,
+                    config.blockBgZ,
+                    config.blockBgColor,
+                    0
                 );
             };
         };
@@ -258,130 +246,49 @@ class Component extends React.Component {
             let xRec = root.store.getState().blockXRec[xI];
             for (let yI = 0; yI < xRec.yCollect.length; yI++) {
                 let yRec = xRec.yCollect[yI];
-                let left = xRec.gridX * config.rectSize;
-                let right = (xRec.gridX + 1) * config.rectSize;
-                let bottom = yRec.gridY * config.rectSize;
-                let top = (yRec.gridY + 1) * config.rectSize;
+                this._drawFuncList.length = 0;
                 // 左侧无格子
                 if (!getExist(xRec.gridX - 1, yRec.gridY)) {
-                    this.vertexNumberData.length = 0;
-                    this.vertexNumberData.push(
-                        left + config.blockPadding, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left + config.blockPadding, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                    );
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                    this._drawFuncList.push(this.DrawFrameLeft.bind(this));
                 };
                 // 右侧无格子
                 if (!getExist(xRec.gridX + 1, yRec.gridY)) {
-                    this.vertexNumberData.length = 0;
-                    this.vertexNumberData.push(
-                        right, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right - config.blockPadding, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right - config.blockPadding, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                    );
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                    this._drawFuncList.push(this.DrawFrameRight.bind(this));
                 };
                 // 下方无格子
                 if (!getExist(xRec.gridX, yRec.gridY - 1)) {
-                    this.vertexNumberData.length = 0;
-                    this.vertexNumberData.push(
-                        right, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                    );
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                    this._drawFuncList.push(this.DrawFrameBottom.bind(this));
                 };
                 // 上侧无格子
                 if (!getExist(xRec.gridX, yRec.gridY + 1)) {
-                    this.vertexNumberData.length = 0;
-                    this.vertexNumberData.push(
-                        right, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                    );
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                    this._drawFuncList.push(this.DrawFrameTop.bind(this));
                 };
                 // 右上侧无格子
                 if (!getExist(xRec.gridX + 1, yRec.gridY + 1)) {
-                    this.vertexNumberData.length = 0;
-                    this.vertexNumberData.push(
-                        right, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right - config.blockPadding, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right - config.blockPadding, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                    );
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                    this._drawFuncList.push(this.DrawRectRightTop.bind(this));
                 };
                 // 左上侧无格子
                 if (!getExist(xRec.gridX - 1, yRec.gridY + 1)) {
-                    this.vertexNumberData.length = 0;
-                    this.vertexNumberData.push(
-                        left + config.blockPadding, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, top, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left + config.blockPadding, top - config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                    );
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                    this._drawFuncList.push(this.DrawRectLeftTop.bind(this));
                 };
                 // 左下侧无格子
                 if (!getExist(xRec.gridX - 1, yRec.gridY - 1)) {
-                    this.vertexNumberData.length = 0;
-                    this.vertexNumberData.push(
-                        left + config.blockPadding, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        left + config.blockPadding, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                    );
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                    this._drawFuncList.push(this.DrawRectBottomLeft.bind(this));
                 };
                 // 右下侧无格子
                 if (!getExist(xRec.gridX + 1, yRec.gridY - 1)) {
-                    this.vertexNumberData.length = 0;
-                    this.vertexNumberData.push(
-                        right, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right - config.blockPadding, bottom + config.blockPadding, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right - config.blockPadding, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                        right, bottom, config.blockPaddingZ, config.blockPaddingColor.r, config.blockPaddingColor.g, config.blockPaddingColor.b,
-                    );
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                    this._drawFuncList.push(this.DrawRectBottomRight.bind(this));
                 };
+                // 进行具体绘制
+                this._drawFuncList.forEach(( func ) => {
+                    func(
+                        xRec.gridX,
+                        yRec.gridY,
+                        config.blockPadding,
+                        config.blockPaddingZ,
+                        config.blockPaddingColor
+                    );
+                });
             };
         };
     }
@@ -396,43 +303,356 @@ class Component extends React.Component {
             for (let yI = 0; yI < xRec.yCollect.length; yI++) {
                 let yRec = xRec.yCollect[yI];
 
-                let centerX = (xRec.gridX + 0.5) * config.rectSize;
-                let centerY = (yRec.gridY + 0.5) * config.rectSize;
-                let left = centerX - config.lightSize / 2;
-                let right = centerX + config.lightSize / 2;
-                let bottom = centerY - config.lightSize / 2;
-                let top = centerY + config.lightSize / 2;
-                this.vertexNumberData.length = 0;
-                this.vertexNumberData.push(
-                    right, top, config.lightBgZ, config.lightPaddingColor.r, config.lightPaddingColor.g, config.lightPaddingColor.b,
-                    left, top, config.lightBgZ, config.lightPaddingColor.r, config.lightPaddingColor.g, config.lightPaddingColor.b,
-                    left, bottom, config.lightBgZ, config.lightPaddingColor.r, config.lightPaddingColor.g, config.lightPaddingColor.b,
-                    right, bottom, config.lightBgZ, config.lightPaddingColor.r, config.lightPaddingColor.g, config.lightPaddingColor.b,
-                );
-                this.DrawByElementData(
-                    this.vertexNumberData,
-                    this.shapeNumberData,
-                    WebGLRenderingContext.TRIANGLES
+                this.DrawRectFill(
+                    xRec.gridX,
+                    yRec.gridY,
+                    config.lightBgZ,
+                    config.lightPaddingColor,
+                    (config.rectSize - config.lightSize) / 2
                 );
 
-                left += config.lightPadding;
-                right -= config.lightPadding;
-                bottom += config.lightPadding;
-                top -= config.lightPadding;
-                this.vertexNumberData.length = 0;
-                this.vertexNumberData.push(
-                    right, top, config.lightBodyZ, config.lightBgColor.r, config.lightBgColor.g, config.lightBgColor.b,
-                    left, top, config.lightBodyZ, config.lightBgColor.r, config.lightBgColor.g, config.lightBgColor.b,
-                    left, bottom, config.lightBodyZ, config.lightBgColor.r, config.lightBgColor.g, config.lightBgColor.b,
-                    right, bottom, config.lightBodyZ, config.lightBgColor.r, config.lightBgColor.g, config.lightBgColor.b,
-                );
-                this.DrawByElementData(
-                    this.vertexNumberData,
-                    this.shapeNumberData,
-                    WebGLRenderingContext.TRIANGLES
+                this.DrawRectFill(
+                    xRec.gridX,
+                    yRec.gridY,
+                    config.lightBodyZ,
+                    config.lightBgColor,
+                    (config.rectSize - config.lightSize) / 2 + config.lightPadding
                 );
             };
         };
+    }
+    /**
+     * 需要用到的绘制函数
+     */
+     _drawFrameFuncList: Array<(gridX: number, gridY: number, size: number, z: number, color: number[]) => void> = [];
+
+    /**
+     * 绘制选框
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawFrame (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        // 进行具体绘制
+        this._drawFrameFuncList.forEach(( func ) => {
+            func(
+                gridX,
+                gridY,
+                size,
+                z,
+                color
+            );
+        });
+    }
+
+    /**
+     * 绘制框的左边
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawFrameLeft (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    ) 
+    {
+        let left = gridX * config.rectSize;
+        let bottom = gridY * config.rectSize;
+        let top = (gridY + 1) * config.rectSize;
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            left + size, top, z, color[0], color[1], color[2],
+            left, top, z, color[0], color[1], color[2],
+            left, bottom, z, color[0], color[1], color[2],
+            left + size, bottom, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
+    }
+
+    /**
+     * 绘制框的右边
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawFrameRight (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        let right = (gridX + 1) * config.rectSize;
+        let bottom = gridY * config.rectSize;
+        let top = (gridY + 1) * config.rectSize;
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            right, top, z, color[0], color[1], color[2],
+            right - size, top, z, color[0], color[1], color[2],
+            right - size, bottom, z, color[0], color[1], color[2],
+            right, bottom, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
+    }
+
+    /**
+     * 绘制框的下边
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawFrameBottom (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        let left = gridX * config.rectSize;
+        let right = (gridX + 1) * config.rectSize;
+        let bottom = gridY * config.rectSize;
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            right, bottom + size, z, color[0], color[1], color[2],
+            left, bottom + size, z, color[0], color[1], color[2],
+            left, bottom, z, color[0], color[1], color[2],
+            right, bottom, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
+    }
+
+    /**
+     * 绘制框的上边
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawFrameTop (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        let left = gridX * config.rectSize;
+        let right = (gridX + 1) * config.rectSize;
+        let top = (gridY + 1) * config.rectSize;
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            right, top, z, color[0], color[1], color[2],
+            left, top, z, color[0], color[1], color[2],
+            left, top - size, z, color[0], color[1], color[2],
+            right, top - size, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
+    }
+
+    /**
+     * 绘制右上补角
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawRectRightTop (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        let right = (gridX + 1) * config.rectSize;
+        let top = (gridY + 1) * config.rectSize;
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            right, top, z, color[0], color[1], color[2],
+            right - size, top, z, color[0], color[1], color[2],
+            right - size, top - size, z, color[0], color[1], color[2],
+            right, top - size, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
+    }
+
+    /**
+     * 绘制左上补角
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawRectLeftTop (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        let left = gridX * config.rectSize;
+        let top = (gridY + 1) * config.rectSize;
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            left + size, top, z, color[0], color[1], color[2],
+            left, top, z, color[0], color[1], color[2],
+            left, top - size, z, color[0], color[1], color[2],
+            left + size, top - size, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
+    }
+
+    /**
+     * 绘制左下补角
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawRectBottomLeft (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        let left = gridX * config.rectSize;
+        let bottom = gridY * config.rectSize;
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            left + size, bottom + size, z, color[0], color[1], color[2],
+            left, bottom + size, z, color[0], color[1], color[2],
+            left, bottom, z, color[0], color[1], color[2],
+            left + size, bottom, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
+    }
+
+    /**
+     * 绘制右下补角
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawRectBottomRight (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        let right = (gridX + 1) * config.rectSize;
+        let bottom = gridY * config.rectSize;
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            right, bottom + size, z, color[0], color[1], color[2],
+            right - size, bottom + size, z, color[0], color[1], color[2],
+            right - size, bottom, z, color[0], color[1], color[2],
+            right, bottom, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
+    }
+
+    /**
+     * 绘制实心矩形
+     * @param gridX 
+     * @param gridY 
+     * @param z 
+     * @param r 
+     * @param g 
+     * @param b 
+     */
+    DrawRectFill (
+        gridX: number,
+        gridY: number,
+        z: number,
+        color: number[],
+        padding: number
+    ) 
+    {
+        let left = gridX * config.rectSize;
+        let right = (gridX + 1) * config.rectSize;
+        let bottom = gridY * config.rectSize;
+        let top = (gridY + 1) * config.rectSize;
+
+        left += padding;
+        right -= padding;
+        bottom += padding;
+        top -= padding;
+
+        this.vertexNumberData.length = 0;
+        this.vertexNumberData.push(
+            right, top, z, color[0], color[1], color[2],
+            left, top, z, color[0], color[1], color[2],
+            left, bottom, z, color[0], color[1], color[2],
+            right, bottom, z, color[0], color[1], color[2],
+        );
+        this.DrawByElementData(
+            this.vertexNumberData,
+            this.shapeNumberData,
+            WebGLRenderingContext.TRIANGLES
+        );
     }
 
     /**
@@ -519,10 +739,10 @@ class Component extends React.Component {
                     this.attlocColor = this.gl.getAttribLocation(this.program, colorVertex.attNameColor);
                     this.attlocMvpMat = this.gl.getUniformLocation(this.program, colorVertex.attNameMvpMat);
                     this.gl.clearColor(
-                        config.bgColor.r,
-                        config.bgColor.g,
-                        config.bgColor.b,
-                        config.bgColor.a
+                        config.bgColor[0],
+                        config.bgColor[1],
+                        config.bgColor[2],
+                        config.bgColor[3]
                     );
                     this.gl.enable(this.gl.DEPTH_TEST);
                 }}
