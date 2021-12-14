@@ -1,4 +1,5 @@
 import BlockGridXRec from "./BlockGridXRec";
+import LightGridXRec from "./LightGridXRec";
 
 /**
  * 全局数据结构
@@ -50,6 +51,11 @@ export default class MainState {
     blockXRec: BlockGridXRec[];
 
     /**
+     * 光源记录
+     */
+    lightXRec: LightGridXRec[];
+
+    /**
      * 默认值
      */
     public static def: MainState = {
@@ -61,6 +67,7 @@ export default class MainState {
         focusGridX: 0,
         focusGridY: 0,
         isPressed: false,
-        blockXRec: []
+        blockXRec: [],
+        lightXRec: []
     };
 };

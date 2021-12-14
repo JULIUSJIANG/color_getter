@@ -7,6 +7,8 @@ import TouchStatusDragScene from "./TouchStatusDragScene";
 import TouchStatusIdle from "./TouchStatusIdle";
 import TouchStatusAddBlock from "./TouchStatusAddBlock";
 import TouchStatusRemBlock from "./TouchStatusRemBlock";
+import TouchStatusAddLight from "./TouchStatusAddLight";
+import TouchStatusRemLight from "./TouchStatusRemLight";
 
 /**
  * 交互状态机
@@ -140,12 +142,22 @@ export default class TouchMachine {
      * 状态-移除方块
      */
     public statusRemBlock: TouchStatusRemBlock;
+    /**
+     * 状态-添加光源
+     */
+    public statusAddLight: TouchStatusAddLight;
+    /**
+     * 状态-移除光源
+     */
+    public statusRemLight: TouchStatusRemLight;
 
     public constructor () {
         this.statusIdle = new TouchStatusIdle(this);
         this.statusDragScene = new TouchStatusDragScene(this);
         this.statusAddBlock = new TouchStatusAddBlock(this);
         this.statusRemBlock = new TouchStatusRemBlock(this);
+        this.statusAddLight = new TouchStatusAddLight(this);
+        this.statusRemLight = new TouchStatusRemLight(this);
 
         // 默认为待机状态
         this.SetStatus(this.statusIdle);

@@ -91,6 +91,7 @@ class Component extends React.Component {
         this.DrawBgGrid();
         this.DrawTouch();
         this.DrawBlock();
+        this.DrawLight();
     }
 
     /**
@@ -385,6 +386,55 @@ class Component extends React.Component {
         };
     }
     
+    /**
+     * 绘制光源
+     */
+    DrawLight () {
+        // 绘制背景颜色
+        for (let xI = 0; xI < root.store.getState().lightXRec.length; xI++) {
+            let xRec = root.store.getState().lightXRec[xI];
+            for (let yI = 0; yI < xRec.yCollect.length; yI++) {
+                let yRec = xRec.yCollect[yI];
+
+                let centerX = (xRec.gridX + 0.5) * config.rectSize;
+                let centerY = (yRec.gridY + 0.5) * config.rectSize;
+                let left = centerX - config.lightSize / 2;
+                let right = centerX + config.lightSize / 2;
+                let bottom = centerY - config.lightSize / 2;
+                let top = centerY + config.lightSize / 2;
+                this.vertexNumberData.length = 0;
+                this.vertexNumberData.push(
+                    right, top, config.lightBgZ, config.lightPaddingColor.r, config.lightPaddingColor.g, config.lightPaddingColor.b,
+                    left, top, config.lightBgZ, config.lightPaddingColor.r, config.lightPaddingColor.g, config.lightPaddingColor.b,
+                    left, bottom, config.lightBgZ, config.lightPaddingColor.r, config.lightPaddingColor.g, config.lightPaddingColor.b,
+                    right, bottom, config.lightBgZ, config.lightPaddingColor.r, config.lightPaddingColor.g, config.lightPaddingColor.b,
+                );
+                this.DrawByElementData(
+                    this.vertexNumberData,
+                    this.shapeNumberData,
+                    WebGLRenderingContext.TRIANGLES
+                );
+
+                left += config.lightPadding;
+                right -= config.lightPadding;
+                bottom += config.lightPadding;
+                top -= config.lightPadding;
+                this.vertexNumberData.length = 0;
+                this.vertexNumberData.push(
+                    right, top, config.lightBodyZ, config.lightBgColor.r, config.lightBgColor.g, config.lightBgColor.b,
+                    left, top, config.lightBodyZ, config.lightBgColor.r, config.lightBgColor.g, config.lightBgColor.b,
+                    left, bottom, config.lightBodyZ, config.lightBgColor.r, config.lightBgColor.g, config.lightBgColor.b,
+                    right, bottom, config.lightBodyZ, config.lightBgColor.r, config.lightBgColor.g, config.lightBgColor.b,
+                );
+                this.DrawByElementData(
+                    this.vertexNumberData,
+                    this.shapeNumberData,
+                    WebGLRenderingContext.TRIANGLES
+                );
+            };
+        };
+    }
+
     /**
      * 顶点数据
      */

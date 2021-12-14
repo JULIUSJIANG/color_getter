@@ -1,9 +1,9 @@
 import BlockGridYRec from "./BlockGridYRec";
 
 /**
- * x 记录-方块
+ * x 记录-光源
  */
-export default interface BlockGridXRec {
+export default interface LightGridXRec {
     /**
      * x 位置
      */

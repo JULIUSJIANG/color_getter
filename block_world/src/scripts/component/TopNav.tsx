@@ -27,6 +27,14 @@ class Component extends React.Component {
                     {
                         label: `销毁方块`,
                         value: 2
+                    },
+                    {
+                        label: `放置光源`,
+                        value: 3
+                    },
+                    {
+                        label: `销毁光源`,
+                        value: 4
                     }
                 ]}
                 onChange={this.OnOpChanged.bind(this)}

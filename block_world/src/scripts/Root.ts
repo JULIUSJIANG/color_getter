@@ -227,7 +227,75 @@ namespace root {
                 version: version
             };
         }
-    )
+    );
+
+    /**
+     * 添加光源
+     */
+     export const reducerAddLight = new RootAction<number[]> (
+        (state, gridLoc) => {
+            let xRec = state.lightXRec.find((ele) => {
+                return ele.gridX == gridLoc[0];
+            });
+            // 确保记录存在
+            if (xRec == null) {
+                xRec = {
+                    gridX: gridLoc[0],
+                    yCollect: []
+                };
+                state.lightXRec.push(xRec);
+                state.lightXRec.sort(( recA, recB ) => {
+                    return recA.gridX - recB.gridX
+                });
+            };
+            let yRec = xRec.yCollect.find(( ele ) => {
+                return ele.gridY == gridLoc[1];
+            });
+            // 位置上本来就有东西，忽略该次操作
+            if (yRec != null) {
+                return state;
+            };
+            yRec = {
+                gridY: gridLoc[1]
+            };
+            xRec.yCollect.push(yRec);
+            xRec.yCollect.sort((eleA, eleB) => {
+                return eleA.gridY - eleB.gridY;
+            });
+            let version = state.version + 1;
+            return {
+                ...state,
+                version: version
+            };
+        }
+    );
+
+    /**
+     * 移除光源
+     */
+    export const reducerRemLight = new RootAction<number[]> (
+        (state, gridLoc) => {
+            let xRec = state.lightXRec.find((ele) => {
+                return ele.gridX == gridLoc[0];
+            });
+            if (xRec == null) {
+                return state;
+            };
+            let yRec = xRec.yCollect.find(( ele ) => {
+                return ele.gridY == gridLoc[1];
+            });
+            // 位置上本来就有东西，忽略该次操作
+            if (yRec == null) {
+                return state;
+            };
+            xRec.yCollect.splice(xRec.yCollect.indexOf(yRec), 1);
+            let version = state.version + 1;
+            return {
+                ...state,
+                version: version
+            };
+        }
+    );
 };
 
 // 读取本地存储的数据
