@@ -1,3 +1,5 @@
+import CuonMatrix4 from "./CuonMatrix4";
+import CuonVector3 from "./CuonVector3";
 import webglUtils from "./WebglUtils";
 
 namespace cuonUtils {
@@ -125,5 +127,6 @@ namespace cuonUtils {
     return gl as any;
   }
 };
+
 
 export default cuonUtils;

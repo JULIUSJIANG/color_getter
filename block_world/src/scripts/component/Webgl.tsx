@@ -4,10 +4,10 @@ import cuonUtils from "../../lib/webgl/CuonUtils";
 import config from "../Config";
 import colorFragment from "../shader/ColorFragment";
 import colorVertex from "../shader/ColorVertex";
-import TouchMachine from "../touchmachine/TouchMachine";
-import {Dispatch} from 'redux';
 import {connect} from 'react-redux';
 import root from "../Root";
+import CuonVector3 from "../../lib/webgl/CuonVector3";
+import LightAreaRec from "../struct/LightAreaRec";
 
 /**
  * 绘制-主内容
@@ -99,14 +99,10 @@ class Component extends React.Component {
             0
         );
         this.DrawBgGrid();
-        this.shapeNumberData.length = 0;
-        this.shapeNumberData.push(
-            0, 1, 2,
-            0, 2, 3
-        );
         this.DrawTouch();
         this.DrawBlock();
-        this.DrawLight();
+        this.DrawLightPoint();
+        this.DrawLightArea();
     }
 
     /**
@@ -118,6 +114,14 @@ class Component extends React.Component {
      * 用于连线的数据
      */
     shapeNumberData: number[] = [];
+
+    /**
+     * 形状-填充的矩形
+     */
+    shapeRectFill = [
+        0, 1, 2,
+        0, 2, 3
+    ];
 
     /**
      * 绘制背景格子
@@ -296,7 +300,7 @@ class Component extends React.Component {
     /**
      * 绘制光源
      */
-    DrawLight () {
+    DrawLightPoint () {
         // 绘制背景颜色
         for (let xI = 0; xI < root.store.getState().lightXRec.length; xI++) {
             let xRec = root.store.getState().lightXRec[xI];
@@ -321,6 +325,128 @@ class Component extends React.Component {
             };
         };
     }
+
+    _lightDataList: LightAreaRec[] = [];
+
+    /**
+     * 绘制光照范围
+     */
+    DrawLightArea () {
+        // 穷举所有光源
+        for (let lightXI = 0; lightXI < root.store.getState().lightXRec.length; lightXI++) {
+            let lightXRec = root.store.getState().lightXRec[lightXI];
+            for (let lightYI = 0; lightYI < lightXRec.yCollect.length; lightYI++) {
+                let lightYRec = lightXRec.yCollect[lightYI];
+
+                // 先清空记录
+                this._lightDataList.length = 0;
+
+                // 光源的中心位置
+                let blockCenterX = (lightXRec.gridX + 0.5) * config.rectSize;
+                let blockCenterY = (lightYRec.gridY + 0.5) * config.rectSize;
+
+                // 线段处理器
+                let lineAddition = (
+                    x1: number,
+                    y1: number,
+                    x2: number,
+                    y2: number
+                ) => {
+                    // 线段的正前方
+                    let forward = CuonVector3.CreateByXY(
+                        x2 - x1,
+                        y2 - y1
+                    );
+                    // 线段的正右方
+                    let right = forward.GetRight();
+                    // 点 1 到光源
+                    let pos1ToLight = CuonVector3.CreateByXY(
+                        blockCenterX - x1,
+                        blockCenterY - y1
+                    );
+                    // 取得点积
+                    let dot = CuonVector3.Dot(right, pos1ToLight);
+                    // 没有向着光源，忽略
+                    if (dot < 0) {
+                        return;
+                    };
+                    // 点 1
+                    let angle1 = Math.atan2(y1 - blockCenterY, x1 - blockCenterX) / Math.PI * 180;
+                    let distance1 = Math.sqrt((x1 - blockCenterX) ** 2 + (y1 - blockCenterY) ** 2);
+                    while (angle1 < 0) {
+                        angle1 += 360;
+                    };
+                    // 点 2
+                    let angle2 = Math.atan2(y2 - blockCenterY, x2 - blockCenterX) / Math.PI * 180;
+                    let distance2 = Math.sqrt((x2 - blockCenterX) ** 2 + (y2 - blockCenterY) ** 2)
+                    while (angle2 < 0) {
+                        angle2 += 360;
+                    };
+                    // 角度不够的话，说明差了 1 圈，那么补回来
+                    if (angle1 < angle2) {
+                        angle1 += 360;
+                    };
+                    // 生成范围记录
+                    let lightAreaRec: LightAreaRec = {
+                        pointFrom: {
+                            angle: angle2,
+                            distance: distance2
+                        },
+                        pointTo: {
+                            angle: angle1,
+                            distance: distance1
+                        }
+                    };
+                    // 记录起来
+                    this._lightDataList.push(lightAreaRec);
+                };
+
+                // 穷举所有方块
+                for (let blockXI = 0; blockXI < root.store.getState().blockXRec.length; blockXI++) {
+                    let blockXRec = root.store.getState().blockXRec[blockXI];
+                    for (let blockYI = 0; blockYI < blockXRec.yCollect.length; blockYI++) {
+                        let blockYRec = blockXRec.yCollect[blockYI];
+
+                        // 求得 4 个方位的边界
+                        let posLeft = blockXRec.gridX * config.rectSize;
+                        let posRight = (blockXRec.gridX + 1) * config.rectSize;
+                        let posBottom = blockYRec.gridY * config.rectSize;
+                        let posTop = (blockYRec.gridY + 1) * config.rectSize;
+
+                        // 左下->右下
+                        lineAddition(
+                            posLeft,
+                            posBottom,
+                            posRight,
+                            posBottom
+                        );
+                        // 右下->右上
+                        lineAddition(
+                            posRight,
+                            posBottom,
+                            posRight,
+                            posTop
+                        );
+                        // 右上->左上
+                        lineAddition(
+                            posRight,
+                            posTop,
+                            posLeft,
+                            posTop
+                        );
+                        // 左上->左下
+                        lineAddition(
+                            posLeft,
+                            posTop,
+                            posLeft,
+                            posBottom
+                        );
+                    };
+                };
+            };
+        };
+    }
+
     /**
      * 需要用到的绘制函数
      */
@@ -382,7 +508,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }
@@ -415,7 +541,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }
@@ -448,7 +574,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }
@@ -481,7 +607,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }
@@ -513,7 +639,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }
@@ -545,7 +671,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }
@@ -577,7 +703,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }
@@ -609,7 +735,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }
@@ -650,7 +776,7 @@ class Component extends React.Component {
         );
         this.DrawByElementData(
             this.vertexNumberData,
-            this.shapeNumberData,
+            this.shapeRectFill,
             WebGLRenderingContext.TRIANGLES
         );
     }

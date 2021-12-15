@@ -5,7 +5,7 @@ namespace config {
     /**
      * 本地存储的时候采用的 key
      */
-    export const storageKey = `data26`;
+    export const storageKey = `data27`;
 
     /**
      * 背景格子的深度
