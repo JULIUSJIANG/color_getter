@@ -124,6 +124,13 @@ class Component extends React.Component {
     ];
 
     /**
+     * 形状-填充的 3 角形
+     */
+    shapeTriangleFill = [
+        0, 1, 2
+    ];
+
+    /**
      * 绘制背景格子
      */
     DrawBgGrid () {
@@ -373,32 +380,61 @@ class Component extends React.Component {
                     // 点 1
                     let angle1 = Math.atan2(y1 - blockCenterY, x1 - blockCenterX) / Math.PI * 180;
                     let distance1 = Math.sqrt((x1 - blockCenterX) ** 2 + (y1 - blockCenterY) ** 2);
+                    // 确保都是正数
                     while (angle1 < 0) {
                         angle1 += 360;
                     };
                     // 点 2
                     let angle2 = Math.atan2(y2 - blockCenterY, x2 - blockCenterX) / Math.PI * 180;
-                    let distance2 = Math.sqrt((x2 - blockCenterX) ** 2 + (y2 - blockCenterY) ** 2)
+                    let distance2 = Math.sqrt((x2 - blockCenterX) ** 2 + (y2 - blockCenterY) ** 2);
+                    // 确保都是正数
                     while (angle2 < 0) {
                         angle2 += 360;
                     };
-                    // 角度不够的话，说明差了 1 圈，那么补回来
+                    // 更正大小
                     if (angle1 < angle2) {
                         angle1 += 360;
                     };
-                    // 生成范围记录
-                    let lightAreaRec: LightAreaRec = {
-                        pointFrom: {
-                            angle: angle2,
-                            distance: distance2
-                        },
-                        pointTo: {
-                            angle: angle1,
-                            distance: distance1
-                        }
+                    // 如果过了 360，分成俩个部分
+                    if (360 < angle1) {
+                        // 360 度对应的距离
+                        let distance360 = (360 - angle2) / (angle1 - angle2) * (distance1 - distance2) + distance2;
+                        // 记录起来-小于 360 的部分
+                        this._lightDataList.push({
+                            pointFrom: {
+                                angle: angle2,
+                                distance: distance2
+                            },
+                            pointTo: {
+                                angle: 360,
+                                distance: distance360
+                            }
+                        });
+                        // 记录起来-大于 360 的部分
+                        this._lightDataList.push({
+                            pointFrom: {
+                                angle: 0,
+                                distance: distance360
+                            },
+                            pointTo: {
+                                angle: angle1 - 360,
+                                distance: distance1
+                            }
+                        });
+                    }
+                    else {
+                        // 记录起来
+                        this._lightDataList.push({
+                            pointFrom: {
+                                angle: angle2,
+                                distance: distance2
+                            },
+                            pointTo: {
+                                angle: angle1,
+                                distance: distance1
+                            }
+                        });
                     };
-                    // 记录起来
-                    this._lightDataList.push(lightAreaRec);
                 };
 
                 // 穷举所有方块
@@ -442,6 +478,100 @@ class Component extends React.Component {
                             posBottom
                         );
                     };
+                };
+
+                lineAddition(
+                    blockCenterX + config.lightDistance,
+                    blockCenterY + config.lightDistance,
+                    blockCenterX + config.lightDistance,
+                    blockCenterY - config.lightDistance
+                );
+                lineAddition(
+                    blockCenterX - config.lightDistance,
+                    blockCenterY + config.lightDistance,
+                    blockCenterX + config.lightDistance,
+                    blockCenterY + config.lightDistance
+                );
+                lineAddition(
+                    blockCenterX - config.lightDistance,
+                    blockCenterY - config.lightDistance,
+                    blockCenterX - config.lightDistance,
+                    blockCenterY + config.lightDistance
+                );
+                lineAddition(
+                    blockCenterX + config.lightDistance,
+                    blockCenterY - config.lightDistance,
+                    blockCenterX - config.lightDistance,
+                    blockCenterY - config.lightDistance
+                );
+                console.log(JSON.stringify(this._lightDataList, null, 1));
+                // 按距离进行排序
+                this._lightDataList.sort(( areaA, areaB ) => {
+                    return (areaA.pointFrom.distance + areaA.pointTo.distance) - (areaB.pointFrom.distance + areaB.pointTo.distance);
+                });
+                // 每个范围对后续的范围进行裁切
+                for (let i = 0; i < this._lightDataList.length; i++) {
+                    let areaNearBy = this._lightDataList[i];
+                    for (let j = i + 1; j < this._lightDataList.length; j++) {
+                        let areaElse = this._lightDataList[j];
+                        // 没有交集的话，忽略掉
+                        if (areaElse.pointTo.angle <= areaNearBy.pointFrom.angle) {
+                            continue;
+                        };
+                        if (areaNearBy.pointTo.angle <= areaElse.pointFrom.angle) {
+                            continue;
+                        };
+
+                        // 去掉左边
+                        if (areaElse.pointFrom.angle < areaNearBy.pointTo.angle && areaNearBy.pointTo.angle < areaElse.pointTo.angle) {
+                            let toDistance = (areaNearBy.pointTo.angle - areaElse.pointFrom.angle) / (areaElse.pointTo.angle -  areaElse.pointFrom.angle) * (areaElse.pointTo.distance - areaElse.pointFrom.distance) + areaElse.pointFrom.distance;
+                            areaElse.pointFrom.angle = areaNearBy.pointTo.angle;
+                            areaElse.pointFrom.distance = toDistance;
+                        };
+                        // 去掉右边
+                        if (areaElse.pointFrom.angle < areaNearBy.pointFrom.angle && areaNearBy.pointFrom.angle < areaElse.pointTo.angle) {
+                            let fromDistance = (areaNearBy.pointFrom.angle - areaElse.pointFrom.angle) / (areaElse.pointTo.angle -  areaElse.pointFrom.angle) * (areaElse.pointTo.distance - areaElse.pointFrom.distance) + areaElse.pointFrom.distance;
+                            areaElse.pointTo.angle = areaNearBy.pointFrom.angle;
+                            areaElse.pointTo.distance = fromDistance;
+                        };
+                    };
+                };
+                // 对残留的每个区域进行 3 角形绘制
+                for (let areaI = 0; areaI < this._lightDataList.length; areaI++) {
+                    let currArea = this._lightDataList[areaI];
+                    // 忽略掉非法数据
+                    if (currArea.pointTo.angle <= currArea.pointFrom.angle) {
+                        continue;
+                    };
+                    this.vertexNumberData.length = 0;
+                    this.vertexNumberData.push(
+                        Math.cos(currArea.pointFrom.angle / 180 * Math.PI) * currArea.pointFrom.distance + blockCenterX, 
+                        Math.sin(currArea.pointFrom.angle / 180 * Math.PI) * currArea.pointFrom.distance + blockCenterY, 
+                        config.lightAreaZ,
+                        config.lightAreaColor[0],
+                        config.lightAreaColor[1],
+                        config.lightAreaColor[2],
+
+                        Math.cos(currArea.pointTo.angle / 180 * Math.PI) * currArea.pointTo.distance + blockCenterX, 
+                        Math.sin(currArea.pointTo.angle / 180 * Math.PI) * currArea.pointTo.distance + blockCenterY, 
+                        config.lightAreaZ,
+                        config.lightAreaColor[0],
+                        config.lightAreaColor[1],
+                        config.lightAreaColor[2],
+
+                        blockCenterX,
+                        blockCenterY,
+                        config.lightAreaZ,
+                        config.lightAreaColor[0],
+                        config.lightAreaColor[1],
+                        config.lightAreaColor[2]
+                    );
+                    // 逐个地把 3 角形给绘制出来
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeTriangleFill,
+                        WebGLRenderingContext.TRIANGLES
+                    );
                 };
             };
         };

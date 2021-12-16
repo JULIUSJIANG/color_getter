@@ -26,16 +26,21 @@ namespace config {
      * 方块边缘的深度
      */
     export const blockPaddingZ = 0.01;
+    
+    /**
+     * 光源区域的深度
+     */
+    export const lightAreaZ = 0.02;
 
     /**
      * 光源背景的深度
      */
-    export const lightBgZ = 0.02;
+    export const lightBgZ = 0.03;
 
     /**
      * 光源身体的主体的深度
      */
-    export const lightBodyZ = 0.03;
+    export const lightBodyZ = 0.04;
 
     /**
      * 聚焦框的深度
@@ -66,6 +71,11 @@ namespace config {
      * 光源边缘厚度
      */
     export const lightPadding = 5;
+    
+    /**
+     * 光照距离
+     */
+     export const lightDistance = 300;
 
     /**
      * 背景颜色
@@ -156,6 +166,15 @@ namespace config {
         0,
         0,
         0
+    ];
+
+    /**
+     * 光源边缘颜色
+     */
+    export const lightAreaColor = [
+        1,
+        0,
+        1
     ];
 };
 
