@@ -398,7 +398,13 @@ class Component extends React.Component {
                     // 如果过了 360，分成俩个部分
                     if (360 < angle1) {
                         // 360 度对应的距离
-                        let distance360 = (360 - angle2) / (angle1 - angle2) * (distance1 - distance2) + distance2;
+                        let distance360 = this.GetDistance(
+                            angle1,
+                            distance1,
+                            angle2,
+                            distance2,
+                            360
+                        );
                         // 记录起来-小于 360 的部分
                         this._lightDataList.push({
                             pointFrom: {
@@ -524,15 +530,27 @@ class Component extends React.Component {
 
                         // 去掉左边
                         if (areaElse.pointFrom.angle < areaNearBy.pointTo.angle && areaNearBy.pointTo.angle < areaElse.pointTo.angle) {
-                            let toDistance = (areaNearBy.pointTo.angle - areaElse.pointFrom.angle) / (areaElse.pointTo.angle -  areaElse.pointFrom.angle) * (areaElse.pointTo.distance - areaElse.pointFrom.distance) + areaElse.pointFrom.distance;
+                            let distance = this.GetDistance(
+                                areaElse.pointFrom.angle,
+                                areaElse.pointFrom.distance,
+                                areaElse.pointTo.angle,
+                                areaElse.pointTo.distance,
+                                areaNearBy.pointTo.angle
+                            );
                             areaElse.pointFrom.angle = areaNearBy.pointTo.angle;
-                            areaElse.pointFrom.distance = toDistance;
+                            areaElse.pointFrom.distance = distance;
                         };
                         // 去掉右边
                         if (areaElse.pointFrom.angle < areaNearBy.pointFrom.angle && areaNearBy.pointFrom.angle < areaElse.pointTo.angle) {
-                            let fromDistance = (areaNearBy.pointFrom.angle - areaElse.pointFrom.angle) / (areaElse.pointTo.angle -  areaElse.pointFrom.angle) * (areaElse.pointTo.distance - areaElse.pointFrom.distance) + areaElse.pointFrom.distance;
+                            let distance = this.GetDistance(
+                                areaElse.pointFrom.angle,
+                                areaElse.pointFrom.distance,
+                                areaElse.pointTo.angle,
+                                areaElse.pointTo.distance,
+                                areaNearBy.pointFrom.angle
+                            );
                             areaElse.pointTo.angle = areaNearBy.pointFrom.angle;
-                            areaElse.pointTo.distance = fromDistance;
+                            areaElse.pointTo.distance = distance;
                         };
                     };
                 };
@@ -575,6 +593,36 @@ class Component extends React.Component {
                 };
             };
         };
+    }
+
+    /**
+     * 取得射线 angle 与点 1、2 连线的交点距离
+     * @param a1 
+     * @param d1 
+     * @param a2 
+     * @param d2 
+     * @param angle 
+     * @returns 
+     */
+    GetDistance (
+        a1: number,
+        d1: number,
+        a2: number,
+        d2: number,
+        angle: number
+    )
+    {
+        a1 = a1 / 180 * Math.PI;
+        a2 = a2 / 180 * Math.PI;
+        angle = angle / 180 * Math.PI;
+        let p1 = [Math.cos(a1) * d1, Math.sin(a1) * d1];
+        let p2 = [Math.cos(a2) * d2, Math.sin(a2) * d2];
+        let k = (p2[1] - p1[1]) / (p2[0] - p1[0]);
+        let b = p2[1] - k * p2[0];
+        let tanAngle = Math.tan(angle);
+        let x = b / (tanAngle - k);
+        let y = k * x + b;
+        return Math.sqrt(x**2 + y**2);
     }
 
     /**
