@@ -8,6 +8,7 @@ import {connect} from 'react-redux';
 import root from "../Root";
 import CuonVector3 from "../../lib/webgl/CuonVector3";
 import LightAreaRec from "../struct/LightAreaRec";
+import CuonVector4 from "../../lib/webgl/CuonVector4";
 
 /**
  * 绘制-主内容
@@ -486,31 +487,36 @@ class Component extends React.Component {
                     };
                 };
 
-                lineAddition(
-                    blockCenterX + config.lightDistance,
-                    blockCenterY + config.lightDistance,
-                    blockCenterX + config.lightDistance,
-                    blockCenterY - config.lightDistance
-                );
-                lineAddition(
-                    blockCenterX - config.lightDistance,
-                    blockCenterY + config.lightDistance,
-                    blockCenterX + config.lightDistance,
-                    blockCenterY + config.lightDistance
-                );
-                lineAddition(
-                    blockCenterX - config.lightDistance,
-                    blockCenterY - config.lightDistance,
-                    blockCenterX - config.lightDistance,
-                    blockCenterY + config.lightDistance
-                );
-                lineAddition(
-                    blockCenterX + config.lightDistance,
-                    blockCenterY - config.lightDistance,
-                    blockCenterX - config.lightDistance,
-                    blockCenterY - config.lightDistance
-                );
-                console.log(JSON.stringify(this._lightDataList, null, 1));
+                // 周长
+                let cycleLen = 2 * Math.PI * config.lightDistance;
+                // 单元数量
+                let unitCount = Math.ceil(cycleLen / config.rectSize);
+                // 每个单元长度
+                let unitLen = cycleLen / unitCount;
+                // 每个单元角度
+                let unitAngle = 360 / unitCount;
+                // 当前方向向量
+                let vec = new CuonVector3();
+                vec.elements[1] = unitLen;
+                // 初始化旋转矩阵
+                let rotate = new CuonMatrix4();
+                rotate.setRotate(unitAngle, 0, 0, 1);
+                // 起始位置
+                let currPos = [config.lightDistance, 0];
+                for (let i = 0; i < unitLen; i++) {
+                    // 当前末端
+                    let tempPos = [currPos[0] + vec.elements[0], currPos[1] + vec.elements[1]];
+                    // 角度继续偏转
+                    vec = rotate.multiplyVector3(vec);
+                    lineAddition(
+                        tempPos[0],
+                        tempPos[1],
+                        currPos[0],
+                        currPos[1]
+                    )
+                    // 更新末端
+                    currPos = tempPos;
+                };
                 // 按距离进行排序
                 this._lightDataList.sort(( areaA, areaB ) => {
                     return (areaA.pointFrom.distance + areaA.pointTo.distance) - (areaB.pointFrom.distance + areaB.pointTo.distance);
@@ -520,6 +526,12 @@ class Component extends React.Component {
                     let areaNearBy = this._lightDataList[i];
                     for (let j = i + 1; j < this._lightDataList.length; j++) {
                         let areaElse = this._lightDataList[j];
+                        // 完全遮挡的话，移除
+                        if (areaNearBy.pointFrom.angle <= areaElse.pointFrom.angle && areaElse.pointTo.angle <= areaNearBy.pointTo.angle) {
+                            this._lightDataList.splice(j, 1);
+                            j--;
+                            continue;
+                        };
                         // 没有交集的话，忽略掉
                         if (areaElse.pointTo.angle <= areaNearBy.pointFrom.angle) {
                             continue;
@@ -529,7 +541,7 @@ class Component extends React.Component {
                         };
 
                         // 去掉左边
-                        if (areaElse.pointFrom.angle < areaNearBy.pointTo.angle && areaNearBy.pointTo.angle < areaElse.pointTo.angle) {
+                        if (areaElse.pointFrom.angle <= areaNearBy.pointTo.angle && areaNearBy.pointTo.angle <= areaElse.pointTo.angle) {
                             let distance = this.GetDistance(
                                 areaElse.pointFrom.angle,
                                 areaElse.pointFrom.distance,
@@ -541,7 +553,7 @@ class Component extends React.Component {
                             areaElse.pointFrom.distance = distance;
                         };
                         // 去掉右边
-                        if (areaElse.pointFrom.angle < areaNearBy.pointFrom.angle && areaNearBy.pointFrom.angle < areaElse.pointTo.angle) {
+                        if (areaElse.pointFrom.angle <= areaNearBy.pointFrom.angle && areaNearBy.pointFrom.angle <= areaElse.pointTo.angle) {
                             let distance = this.GetDistance(
                                 areaElse.pointFrom.angle,
                                 areaElse.pointFrom.distance,
@@ -617,12 +629,17 @@ class Component extends React.Component {
         angle = angle / 180 * Math.PI;
         let p1 = [Math.cos(a1) * d1, Math.sin(a1) * d1];
         let p2 = [Math.cos(a2) * d2, Math.sin(a2) * d2];
-        let k = (p2[1] - p1[1]) / (p2[0] - p1[0]);
-        let b = p2[1] - k * p2[0];
-        let tanAngle = Math.tan(angle);
-        let x = b / (tanAngle - k);
-        let y = k * x + b;
-        return Math.sqrt(x**2 + y**2);
+
+        let p12 = new CuonVector3();
+        p12.elements[0] = p2[0] - p1[0];
+        p12.elements[1] = p2[1] - p1[1];
+
+        let right = p12.GetRight();
+        let cosAngle = Math.cos(angle);
+        let sinAngle = Math.sin(angle);
+        // (cosAngle * d - p2[0]) * right.elements[0] + (sinAngle * d - p2[1]) * right.elements[1] = 0
+        // d * cosAngle * right.elements[0] - p2[0] * right.elements[0] + d * sinAngle * right.elements[1] - p2[1] * right.elements[1] = 0;
+        return (p2[0] * right.elements[0] + p2[1] * right.elements[1]) / (cosAngle * right.elements[0] + sinAngle * right.elements[1]);
     }
 
     /**
