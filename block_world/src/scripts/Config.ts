@@ -8,46 +8,6 @@ namespace config {
     export const storageKey = `data27`;
 
     /**
-     * 背景格子的深度
-     */
-    export const bgGridZ = -0.2;
-
-    /**
-     * 背景 xy 轴的深度
-     */
-    export const xyZ = -0.1;
-
-    /**
-     * 方块的深度
-     */
-    export const blockBgZ = 0;
-
-    /**
-     * 方块边缘的深度
-     */
-    export const blockPaddingZ = 0.01;
-    
-    /**
-     * 光源区域的深度
-     */
-    export const lightAreaZ = 0.02;
-
-    /**
-     * 光源背景的深度
-     */
-    export const lightBgZ = 0.03;
-
-    /**
-     * 光源身体的主体的深度
-     */
-    export const lightBodyZ = 0.04;
-
-    /**
-     * 聚焦框的深度
-     */
-    export const focusFrameZ = 0.1;
-
-    /**
      * 聚焦框的宽度
      */
     export const focusFrameBorderSize = 5;
@@ -60,22 +20,22 @@ namespace config {
     /**
      * 方块尺寸
      */
-    export const rectSize = 100;
+    export const rectSize = 20;
     
     /**
      * 光源尺寸
      */
-    export const lightSize = 50;
+    export const lightSize = rectSize / 2;
 
     /**
      * 光源边缘厚度
      */
-    export const lightPadding = 5;
+    export const lightPadding = rectSize / 10;
     
     /**
      * 光照距离
      */
-     export const lightDistance = 300;
+    export const lightDistance = 300;
 
     /**
      * 背景颜色
@@ -93,7 +53,8 @@ namespace config {
     export const gridColor = [
         bgColor[0] * 2,
         bgColor[1] * 2,
-        bgColor[2] * 2
+        bgColor[2] * 2,
+        1
     ];
 
     /**
@@ -102,7 +63,8 @@ namespace config {
      export const xColor = [
         1,
         0,
-        0
+        0,
+        1
     ];
 
     /**
@@ -111,7 +73,8 @@ namespace config {
     export const yColor = [
         0,
         1,
-        0
+        0,
+        1
     ];
 
     /**
@@ -120,6 +83,7 @@ namespace config {
     export const focusFrameReleaseColor = [
         0,
         0,
+        1,
         1
     ];
 
@@ -128,6 +92,7 @@ namespace config {
      */
     export const focusFramePressColor = [
         0,
+        1,
         1,
         1
     ];
@@ -138,7 +103,8 @@ namespace config {
     export const blockPaddingColor = [
         0,
         0,
-        0
+        0,
+        1
     ];
 
     /**
@@ -147,13 +113,15 @@ namespace config {
     export const blockBgColor = [
         1,
         1,
-        0
+        0,
+        1
     ];
 
     /**
      * 光源主体颜色
      */
     export const lightBgColor = [
+        1,
         1,
         1,
         1
@@ -165,16 +133,18 @@ namespace config {
     export const lightPaddingColor = [
         0,
         0,
-        0
+        0,
+        1
     ];
 
     /**
-     * 光源边缘颜色
+     * 光源区域颜色
      */
     export const lightAreaColor = [
         1,
-        0,
-        1
+        1,
+        1,
+        0.7
     ];
 };
 

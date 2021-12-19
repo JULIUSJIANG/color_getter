@@ -463,14 +463,14 @@ class Component extends React.Component {
                             posRight,
                             posBottom
                         );
-                        // 右下->右上
+                        // // 右下->右上
                         lineAddition(
                             posRight,
                             posBottom,
                             posRight,
                             posTop
                         );
-                        // 右上->左上
+                        // // 右上->左上
                         lineAddition(
                             posRight,
                             posTop,
@@ -508,6 +508,7 @@ class Component extends React.Component {
                     let tempPos = [currPos[0] + vec.elements[0], currPos[1] + vec.elements[1]];
                     // 角度继续偏转
                     vec = rotate.multiplyVector3(vec);
+                    // 加入光照图
                     lineAddition(
                         tempPos[0] + blockCenterX,
                         tempPos[1] + blockCenterY - unitLen / 2,
@@ -521,38 +522,40 @@ class Component extends React.Component {
                 this._lightDataList.sort(( areaA, areaB ) => {
                     return (areaA.pointFrom.distance + areaA.pointTo.distance) - (areaB.pointFrom.distance + areaB.pointTo.distance);
                 });
-                // 每个范围对后续的范围进行裁切
-                for (let i = 0; i < this._lightDataList.length; i++) {
-                    let areaNearBy = this._lightDataList[i];
-                    for (let j = i + 1; j < this._lightDataList.length; j++) {
-                        let areaElse = this._lightDataList[j];
-                        // 完全遮挡的话，移除
+                // 用于穷举的集合
+                let walker = [...this._lightDataList];
+                // 临时的集合
+                let tempList: LightAreaRec[] = [];
+                // 让集合留空
+                this._lightDataList.length = 0;
+                
+                // 穷举全部
+                while (0 < walker.length) {
+                    // 每次提取首个
+                    let areaNearBy = walker.shift();
+                    // 添加进渲染列表
+                    this._lightDataList.push(areaNearBy);
+                    // 清空临时列表
+                    tempList.length = 0;
+                    // 用这一个，切割其余的
+                    for (let walkI = 0; walkI < walker.length; walkI++) {
+                        let areaElse = walker[walkI];
+                        // 如果该项完全被遮挡，那么忽略它
                         if (areaNearBy.pointFrom.angle <= areaElse.pointFrom.angle && areaElse.pointTo.angle <= areaNearBy.pointTo.angle) {
-                            this._lightDataList.splice(j, 1);
-                            j--;
-                            continue;
-                        };
-                        // 没有交集的话，忽略掉
-                        if (areaElse.pointTo.angle <= areaNearBy.pointFrom.angle) {
-                            continue;
-                        };
-                        if (areaNearBy.pointTo.angle <= areaElse.pointFrom.angle) {
                             continue;
                         };
 
-                        // 去掉左边
-                        if (areaElse.pointFrom.angle <= areaNearBy.pointTo.angle && areaNearBy.pointTo.angle <= areaElse.pointTo.angle) {
-                            let distance = this.GetDistance(
-                                areaElse.pointFrom.angle,
-                                areaElse.pointFrom.distance,
-                                areaElse.pointTo.angle,
-                                areaElse.pointTo.distance,
-                                areaNearBy.pointTo.angle
-                            );
-                            areaElse.pointFrom.angle = areaNearBy.pointTo.angle;
-                            areaElse.pointFrom.distance = distance;
+                        // 不存在遮挡的话，保留下来
+                        if (
+                            areaElse.pointTo.angle <= areaNearBy.pointFrom.angle
+                            || areaNearBy.pointTo.angle <= areaElse.pointFrom.angle    
+                        ) 
+                        {
+                            tempList.push( areaElse );
+                            continue;
                         };
-                        // 去掉右边
+
+                        // 保留左方的突出内容
                         if (areaElse.pointFrom.angle <= areaNearBy.pointFrom.angle && areaNearBy.pointFrom.angle <= areaElse.pointTo.angle) {
                             let distance = this.GetDistance(
                                 areaElse.pointFrom.angle,
@@ -561,11 +564,38 @@ class Component extends React.Component {
                                 areaElse.pointTo.distance,
                                 areaNearBy.pointFrom.angle
                             );
-                            areaElse.pointTo.angle = areaNearBy.pointFrom.angle;
-                            areaElse.pointTo.distance = distance;
+                            tempList.push({
+                                pointFrom: areaElse.pointFrom,
+                                pointTo: {
+                                    angle: areaNearBy.pointFrom.angle,
+                                    distance: distance
+                                }
+                            })
+                        };
+
+                        // 保留右方的突出内容
+                        if (areaElse.pointFrom.angle <= areaNearBy.pointTo.angle && areaNearBy.pointTo.angle <= areaElse.pointTo.angle) {
+                            let distance = this.GetDistance(
+                                areaElse.pointFrom.angle,
+                                areaElse.pointFrom.distance,
+                                areaElse.pointTo.angle,
+                                areaElse.pointTo.distance,
+                                areaNearBy.pointTo.angle
+                            );
+                            tempList.push({
+                                pointFrom: {
+                                    angle: areaNearBy.pointTo.angle,
+                                    distance: distance
+                                },
+                                pointTo: areaElse.pointTo
+                            });
                         };
                     };
+                    // 更新 walker 为切割后的内容
+                    walker.length = 0;
+                    walker.push(...tempList);
                 };
+
                 // 对残留的每个区域进行 3 角形绘制
                 for (let areaI = 0; areaI < this._lightDataList.length; areaI++) {
                     let currArea = this._lightDataList[areaI];
