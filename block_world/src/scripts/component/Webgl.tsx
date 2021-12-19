@@ -65,8 +65,19 @@ class Component extends React.Component {
         );
     }
 
+    /**
+     * 用于监听帧的 id
+     */
+    private _frameListenId: number;
+
     public override componentDidMount () {
-        this.componentDidUpdate();
+        this._frameListenId = root.evterFrame.On(() => {
+            this.RefreshAll();
+        });
+    }
+
+    public override componentWillUnmount() {
+        root.evterFrame.Off(this._frameListenId);
     }
 
     /**
@@ -74,10 +85,27 @@ class Component extends React.Component {
      */
     private _vpMatrix = new CuonMatrix4();
 
-    public override componentDidUpdate () {
+    /**
+     * 上一次进行绘制的版本 id
+     */
+    private _currDrawVersionId: number;
+
+    /**
+     * 刷新画面的全部
+     * @returns 
+     */
+    public RefreshAll () {
         if (this.canvas == null) {
             return;
         };
+        // 这个版本的数据已经绘制过了的话，忽略掉
+        if (this._currDrawVersionId == root.store.getState().version) {
+            return;
+        };
+        this._currDrawVersionId = root.store.getState().version;
+
+        perfAnalyse.Rec(`Prepare`);
+        // 进行绘制
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT | WebGLRenderingContext.DEPTH_BUFFER_BIT);
         // 设置为看向屏幕涉猎的所有地方
         this._vpMatrix.setOrtho(
@@ -100,11 +128,18 @@ class Component extends React.Component {
             -root.store.getState().cameraY,
             0
         );
+        perfAnalyse.Rec(`DrawBgGrid`);
         this.DrawBgGrid();
+        perfAnalyse.Rec(`DrawBlock`);
         this.DrawBlock();
+        perfAnalyse.Rec(`DrawLightArea`);
         this.DrawLightArea();
+        perfAnalyse.Rec(`DrawLightPoint`);
         this.DrawLightPoint();
+        perfAnalyse.Rec(`DrawTouch`);
         this.DrawTouch();
+        perfAnalyse.Rec(`End`);
+        perfAnalyse.Catch();
     }
 
     /**

@@ -22,9 +22,6 @@ namespace perfAnalyse {
      * @returns 
      */
     export function Catch () {
-        if (timerRecList.length == 0) {
-            return;
-        };
         let cycleTag = timerRecList[0].tag
         for (let recI = 0; recI < timerRecList.length; recI++) {
             let inst = timerRecList[recI];
@@ -39,13 +36,13 @@ namespace perfAnalyse {
             };
             // 把时间累计起来
             totalCostRecMap.get(key).totalCost += inst.timer - previous.timer;
-            totalCostRecMap.get(key).times ++;
         };
         for (let recI = 0; recI < timerRecList.length; recI++) {
             let inst = timerRecList[recI];
             recPool.Push(inst);
         };
         timerRecList.length = 0;
+        catchTimes++;
     }
 
     /**
@@ -53,18 +50,24 @@ namespace perfAnalyse {
      * @returns 
      */
     export function SumMsg () {
-        let totalTtime = 0;
+        let totalCost = 0;
         totalCostRecMap.forEach(( val, key ) => {
-            totalTtime += val.totalCost;
+            totalCost += val.totalCost;
         });
+        strList.push(`捕获次数:${catchTimes} 累计耗时:${totalCost}`);
         totalCostRecMap.forEach(( val, key ) => {
-            strList.push(`${key}:${val}(${Math.ceil(val.totalCost/val.times*100)/100},${Math.ceil(val.totalCost/totalTtime*100)}%)`);
+            strList.push(`${key} 累计[${val.totalCost}] 平均[${Math.ceil(val.totalCost/catchTimes*100)/100}] 占比[${Math.ceil(val.totalCost/totalCost*100)}%]`);
         });
         let result = strList.join(`\n`);
         strList.length = 0;
         return result;
     }
 }
+
+/**
+ * 已捕获的次数
+ */
+let catchTimes: number = 0;
 /**
  * 字符串列表
  */
@@ -72,7 +75,7 @@ let strList: string[] = [];
 /**
  * 记录耗时的字典-总
  */
- let totalCostRecMap: Map<string, PerfAnalyseTagRec> = new Map();
+let totalCostRecMap: Map<string, PerfAnalyseTagRec> = new Map();
 /**
  * 记录专用的对象池
  */

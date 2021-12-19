@@ -1,4 +1,5 @@
 import { createStore, Action } from 'redux';
+import Eventer from '../lib/Eventer';
 import ObjectPool from '../lib/object_pool/ObjectPool';
 import config from './Config';
 import BlockGridXRec from './struct/BlockGridXRec';
@@ -137,7 +138,8 @@ namespace root {
             return {
                 ...state,
                 cameraX: cameraPos[0],
-                cameraY: cameraPos[1]
+                cameraY: cameraPos[1],
+                version: state.version + 1
             };
         }
     );
@@ -150,7 +152,8 @@ namespace root {
             return {
                 ...state,
                 focusGridX: cameraPos[0],
-                focusGridY: cameraPos[1]
+                focusGridY: cameraPos[1],
+                version: state.version + 1
             };
         }
     );
@@ -162,7 +165,8 @@ namespace root {
         (state, isPressed) => {
             return {
                 ...state,
-                isPressed: isPressed
+                isPressed: isPressed,
+                version: state.version + 1
             };
         }
     );
@@ -200,10 +204,9 @@ namespace root {
             xRec.yCollect.sort((eleA, eleB) => {
                 return eleA.gridY - eleB.gridY;
             });
-            let version = state.version + 1;
             return {
                 ...state,
-                version: version
+                version: state.version + 1
             };
         }
     );
@@ -227,10 +230,9 @@ namespace root {
                 return state;
             };
             xRec.yCollect.splice(xRec.yCollect.indexOf(yRec), 1);
-            let version = state.version + 1;
             return {
                 ...state,
-                version: version
+                version: state.version + 1
             };
         }
     );
@@ -268,10 +270,9 @@ namespace root {
             xRec.yCollect.sort((eleA, eleB) => {
                 return eleA.gridY - eleB.gridY;
             });
-            let version = state.version + 1;
             return {
                 ...state,
-                version: version
+                version: state.version + 1
             };
         }
     );
@@ -295,13 +296,25 @@ namespace root {
                 return state;
             };
             xRec.yCollect.splice(xRec.yCollect.indexOf(yRec), 1);
-            let version = state.version + 1;
             return {
                 ...state,
-                version: version
+                version: state.version + 1
             };
         }
     );
+
+    /**
+     * 事件派发器-帧变化
+     */
+    export const evterFrame = new Eventer();
+
+    /**
+     * 获取当前的帧 id
+     * @returns 
+     */
+    export function GetFrameId () {
+        return frameId;
+    }
 };
 
 // 读取本地存储的数据
@@ -325,4 +338,13 @@ root.reducerInit.Eff(initState);
 window.onunload = () => {
     localStorage.setItem(config.storageKey, JSON.stringify(root.store.getState()));
 };
+// 帧 id
+let frameId = 0;
+// 帧回调
+function step () {
+    frameId++;
+    root.evterFrame.Call();
+    window.requestAnimationFrame(step);
+};
+window.requestAnimationFrame(step);
 export default root;

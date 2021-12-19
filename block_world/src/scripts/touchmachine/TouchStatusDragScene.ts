@@ -22,14 +22,10 @@ export default class TouchStatusDragScene extends TouchStatus {
     }
 
     public override OnMouseMove () {
-        let start = Date.now();
-        perfAnalyse.Rec(`start`);
         root.reducerSetCameraPos.Eff([
             this.initCameraX - this.machine.posMove.elements[0] + this.machine.posStart.elements[0],
             this.initCameraY - this.machine.posMove.elements[1] + this.machine.posStart.elements[1]
         ]);
-        perfAnalyse.Rec(`end`);
-        perfAnalyse.Catch();
     }
 
     public override OnMouseUP () {
