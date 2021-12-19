@@ -10,6 +10,7 @@ import CuonVector3 from "../../lib/webgl/CuonVector3";
 import LightAreaRec from "../struct/LightAreaRec";
 import CuonVector4 from "../../lib/webgl/CuonVector4";
 import perfAnalyse from "../../lib/perf_analyse/PerfAnalyse";
+import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
 
 /**
  * 绘制-主内容
@@ -258,18 +259,36 @@ class Component extends React.Component {
     _drawFuncList: Array<(gridX: number, gridY: number, size: number, z: number, color: number[]) => void> = [];
 
     /**
+     * 用于记录占用了的格子
+     */
+    locRec: Map<number, Map<number, boolean>> = new Map();
+
+    /**
+     * 记录的字典
+     */
+    public static ptLocRecMap = new ObjectPoolType(
+        () => {
+            return new Map<number, boolean>();
+        },
+        (inst) => {
+
+        },
+        (inst) => {
+            inst.clear();
+        }
+    )
+
+    /**
      * 绘制方块
      */
     DrawBlock () {
-        // 都有哪些格子是已占用了的，记录一下
-        let locRec: Map<number, Map<number, boolean>> = new Map();
         // 绘制背景颜色
         for (let xI = 0; xI < root.store.getState().blockXRec.length; xI++) {
             let xRec = root.store.getState().blockXRec[xI];
-            locRec.set(xRec.gridX, new Map());
+            this.locRec.set(xRec.gridX, root.pool.Pop(Webgl.ptLocRecMap));
             for (let yI = 0; yI < xRec.yCollect.length; yI++) {
                 let yRec = xRec.yCollect[yI];
-                locRec.get(xRec.gridX).set(yRec.gridY, true);
+                this.locRec.get(xRec.gridX).set(yRec.gridY, true);
                 this.DrawRectFill(
                     xRec.gridX,
                     yRec.gridY,
@@ -281,10 +300,10 @@ class Component extends React.Component {
         };
         // 检查某个格子是否存在
         let getExist = (gridX: number, gridY: number) => {
-            if (!locRec.has(gridX)) {
+            if (!this.locRec.has(gridX)) {
                 return false;
             };
-            if (!locRec.get(gridX).has(gridY)) {
+            if (!this.locRec.get(gridX).has(gridY)) {
                 return false;
             };
             return true;
@@ -339,6 +358,10 @@ class Component extends React.Component {
                 });
             };
         };
+        this.locRec.forEach(( val ) => {
+            root.pool.Push(Webgl.ptLocRecMap, val);
+        });
+        this.locRec.clear();
     }
     
     /**

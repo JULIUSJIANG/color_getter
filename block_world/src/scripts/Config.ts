@@ -8,19 +8,19 @@ namespace config {
     export const storageKey = `data27`;
 
     /**
+     * 方块尺寸
+     */
+    export const rectSize = 20;
+
+    /**
      * 聚焦框的宽度
      */
-    export const focusFrameBorderSize = 5;
+    export const focusFrameBorderSize = rectSize / 10;
 
     /**
      * 方块边缘厚度
      */
-    export const blockPadding = 5;
-
-    /**
-     * 方块尺寸
-     */
-    export const rectSize = 20;
+    export const blockPadding = rectSize / 10;
     
     /**
      * 光源尺寸
@@ -35,7 +35,7 @@ namespace config {
     /**
      * 光照距离
      */
-    export const lightDistance = 300;
+    export const lightDistance = rectSize * 20;
 
     /**
      * 背景颜色
