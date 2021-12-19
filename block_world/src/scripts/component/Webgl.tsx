@@ -100,10 +100,10 @@ class Component extends React.Component {
             0
         );
         this.DrawBgGrid();
-        this.DrawTouch();
         this.DrawBlock();
-        this.DrawLightPoint();
         this.DrawLightArea();
+        this.DrawLightPoint();
+        this.DrawTouch();
     }
 
     /**
@@ -162,13 +162,13 @@ class Component extends React.Component {
         for (let horIndex = 0; horIndex < horPosArray.length; horIndex++) {
             let x = horPosArray[horIndex];
             this.vertexNumberData.push(
-                x, verBottom, config.bgGridZ, config.gridColor[0], config.gridColor[1], config.gridColor[2],
-                x, verTop, config.bgGridZ, config.gridColor[0], config.gridColor[1], config.gridColor[2]
+                x, verBottom, 0, config.gridColor[0], config.gridColor[1], config.gridColor[2], config.gridColor[3],
+                x, verTop, 0, config.gridColor[0], config.gridColor[1], config.gridColor[2], config.gridColor[3]
             );
             if (x == 0) {
                 this.vertexNumberData.push(
-                    x, 0, config.xyZ, config.xColor[0], config.xColor[1], config.xColor[2],
-                    x, verTop, config.xyZ, config.xColor[0], config.xColor[1], config.xColor[2]
+                    x, 0, 0, config.xColor[0], config.xColor[1], config.xColor[2], config.xColor[3],
+                    x, verTop, 0, config.xColor[0], config.xColor[1], config.xColor[2], config.xColor[3]
                 );
             };
         };
@@ -177,13 +177,13 @@ class Component extends React.Component {
         for (let verIndex = 0; verIndex < verPosArray.length; verIndex++) {
             let y = verPosArray[verIndex];
             this.vertexNumberData.push(
-                horLeft, y, config.bgGridZ, config.gridColor[0], config.gridColor[1], config.gridColor[2],
-                horRight, y, config.bgGridZ, config.gridColor[0], config.gridColor[1], config.gridColor[2]
+                horLeft, y, 0, config.gridColor[0], config.gridColor[1], config.gridColor[2], config.gridColor[3],
+                horRight, y, 0, config.gridColor[0], config.gridColor[1], config.gridColor[2], config.gridColor[3]
             );
             if (y == 0) {
                 this.vertexNumberData.push(
-                    0, y, config.xyZ, config.yColor[0], config.yColor[1], config.yColor[2],
-                    horRight, y, config.xyZ, config.yColor[0], config.yColor[1], config.yColor[2]
+                    0, y, 0, config.yColor[0], config.yColor[1], config.yColor[2], config.yColor[3],
+                    horRight, y, 0, config.yColor[0], config.yColor[1], config.yColor[2], config.yColor[3]
                 );
             };
         };
@@ -211,7 +211,7 @@ class Component extends React.Component {
             root.store.getState().focusGridX,
             root.store.getState().focusGridY,
             config.focusFrameBorderSize,
-            config.focusFrameZ,
+            0,
             colorObj
         );
     }
@@ -237,7 +237,7 @@ class Component extends React.Component {
                 this.DrawRectFill(
                     xRec.gridX,
                     yRec.gridY,
-                    config.blockBgZ,
+                    0,
                     config.blockBgColor,
                     0
                 );
@@ -297,7 +297,7 @@ class Component extends React.Component {
                         xRec.gridX,
                         yRec.gridY,
                         config.blockPadding,
-                        config.blockPaddingZ,
+                        0,
                         config.blockPaddingColor
                     );
                 });
@@ -318,7 +318,7 @@ class Component extends React.Component {
                 this.DrawRectFill(
                     xRec.gridX,
                     yRec.gridY,
-                    config.lightBgZ,
+                    0,
                     config.lightPaddingColor,
                     (config.rectSize - config.lightSize) / 2
                 );
@@ -326,7 +326,7 @@ class Component extends React.Component {
                 this.DrawRectFill(
                     xRec.gridX,
                     yRec.gridY,
-                    config.lightBodyZ,
+                    0,
                     config.lightBgColor,
                     (config.rectSize - config.lightSize) / 2 + config.lightPadding
                 );
@@ -503,17 +503,17 @@ class Component extends React.Component {
                 rotate.setRotate(unitAngle, 0, 0, 1);
                 // 起始位置
                 let currPos = [config.lightDistance, 0];
-                for (let i = 0; i < unitLen; i++) {
+                for (let i = 0; i < unitCount; i++) {
                     // 当前末端
                     let tempPos = [currPos[0] + vec.elements[0], currPos[1] + vec.elements[1]];
                     // 角度继续偏转
                     vec = rotate.multiplyVector3(vec);
                     lineAddition(
-                        tempPos[0],
-                        tempPos[1],
-                        currPos[0],
-                        currPos[1]
-                    )
+                        tempPos[0] + blockCenterX,
+                        tempPos[1] + blockCenterY - unitLen / 2,
+                        currPos[0] + blockCenterX,
+                        currPos[1] + blockCenterY - unitLen / 2
+                    );
                     // 更新末端
                     currPos = tempPos;
                 };
@@ -574,27 +574,32 @@ class Component extends React.Component {
                         continue;
                     };
                     this.vertexNumberData.length = 0;
+                    let fromRate = (1 - currArea.pointFrom.distance / config.lightDistance);
+                    let toRate = (1 - currArea.pointTo.distance / config.lightDistance);
                     this.vertexNumberData.push(
                         Math.cos(currArea.pointFrom.angle / 180 * Math.PI) * currArea.pointFrom.distance + blockCenterX, 
                         Math.sin(currArea.pointFrom.angle / 180 * Math.PI) * currArea.pointFrom.distance + blockCenterY, 
-                        config.lightAreaZ,
+                        0,
                         config.lightAreaColor[0],
                         config.lightAreaColor[1],
                         config.lightAreaColor[2],
+                        fromRate * config.lightAreaColor[3],
 
                         Math.cos(currArea.pointTo.angle / 180 * Math.PI) * currArea.pointTo.distance + blockCenterX, 
                         Math.sin(currArea.pointTo.angle / 180 * Math.PI) * currArea.pointTo.distance + blockCenterY, 
-                        config.lightAreaZ,
+                        0,
                         config.lightAreaColor[0],
                         config.lightAreaColor[1],
                         config.lightAreaColor[2],
+                        toRate * config.lightAreaColor[3],
 
                         blockCenterX,
                         blockCenterY,
-                        config.lightAreaZ,
+                        0,
                         config.lightAreaColor[0],
                         config.lightAreaColor[1],
-                        config.lightAreaColor[2]
+                        config.lightAreaColor[2],
+                        config.lightAreaColor[3]
                     );
                     // 逐个地把 3 角形给绘制出来
                     this.DrawByElementData(
@@ -696,10 +701,10 @@ class Component extends React.Component {
         let top = (gridY + 1) * config.rectSize;
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            left + size, top, z, color[0], color[1], color[2],
-            left, top, z, color[0], color[1], color[2],
-            left, bottom, z, color[0], color[1], color[2],
-            left + size, bottom, z, color[0], color[1], color[2],
+            left + size, top, z, color[0], color[1], color[2], color[3],
+            left, top, z, color[0], color[1], color[2], color[3],
+            left, bottom, z, color[0], color[1], color[2], color[3],
+            left + size, bottom, z, color[0], color[1], color[2], color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -729,10 +734,10 @@ class Component extends React.Component {
         let top = (gridY + 1) * config.rectSize;
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            right, top, z, color[0], color[1], color[2],
-            right - size, top, z, color[0], color[1], color[2],
-            right - size, bottom, z, color[0], color[1], color[2],
-            right, bottom, z, color[0], color[1], color[2],
+            right, top, z, color[0], color[1], color[2], color[3],
+            right - size, top, z, color[0], color[1], color[2], color[3],
+            right - size, bottom, z, color[0], color[1], color[2], color[3],
+            right, bottom, z, color[0], color[1], color[2], color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -762,10 +767,10 @@ class Component extends React.Component {
         let bottom = gridY * config.rectSize;
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            right, bottom + size, z, color[0], color[1], color[2],
-            left, bottom + size, z, color[0], color[1], color[2],
-            left, bottom, z, color[0], color[1], color[2],
-            right, bottom, z, color[0], color[1], color[2],
+            right, bottom + size, z, color[0], color[1], color[2], color[3],
+            left, bottom + size, z, color[0], color[1], color[2], color[3],
+            left, bottom, z, color[0], color[1], color[2], color[3],
+            right, bottom, z, color[0], color[1], color[2], color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -795,10 +800,10 @@ class Component extends React.Component {
         let top = (gridY + 1) * config.rectSize;
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            right, top, z, color[0], color[1], color[2],
-            left, top, z, color[0], color[1], color[2],
-            left, top - size, z, color[0], color[1], color[2],
-            right, top - size, z, color[0], color[1], color[2],
+            right, top, z, color[0], color[1], color[2], color[3],
+            left, top, z, color[0], color[1], color[2], color[3],
+            left, top - size, z, color[0], color[1], color[2], color[3],
+            right, top - size, z, color[0], color[1], color[2], color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -827,10 +832,10 @@ class Component extends React.Component {
         let top = (gridY + 1) * config.rectSize;
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            right, top, z, color[0], color[1], color[2],
-            right - size, top, z, color[0], color[1], color[2],
-            right - size, top - size, z, color[0], color[1], color[2],
-            right, top - size, z, color[0], color[1], color[2],
+            right, top, z, color[0], color[1], color[2], color[3],
+            right - size, top, z, color[0], color[1], color[2], color[3],
+            right - size, top - size, z, color[0], color[1], color[2], color[3],
+            right, top - size, z, color[0], color[1], color[2], color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -859,10 +864,10 @@ class Component extends React.Component {
         let top = (gridY + 1) * config.rectSize;
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            left + size, top, z, color[0], color[1], color[2],
-            left, top, z, color[0], color[1], color[2],
-            left, top - size, z, color[0], color[1], color[2],
-            left + size, top - size, z, color[0], color[1], color[2],
+            left + size, top, z, color[0], color[1], color[2], color[3],
+            left, top, z, color[0], color[1], color[2], color[3],
+            left, top - size, z, color[0], color[1], color[2], color[3],
+            left + size, top - size, z, color[0], color[1], color[2], color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -891,10 +896,10 @@ class Component extends React.Component {
         let bottom = gridY * config.rectSize;
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            left + size, bottom + size, z, color[0], color[1], color[2],
-            left, bottom + size, z, color[0], color[1], color[2],
-            left, bottom, z, color[0], color[1], color[2],
-            left + size, bottom, z, color[0], color[1], color[2],
+            left + size, bottom + size, z, color[0], color[1], color[2], color[3],
+            left, bottom + size, z, color[0], color[1], color[2], color[3],
+            left, bottom, z, color[0], color[1], color[2], color[3],
+            left + size, bottom, z, color[0], color[1], color[2], color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -923,10 +928,10 @@ class Component extends React.Component {
         let bottom = gridY * config.rectSize;
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            right, bottom + size, z, color[0], color[1], color[2],
-            right - size, bottom + size, z, color[0], color[1], color[2],
-            right - size, bottom, z, color[0], color[1], color[2],
-            right, bottom, z, color[0], color[1], color[2],
+            right, bottom + size, z, color[0], color[1], color[2], color[3],
+            right - size, bottom + size, z, color[0], color[1], color[2], color[3],
+            right - size, bottom, z, color[0], color[1], color[2], color[3],
+            right, bottom, z, color[0], color[1], color[2], color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -964,10 +969,10 @@ class Component extends React.Component {
 
         this.vertexNumberData.length = 0;
         this.vertexNumberData.push(
-            right, top, z, color[0], color[1], color[2],
-            left, top, z, color[0], color[1], color[2],
-            left, bottom, z, color[0], color[1], color[2],
-            right, bottom, z, color[0], color[1], color[2],
+            right, top, z, color[0], color[1], color[2], color[3],
+            left, top, z, color[0], color[1], color[2],  color[3],
+            left, bottom, z, color[0], color[1], color[2], color[3],
+            right, bottom, z, color[0], color[1], color[2],  color[3]
         );
         this.DrawByElementData(
             this.vertexNumberData,
@@ -1020,11 +1025,11 @@ class Component extends React.Component {
         this.gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, this.elementData, WebGLRenderingContext.STATIC_DRAW);
 
         // 填充坐标数据
-        this.gl.vertexAttribPointer(this.attlocPos, 3, this.gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 6, 0);
+        this.gl.vertexAttribPointer(this.attlocPos, 3, this.gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 7, 0);
         this.gl.enableVertexAttribArray(this.attlocPos);
 
         // 填充颜色数据
-        this.gl.vertexAttribPointer(this.attlocColor, 3, this.gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 6, Float32Array.BYTES_PER_ELEMENT * 3);
+        this.gl.vertexAttribPointer(this.attlocColor, 4, this.gl.FLOAT, false, Float32Array.BYTES_PER_ELEMENT * 7, Float32Array.BYTES_PER_ELEMENT * 3);
         this.gl.enableVertexAttribArray(this.attlocColor);
         
         // 传入变换矩阵
@@ -1065,7 +1070,8 @@ class Component extends React.Component {
                         config.bgColor[2],
                         config.bgColor[3]
                     );
-                    this.gl.enable(this.gl.DEPTH_TEST);
+                    this.gl.enable(WebGLRenderingContext.BLEND);
+                    this.gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
                 }}
                 width={window.innerWidth}
                 height={window.innerHeight}
