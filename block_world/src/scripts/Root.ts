@@ -1,4 +1,5 @@
 import { createStore, Action } from 'redux';
+import ObjectPool from '../lib/object_pool/ObjectPool';
 import config from './Config';
 import BlockGridXRec from './struct/BlockGridXRec';
 import MainState from './struct/MainState';
@@ -8,6 +9,11 @@ import TouchMachine from './touchmachine/TouchMachine';
  * 全局的数据中心
  */
 namespace root {
+    /**
+     * 全局对象池
+     */
+    export const pool = new ObjectPool();
+
     /**
      * 交互状态机
      */

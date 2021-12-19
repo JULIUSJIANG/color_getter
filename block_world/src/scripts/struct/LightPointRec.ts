@@ -1,7 +1,9 @@
+import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
+
 /**
  * 光照关键点记录
  */
-export default interface LightPointRec {
+export default class LightPointRec {
     /**
      * 角度
      */
@@ -10,4 +12,19 @@ export default interface LightPointRec {
      * 距离
      */
     distance: number;
+    
+    /**
+     * 对象池类型
+     */
+    public static type = new ObjectPoolType(
+        () => {
+            return new LightPointRec();
+        },
+        (inst) => {
+
+        },
+        (inst) => {
+
+        }
+    )
 }

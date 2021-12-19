@@ -9,6 +9,7 @@ import root from "../Root";
 import CuonVector3 from "../../lib/webgl/CuonVector3";
 import LightAreaRec from "../struct/LightAreaRec";
 import CuonVector4 from "../../lib/webgl/CuonVector4";
+import perfAnalyse from "../../lib/perf_analyse/PerfAnalyse";
 
 /**
  * 绘制-主内容
@@ -17,42 +18,42 @@ class Component extends React.Component {
     /**
      * 画布
      */
-    public canvas?: HTMLCanvasElement;
+    public canvas: HTMLCanvasElement;
 
     /**
      * webgl 上下文
      */
-    public gl?: WebGLRenderingContext;
+    public gl: WebGLRenderingContext;
 
     /**
      * 着色程序
      */
-    public program?: WebGLProgram;
+    public program: WebGLProgram;
 
     /**
      * 顶点数据缓冲区
      */
-    public vbuffer?: WebGLBuffer;
+    public vbuffer: WebGLBuffer;
 
     /**
      * 绘制点的缓冲区
      */
-    public iBuffer?: WebGLBuffer;
+    public iBuffer: WebGLBuffer;
 
     /**
      * 内存位置-顶点坐标
      */
-    public attlocPos?: GLint;
+    public attlocPos: GLint;
 
     /**
      * 内存位置-顶点颜色
      */
-    public attlocColor?: GLint;
+    public attlocColor: GLint;
 
     /**
      * 内存位置-mvp 矩阵
      */
-    public attlocMvpMat?: WebGLUniformLocation;
+    public attlocMvpMat: WebGLUniformLocation;
 
     public constructor (props: {}) {
         super (props);
@@ -1080,38 +1081,46 @@ class Component extends React.Component {
 
     public override render () {
         return (
-            <canvas 
-                ref={(ref) => {
-                    this.canvas = ref;
-                    if (this.canvas == null) {
-                        return;
-                    };
-                    root.touchMachine.ListenTouch(this.canvas);
-                    this.gl = cuonUtils.getWebGLContext(ref);
-                    this.program = cuonUtils.createProgram(this.gl, colorVertex.shader, colorFragment.shader);
-                    this.vbuffer = this.gl.createBuffer();
-                    this.iBuffer = this.gl.createBuffer();
-                    this.attlocPos = this.gl.getAttribLocation(this.program, colorVertex.attNamePos);
-                    this.attlocColor = this.gl.getAttribLocation(this.program, colorVertex.attNameColor);
-                    this.attlocMvpMat = this.gl.getUniformLocation(this.program, colorVertex.attNameMvpMat);
-                    this.gl.clearColor(
-                        config.bgColor[0],
-                        config.bgColor[1],
-                        config.bgColor[2],
-                        config.bgColor[3]
-                    );
-                    this.gl.enable(WebGLRenderingContext.BLEND);
-                    this.gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
-                }}
-                width={window.innerWidth}
-                height={window.innerHeight}
+            <div
                 style={{
                     width: "100%",
-                    height: "100%",
-                    display: "block"
+                    height: "100%"
                 }}
             >
-            </canvas>
+                <canvas 
+                    ref={(ref) => {
+                        this.canvas = ref;
+                        if (this.canvas == null) {
+                            return;
+                        };
+                        root.touchMachine.ListenTouch(this.canvas);
+                        this.gl = cuonUtils.getWebGLContext(ref);
+                        this.program = cuonUtils.createProgram(this.gl, colorVertex.shader, colorFragment.shader);
+                        this.vbuffer = this.gl.createBuffer();
+                        this.iBuffer = this.gl.createBuffer();
+                        this.attlocPos = this.gl.getAttribLocation(this.program, colorVertex.attNamePos);
+                        this.attlocColor = this.gl.getAttribLocation(this.program, colorVertex.attNameColor);
+                        this.attlocMvpMat = this.gl.getUniformLocation(this.program, colorVertex.attNameMvpMat);
+                        this.gl.clearColor(
+                            config.bgColor[0],
+                            config.bgColor[1],
+                            config.bgColor[2],
+                            config.bgColor[3]
+                        );
+                        this.gl.enable(WebGLRenderingContext.BLEND);
+                        this.gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
+                    }}
+                    width={window.innerWidth}
+                    height={window.innerHeight}
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block"
+                    }}
+                >
+                </canvas>
+            </div>
+            
         )
     }
 }

@@ -4,12 +4,20 @@ import Webgl from "./Webgl";
 import root from "../Root";
 import {connect} from 'react-redux';
 import { Provider } from 'react-redux';
+import perfAnalyse from "../../lib/perf_analyse/PerfAnalyse";
 
 /**
  * 全局环境的组件
  */
 class Component extends React.Component {
+    
+    /**
+     * 文本标签
+     */
+    public text: HTMLSpanElement;
+
     public componentDidUpdate () {
+        this.text.innerText = perfAnalyse.SumMsg();
         // 已经卸载了 webgl 的话，重新开起来
         if (root.store.getState().disableWebgl) {
             root.reducerEnableWebgl.Eff();
@@ -21,6 +29,19 @@ class Component extends React.Component {
             <div style={{width: "100%", height: "100%"}}>
                 {root.store.getState().disableWebgl ? null : <Webgl/>}
                 <TopNav/>
+                <span
+                    ref={(ref) => {
+                        this.text = ref;
+                    }}
+                    style={{
+                        position: "absolute",
+                        left: "20px",
+                        bottom: "20px",
+                        fontSize: "14px",
+                        color: "#ffffff"
+                    }}
+                >
+                </span>
             </div>
         );
     }
