@@ -5,7 +5,7 @@ namespace config {
     /**
      * 本地存储的时候采用的 key
      */
-    export const storageKey = `data27`;
+    export const storageKey = `data28`;
 
     /**
      * 方块尺寸
@@ -146,6 +146,16 @@ namespace config {
         1,
         0.3
     ];
+
+    /**
+     * 光的射线颜色
+     */
+    export const lightRayColor = [
+        1,
+        0,
+        0,
+        1
+    ]
 };
 
 export default config;

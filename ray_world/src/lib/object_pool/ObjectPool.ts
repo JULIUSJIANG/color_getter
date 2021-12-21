@@ -4,7 +4,7 @@ import ObjectPoolType from "./ObjectPoolType";
 /**
  * 对象池
  */
-export default class ObjectPool {
+class ObjectPool {
     /**
      * 类型以及具体记录的映射
      */
@@ -14,7 +14,7 @@ export default class ObjectPool {
      * 提取实例
      * @param type 
      */
-    public Pop<T> (type: ObjectPoolType<T>) {
+    public Pop<T> (type: ObjectPoolType<T>): T {
         this.Promise(type);
         return this._typeRecMap.get(type).Pop();
     }
@@ -41,3 +41,12 @@ export default class ObjectPool {
         this._typeRecMap.set(type, new ObjectPoolRecord(type));
     }
 }
+
+namespace ObjectPool {
+    /**
+     * 全局实例
+     */
+    export const inst = new ObjectPool();
+}
+
+export default ObjectPool;

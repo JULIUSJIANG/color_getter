@@ -11,7 +11,7 @@ export default class TouchStatusAddLight extends TouchStatus {
 
     public override OnMouseMove() {
         // 当前交互的格子不可用
-        if (!this.CheckGridLightEmpty()) {
+        if (!root.CheckGridLightEmpty(this.machine.touchGridX, this.machine.touchGridY)) {
             return;
         };
         // 添加光源

@@ -1,24 +1,25 @@
 import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
 
 /**
- * 光照关键点记录
+ * 方块位
  */
-export default class LightPointRec {
+export default class BlockPos {
     /**
-     * 角度
+     * 位置 x
      */
-    angle: number;
+    public gridX: number;
+
     /**
-     * 距离
+     * 位置 y
      */
-    distance: number;
-    
+    public gridY: number;
+
     /**
      * 对象池类型
      */
-    public static type = new ObjectPoolType(
+    public static poolType = new ObjectPoolType(
         () => {
-            return new LightPointRec();
+            return new BlockPos();
         },
         (inst) => {
 

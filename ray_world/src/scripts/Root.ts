@@ -11,11 +11,6 @@ import TouchMachine from './touchmachine/TouchMachine';
  */
 namespace root {
     /**
-     * 全局对象池
-     */
-    export const pool = new ObjectPool();
-
-    /**
      * 交互状态机
      */
     export const touchMachine = new TouchMachine();
@@ -314,6 +309,47 @@ namespace root {
      */
     export function GetFrameId () {
         return frameId;
+    }
+
+    
+    /**
+     * 检查当前格子上方块是否为空
+     * @returns 
+     */
+    export function CheckGridBlockEmpty (gridX: number, gridY: number) {
+        let gridRec = root.store.getState().blockXRec.find((ele) => {
+            return ele.gridX == gridX;
+        });
+        if (gridRec == null) {
+            return true;
+        };
+        let yRec = gridRec.yCollect.find((ele) => {
+            return ele.gridY == gridY;
+        });
+        if (yRec == null) {
+            return true;
+        };
+        return false;
+    }
+
+    /**
+     * 检查当前格子上光源是否为空
+     * @returns 
+     */
+     export function CheckGridLightEmpty (gridX: number, gridY: number) {
+        let gridRec = root.store.getState().lightXRec.find((ele) => {
+            return ele.gridX == gridX;
+        });
+        if (gridRec == null) {
+            return true;
+        };
+        let yRec = gridRec.yCollect.find((ele) => {
+            return ele.gridY == gridY;
+        });
+        if (yRec == null) {
+            return true;
+        };
+        return false;
     }
 };
 

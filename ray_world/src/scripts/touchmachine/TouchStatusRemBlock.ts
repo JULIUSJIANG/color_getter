@@ -11,7 +11,7 @@ export default class TouchStatusRemBlock extends TouchStatus {
 
     public override OnMouseMove(): void {
         // 当前交互的格子位不可用
-        if (this.CheckGridBlockEmpty()) {
+        if (root.CheckGridBlockEmpty(this.machine.touchGridX, this.machine.touchGridY)) {
             return;
         };
         // 移除格子

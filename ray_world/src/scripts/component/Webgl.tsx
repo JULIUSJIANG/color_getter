@@ -7,10 +7,11 @@ import colorVertex from "../shader/ColorVertex";
 import {connect} from 'react-redux';
 import root from "../Root";
 import CuonVector3 from "../../lib/webgl/CuonVector3";
-import LightAreaRec from "../struct/LightAreaRec";
-import CuonVector4 from "../../lib/webgl/CuonVector4";
 import perfAnalyse from "../../lib/perf_analyse/PerfAnalyse";
 import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
+import LightRange from "../struct/LightRange";
+import ObjectPool from "../../lib/object_pool/ObjectPool";
+import BlockPos from "../struct/BlockPos";
 
 /**
  * 绘制-主内容
@@ -285,7 +286,7 @@ class Component extends React.Component {
         // 绘制背景颜色
         for (let xI = 0; xI < root.store.getState().blockXRec.length; xI++) {
             let xRec = root.store.getState().blockXRec[xI];
-            this.locRec.set(xRec.gridX, root.pool.Pop(Webgl.ptLocRecMap));
+            this.locRec.set(xRec.gridX, ObjectPool.inst.Pop(Webgl.ptLocRecMap));
             for (let yI = 0; yI < xRec.yCollect.length; yI++) {
                 let yRec = xRec.yCollect[yI];
                 this.locRec.get(xRec.gridX).set(yRec.gridY, true);
@@ -359,7 +360,7 @@ class Component extends React.Component {
             };
         };
         this.locRec.forEach(( val ) => {
-            root.pool.Push(Webgl.ptLocRecMap, val);
+            ObjectPool.inst.Push(Webgl.ptLocRecMap, val);
         });
         this.locRec.clear();
     }
@@ -393,8 +394,6 @@ class Component extends React.Component {
         };
     }
 
-    _lightDataList: LightAreaRec[] = [];
-
     /**
      * 绘制光照范围
      */
@@ -405,301 +404,178 @@ class Component extends React.Component {
             for (let lightYI = 0; lightYI < lightXRec.yCollect.length; lightYI++) {
                 let lightYRec = lightXRec.yCollect[lightYI];
 
-                // 先清空记录
-                this._lightDataList.length = 0;
+                // 初始化探照光束
+                let lightRange = ObjectPool.inst.Pop(LightRange.poolType);
+                lightRange.rayFrom.angle = 0;
+                lightRange.rayFrom.pointFrom.power = 1;
+                lightRange.rayFrom.pointFrom.distance = 0;
+                lightRange.rayFrom.pointTo.power = 0;
+                lightRange.rayFrom.pointTo.distance = config.lightDistance;
+                lightRange.rayTo.angle = 30;
+                lightRange.rayTo.pointFrom.power = 1;
+                lightRange.rayTo.pointFrom.distance = 0;
+                lightRange.rayTo.pointTo.power = 1;
+                lightRange.rayTo.pointTo.distance = config.lightDistance;
 
                 // 光源的中心位置
-                let blockCenterX = (lightXRec.gridX + 0.5) * config.rectSize;
-                let blockCenterY = (lightYRec.gridY + 0.5) * config.rectSize;
+                let lightP0 = new CuonVector3();
+                lightP0.elements[0] = (lightXRec.gridX + 0.5) * config.rectSize;
+                lightP0.elements[1] = (lightYRec.gridY + 0.5) * config.rectSize;
 
-                // 线段处理器
-                let lineAddition = (
-                    x1: number,
-                    y1: number,
-                    x2: number,
-                    y2: number
-                ) => {
-                    // 线段的正前方
-                    let forward = CuonVector3.CreateByXY(
-                        x2 - x1,
-                        y2 - y1
-                    );
-                    // 线段的正右方
-                    let right = forward.GetRight();
-                    // 点 1 到光源
-                    let pos1ToLight = CuonVector3.CreateByXY(
-                        blockCenterX - x1,
-                        blockCenterY - y1
-                    );
-                    // 取得点积
-                    let dot = CuonVector3.Dot(right, pos1ToLight);
-                    // 没有向着光源，忽略
-                    if (dot < 0) {
-                        return;
-                    };
-                    // 点 1
-                    let angle1 = Math.atan2(y1 - blockCenterY, x1 - blockCenterX) / Math.PI * 180;
-                    let distance1 = Math.sqrt((x1 - blockCenterX) ** 2 + (y1 - blockCenterY) ** 2);
-                    // 确保都是正数
-                    while (angle1 < 0) {
-                        angle1 += 360;
-                    };
-                    // 点 2
-                    let angle2 = Math.atan2(y2 - blockCenterY, x2 - blockCenterX) / Math.PI * 180;
-                    let distance2 = Math.sqrt((x2 - blockCenterX) ** 2 + (y2 - blockCenterY) ** 2);
-                    // 确保都是正数
-                    while (angle2 < 0) {
-                        angle2 += 360;
-                    };
-                    // 更正大小
-                    if (angle1 < angle2) {
-                        angle1 += 360;
-                    };
-                    // 如果过了 360，分成俩个部分
-                    if (360 < angle1) {
-                        // 360 度对应的距离
-                        let distance360 = this.GetDistance(
-                            angle1,
-                            distance1,
-                            angle2,
-                            distance2,
-                            360
-                        );
-                        // 记录起来-小于 360 的部分
-                        this._lightDataList.push({
-                            pointFrom: {
-                                angle: angle2,
-                                distance: distance2
-                            },
-                            pointTo: {
-                                angle: 360,
-                                distance: distance360
-                            }
-                        });
-                        // 记录起来-大于 360 的部分
-                        this._lightDataList.push({
-                            pointFrom: {
-                                angle: 0,
-                                distance: distance360
-                            },
-                            pointTo: {
-                                angle: angle1 - 360,
-                                distance: distance1
-                            }
-                        });
-                    }
-                    else {
-                        // 记录起来
-                        this._lightDataList.push({
-                            pointFrom: {
-                                angle: angle2,
-                                distance: distance2
-                            },
-                            pointTo: {
-                                angle: angle1,
-                                distance: distance1
-                            }
-                        });
-                    };
-                };
+                // 点 1
+                let lightP1 = new CuonVector3();
+                lightP1.elements[0] = lightP0.elements[0] + Math.cos( lightRange.rayFrom.angle / 180 * Math.PI ) * lightRange.rayFrom.pointTo.distance;
+                lightP1.elements[1] = lightP0.elements[1] + Math.sin( lightRange.rayFrom.angle / 180 * Math.PI ) * lightRange.rayFrom.pointTo.distance;
 
-                // 穷举所有方块
-                for (let blockXI = 0; blockXI < root.store.getState().blockXRec.length; blockXI++) {
-                    let blockXRec = root.store.getState().blockXRec[blockXI];
-                    for (let blockYI = 0; blockYI < blockXRec.yCollect.length; blockYI++) {
-                        let blockYRec = blockXRec.yCollect[blockYI];
+                // 点 2
+                let lightP2 = new CuonVector3();
+                lightP2.elements[0] = lightP0.elements[0] + Math.cos( lightRange.rayTo.angle / 180 * Math.PI ) * lightRange.rayTo.pointTo.distance;
+                lightP2.elements[1] = lightP0.elements[1] + Math.sin( lightRange.rayTo.angle / 180 * Math.PI ) * lightRange.rayTo.pointTo.distance;
 
-                        // 求得 4 个方位的边界
-                        let posLeft = blockXRec.gridX * config.rectSize;
-                        let posRight = (blockXRec.gridX + 1) * config.rectSize;
-                        let posBottom = blockYRec.gridY * config.rectSize;
-                        let posTop = (blockYRec.gridY + 1) * config.rectSize;
+                // 探照区域的形状
+                let lightPList = [
+                    lightP0,
+                    lightP1,
+                    lightP2
+                ];
 
-                        // 左下->右下
-                        lineAddition(
-                            posLeft,
-                            posBottom,
-                            posRight,
-                            posBottom
-                        );
-                        // // 右下->右上
-                        lineAddition(
-                            posRight,
-                            posBottom,
-                            posRight,
-                            posTop
-                        );
-                        // // 右上->左上
-                        lineAddition(
-                            posRight,
-                            posTop,
-                            posLeft,
-                            posTop
-                        );
-                        // 左上->左下
-                        lineAddition(
-                            posLeft,
-                            posTop,
-                            posLeft,
-                            posBottom
-                        );
-                    };
-                };
+                // 初始化起始格子
+                let blockPos = ObjectPool.inst.Pop(BlockPos.poolType);
+                blockPos.gridX = lightXRec.gridX;
+                blockPos.gridY = lightYRec.gridY;
 
-                // 周长
-                let cycleLen = 2 * Math.PI * config.lightDistance;
-                // 单元数量
-                let unitCount = Math.ceil(cycleLen / config.rectSize);
-                // 每个单元长度
-                let unitLen = cycleLen / unitCount;
-                // 每个单元角度
-                let unitAngle = 360 / unitCount;
-                // 当前方向向量
-                let vec = new CuonVector3();
-                vec.elements[1] = unitLen;
-                // 初始化旋转矩阵
-                let rotate = new CuonMatrix4();
-                rotate.setRotate(unitAngle, 0, 0, 1);
-                // 起始位置
-                let currPos = [config.lightDistance, 0];
-                for (let i = 0; i < unitCount; i++) {
-                    // 当前末端
-                    let tempPos = [currPos[0] + vec.elements[0], currPos[1] + vec.elements[1]];
-                    // 角度继续偏转
-                    vec = rotate.multiplyVector3(vec);
-                    // 加入光照图
-                    lineAddition(
-                        tempPos[0] + blockCenterX,
-                        tempPos[1] + blockCenterY - unitLen / 2,
-                        currPos[0] + blockCenterX,
-                        currPos[1] + blockCenterY - unitLen / 2
-                    );
-                    // 更新末端
-                    currPos = tempPos;
-                };
-                // 按距离进行排序
-                this._lightDataList.sort(( areaA, areaB ) => {
-                    return (areaA.pointFrom.distance + areaA.pointTo.distance) - (areaB.pointFrom.distance + areaB.pointTo.distance);
-                });
+                // 经过的格子位置集合
+                let blockMap: Map<number, Map<number, BlockPos>> = new Map();
                 // 用于穷举的集合
-                let walker = [...this._lightDataList];
-                // 临时的集合
-                let tempList: LightAreaRec[] = [];
-                // 让集合留空
-                this._lightDataList.length = 0;
-                
-                // 穷举全部
-                while (0 < walker.length) {
-                    // 每次提取首个
-                    let areaNearBy = walker.shift();
-                    // 添加进渲染列表
-                    this._lightDataList.push(areaNearBy);
-                    // 清空临时列表
-                    tempList.length = 0;
-                    // 用这一个，切割其余的
-                    for (let walkI = 0; walkI < walker.length; walkI++) {
-                        let areaElse = walker[walkI];
-                        // 如果该项完全被遮挡，那么忽略它
-                        if (areaNearBy.pointFrom.angle <= areaElse.pointFrom.angle && areaElse.pointTo.angle <= areaNearBy.pointTo.angle) {
-                            continue;
-                        };
+                let blockWalkerList: BlockPos[] = [blockPos];
+                // 已经穷举过的位置集合
+                let walkedMap: Map<number, Map<number, boolean>> = new Map();
+                walkedMap.set(blockPos.gridX, new Map());
+                walkedMap.get(blockPos.gridX).set(blockPos.gridY, true);
 
-                        // 不存在遮挡的话，保留下来
-                        if (
-                            areaElse.pointTo.angle <= areaNearBy.pointFrom.angle
-                            || areaNearBy.pointTo.angle <= areaElse.pointFrom.angle    
-                        ) 
-                        {
-                            tempList.push( areaElse );
-                            continue;
-                        };
+                let walkedAbleCout = 100;
 
-                        // 保留左方的突出内容
-                        if (areaElse.pointFrom.angle <= areaNearBy.pointFrom.angle && areaNearBy.pointFrom.angle <= areaElse.pointTo.angle) {
-                            let distance = this.GetDistance(
-                                areaElse.pointFrom.angle,
-                                areaElse.pointFrom.distance,
-                                areaElse.pointTo.angle,
-                                areaElse.pointTo.distance,
-                                areaNearBy.pointFrom.angle
-                            );
-                            tempList.push({
-                                pointFrom: areaElse.pointFrom,
-                                pointTo: {
-                                    angle: areaNearBy.pointFrom.angle,
-                                    distance: distance
-                                }
-                            })
-                        };
+                // 得到格子联通图
+                while (0 < blockWalkerList.length) {
+                    walkedAbleCout--;
+                    let pop = blockWalkerList.shift();
 
-                        // 保留右方的突出内容
-                        if (areaElse.pointFrom.angle <= areaNearBy.pointTo.angle && areaNearBy.pointTo.angle <= areaElse.pointTo.angle) {
-                            let distance = this.GetDistance(
-                                areaElse.pointFrom.angle,
-                                areaElse.pointFrom.distance,
-                                areaElse.pointTo.angle,
-                                areaElse.pointTo.distance,
-                                areaNearBy.pointTo.angle
-                            );
-                            tempList.push({
-                                pointFrom: {
-                                    angle: areaNearBy.pointTo.angle,
-                                    distance: distance
-                                },
-                                pointTo: areaElse.pointTo
-                            });
-                        };
-                    };
-                    // 更新 walker 为切割后的内容
-                    walker.length = 0;
-                    walker.push(...tempList);
-                };
+                    // 得到各个边界
+                    let left = pop.gridX * config.rectSize;
+                    let right = (pop.gridX + 1) * config.rectSize;
+                    let bottom = pop.gridY * config.rectSize;
+                    let top = (pop.gridY + 1) * config.rectSize;
 
-                // 对残留的每个区域进行 3 角形绘制
-                for (let areaI = 0; areaI < this._lightDataList.length; areaI++) {
-                    let currArea = this._lightDataList[areaI];
-                    // 忽略掉非法数据
-                    if (currArea.pointTo.angle <= currArea.pointFrom.angle) {
+                    // 左下
+                    let gridP1 = new CuonVector3();
+                    gridP1.elements[0] = left;
+                    gridP1.elements[1] = bottom;
+
+                    // 右下
+                    let gridP2 = new CuonVector3();
+                    gridP2.elements[0] = right;
+                    gridP2.elements[1] = bottom;
+
+                    // 右上
+                    let gridP3 = new CuonVector3();
+                    gridP3.elements[0] = right;
+                    gridP3.elements[1] = top;
+
+                    // 左上
+                    let gridP4 = new CuonVector3();
+                    gridP4.elements[0] = left;
+                    gridP4.elements[1] = top;
+
+                    // 如果是非探照区域的格子，忽略掉，甚至不会有拓展的机会
+                    if (!CuonVector3.CheckHasIntersection(
+                        lightPList,
+                        [
+                            gridP1,
+                            gridP2,
+                            gridP3,
+                            gridP4
+                        ]
+                    )) 
+                    {
                         continue;
                     };
-                    this.vertexNumberData.length = 0;
-                    let fromRate = (1 - currArea.pointFrom.distance / config.lightDistance);
-                    let toRate = (1 - currArea.pointTo.distance / config.lightDistance);
-                    this.vertexNumberData.push(
-                        Math.cos(currArea.pointFrom.angle / 180 * Math.PI) * currArea.pointFrom.distance + blockCenterX, 
-                        Math.sin(currArea.pointFrom.angle / 180 * Math.PI) * currArea.pointFrom.distance + blockCenterY, 
-                        0,
-                        config.lightAreaColor[0],
-                        config.lightAreaColor[1],
-                        config.lightAreaColor[2],
-                        fromRate * config.lightAreaColor[3],
 
-                        Math.cos(currArea.pointTo.angle / 180 * Math.PI) * currArea.pointTo.distance + blockCenterX, 
-                        Math.sin(currArea.pointTo.angle / 180 * Math.PI) * currArea.pointTo.distance + blockCenterY, 
-                        0,
-                        config.lightAreaColor[0],
-                        config.lightAreaColor[1],
-                        config.lightAreaColor[2],
-                        toRate * config.lightAreaColor[3],
+                    // 这个位置确实有格子
+                    if (!root.CheckGridBlockEmpty(pop.gridX, pop.gridY)) 
+                    {
+                        // 确保记录起来
+                        if (!blockMap.has(pop.gridX)) {
+                            blockMap.set(pop.gridX, new Map());
+                        };
+                        blockMap.get(pop.gridX).set(pop.gridY, pop);
+                    };
+                    
+                    // 穷举所有相邻位置
+                    for (let nearI = 0; nearI < Webgl.nearByOffset.length; nearI++) {
+                        // 读取相邻数据
+                        let nearData = Webgl.nearByOffset[nearI];
+                        // 生成相邻位置
+                        let nearX = pop.gridX + nearData[0];
+                        let nearY = pop.gridY + nearData[1];
+                        // 如果已经穷举过该位置，忽略
+                        if (walkedMap.has(nearX) && walkedMap.get(nearX).has(nearY)) {
+                            continue;
+                        };
+                        // 标记为该位置已经穷举过
+                        if (!walkedMap.has(nearX)) {
+                            walkedMap.set(nearX, new Map());
+                        };
+                        walkedMap.get(nearX).set(nearY, true);
 
-                        blockCenterX,
-                        blockCenterY,
-                        0,
-                        config.lightAreaColor[0],
-                        config.lightAreaColor[1],
-                        config.lightAreaColor[2],
-                        config.lightAreaColor[3]
-                    );
-                    // 逐个地把 3 角形给绘制出来
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeTriangleFill,
-                        WebGLRenderingContext.TRIANGLES
-                    );
+                        // 生成记录
+                        let nearInst = ObjectPool.inst.Pop(BlockPos.poolType);
+                        nearInst.gridX = nearX;
+                        nearInst.gridY = nearY;
+                        // 等候穷举
+                        blockWalkerList.push(nearInst);
+                    };
                 };
+
+                // 相关的格子全部绘制出来
+                blockMap.forEach(( blockList ) => {
+                    blockList.forEach(( block ) => {
+                        this.DrawMark(
+                            block.gridX,
+                            block.gridY,
+                            config.rectSize / 4,
+                            0,
+                            [1, 0, 0, 1]
+                        );
+                    });
+                });
+
+                // 绘制探照区域提示框
+                this.DrawByElementData(
+                    [
+                        lightP0.elements[0], lightP0.elements[1], lightP0.elements[2], ...config.lightRayColor,
+                        lightP1.elements[0], lightP1.elements[1], lightP1.elements[2], ...config.lightRayColor,
+                        lightP2.elements[0], lightP2.elements[1], lightP2.elements[2], ...config.lightRayColor
+                    ],
+                    [
+                        0, 1,
+                        1, 2,
+                        2, 0
+                    ],
+                    WebGLRenderingContext.LINES
+                );
             };
         };
     }
+
+    /**
+     * 相邻位置集合
+     */
+    static nearByOffset: number[][] = [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1]
+    ];
 
     /**
      * 取得射线 angle 与点 1、2 连线的交点距离
@@ -734,6 +610,39 @@ class Component extends React.Component {
         // (cosAngle * d - p2[0]) * right.elements[0] + (sinAngle * d - p2[1]) * right.elements[1] = 0
         // d * cosAngle * right.elements[0] - p2[0] * right.elements[0] + d * sinAngle * right.elements[1] - p2[1] * right.elements[1] = 0;
         return (p2[0] * right.elements[0] + p2[1] * right.elements[1]) / (cosAngle * right.elements[0] + sinAngle * right.elements[1]);
+    }
+
+    /**
+     * 给某方格绘制标记
+     * @param gridX 
+     * @param gridY 
+     * @param size 
+     * @param z 
+     * @param color 
+     */
+    DrawMark (
+        gridX: number,
+        gridY: number,
+        size: number,
+        z: number,
+        color: number[]
+    )
+    {
+        let centerX = (gridX + 0.5) * config.rectSize;
+        let centerY = (gridY + 0.5) * config.rectSize;
+        this.DrawByElementData(
+            [
+                centerX - size, centerY, z, ...color,
+                centerX + size, centerY, z, ...color,
+                centerX, centerY - size, z, ...color,
+                centerX, centerY + size, z, ...color,
+            ],
+            [
+                0, 1,
+                2, 3
+            ],
+            WebGLRenderingContext.LINES
+        )
     }
 
     /**
