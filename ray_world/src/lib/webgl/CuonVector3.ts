@@ -48,6 +48,10 @@ class CuonVector3 {
      * @param posList 
      */
     public CheckIsAllRightSide (posList: CuonVector3[]) {
+        // 0 向量没有右
+        if (this.elements[0] == 0 && this.elements[1] == 0 && this.elements[2] == 0) {
+            return false;
+        };
         // 获取右向量
         let right = this.GetRight();
         // 如果集合里面所有点在右向量的投影均大于等于 0，那么确实全部都在右侧

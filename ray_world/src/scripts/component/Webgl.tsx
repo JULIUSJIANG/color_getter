@@ -799,7 +799,6 @@ class Component extends React.Component {
                     // 更换为新的探照区域集合
                     lightRangeList.push(...tempLightRangeList);
                 };
-
                 // 穷举所有探照区域
                 for (let i = 0; i < lightRangeList.length; i++) {
                     let lightInst = lightRangeList[i];
@@ -819,12 +818,15 @@ class Component extends React.Component {
                         lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance,
                         lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance
                     ];
+                    // 把所有探照区域都绘制出来
+                    this.vertexNumberData.length = 0;
+                    this.shapeNumberData.length = 0;
                     // 4 边形数据
                     this.vertexNumberData.push(...[
-                        ...fPFrom, 0, ...config.lightAreaColor,
-                        ...fPTo, 0, ...config.lightAreaColor,
-                        ...tPTo, 0, ...config.lightAreaColor,
-                        ...tPFrom, 0, ...config.lightAreaColor
+                        ...fPFrom, 0, ...config.lightSplitedColor,
+                        ...fPTo, 0, ...config.lightSplitedColor,
+                        ...tPTo, 0, ...config.lightSplitedColor,
+                        ...tPFrom, 0, ...config.lightSplitedColor
                     ]);
                     this.shapeNumberData.push(...[
                         0, 1,
@@ -832,9 +834,6 @@ class Component extends React.Component {
                         2, 3,
                         3, 0
                     ]);
-                    // 把所有探照区域都绘制出来
-                    this.vertexNumberData.length = 0;
-                    this.shapeNumberData.length = 0;
                     this.DrawByElementData(
                         this.vertexNumberData,
                         this.shapeNumberData,
@@ -904,9 +903,11 @@ class Component extends React.Component {
         let right = p12.GetRight();
         let cosAngle = Math.cos(angle);
         let sinAngle = Math.sin(angle);
-        // (cosAngle * d - p2[0]) * right.elements[0] + (sinAngle * d - p2[1]) * right.elements[1] = 0
-        // d * cosAngle * right.elements[0] - p2[0] * right.elements[0] + d * sinAngle * right.elements[1] - p2[1] * right.elements[1] = 0;
-        return (p2[0] * right.elements[0] + p2[1] * right.elements[1]) / (cosAngle * right.elements[0] + sinAngle * right.elements[1]);
+        let deno = (cosAngle * right.elements[0] + sinAngle * right.elements[1]);
+        if (deno == 0) {
+            return 0;
+        };
+        return (p2[0] * right.elements[0] + p2[1] * right.elements[1]) / deno;
     }
 
     /**
