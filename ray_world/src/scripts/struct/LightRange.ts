@@ -13,11 +13,11 @@ export default class LightRange {
     /**
      * 起始射线
      */
-    public rayFrom = new LightRangeRay();
+    public ray1 = new LightRangeRay();
     /**
      * 终点射线
      */
-    public rayTo = new LightRangeRay();
+    public ray2 = new LightRangeRay();
 
     /**
      * 对象池类型

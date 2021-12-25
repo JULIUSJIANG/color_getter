@@ -408,16 +408,16 @@ class Component extends React.Component {
                 let lightRange = ObjectPool.inst.Pop(LightRange.poolType);
                 lightRange.centerOfCircle.elements[0] = (lightXRec.gridX + 0.5) * config.rectSize;
                 lightRange.centerOfCircle.elements[1] = (lightYRec.gridY + 0.5) * config.rectSize;
-                lightRange.rayFrom.angle = 0;
-                lightRange.rayFrom.pointFrom.power = 1;
-                lightRange.rayFrom.pointFrom.distance = 0;
-                lightRange.rayFrom.pointTo.power = 0;
-                lightRange.rayFrom.pointTo.distance = config.lightDistance;
-                lightRange.rayTo.angle = 30;
-                lightRange.rayTo.pointFrom.power = 1;
-                lightRange.rayTo.pointFrom.distance = 0;
-                lightRange.rayTo.pointTo.power = 1;
-                lightRange.rayTo.pointTo.distance = config.lightDistance;
+                lightRange.ray1.angle = 0;
+                lightRange.ray1.p1.power = 1;
+                lightRange.ray1.p1.distance = 0;
+                lightRange.ray1.p2.power = 0;
+                lightRange.ray1.p2.distance = config.lightDistance;
+                lightRange.ray2.angle = 30;
+                lightRange.ray2.p1.power = 1;
+                lightRange.ray2.p1.distance = 0;
+                lightRange.ray2.p2.power = 1;
+                lightRange.ray2.p2.distance = config.lightDistance;
 
                 // 光源的中心位置
                 let lightP0 = new CuonVector3();
@@ -426,13 +426,13 @@ class Component extends React.Component {
 
                 // 点 1
                 let lightP1 = new CuonVector3();
-                lightP1.elements[0] = lightP0.elements[0] + Math.cos( lightRange.rayFrom.angle / 180 * Math.PI ) * lightRange.rayFrom.pointTo.distance;
-                lightP1.elements[1] = lightP0.elements[1] + Math.sin( lightRange.rayFrom.angle / 180 * Math.PI ) * lightRange.rayFrom.pointTo.distance;
+                lightP1.elements[0] = lightP0.elements[0] + Math.cos( lightRange.ray1.angle / 180 * Math.PI ) * lightRange.ray1.p2.distance;
+                lightP1.elements[1] = lightP0.elements[1] + Math.sin( lightRange.ray1.angle / 180 * Math.PI ) * lightRange.ray1.p2.distance;
 
                 // 点 2
                 let lightP2 = new CuonVector3();
-                lightP2.elements[0] = lightP0.elements[0] + Math.cos( lightRange.rayTo.angle / 180 * Math.PI ) * lightRange.rayTo.pointTo.distance;
-                lightP2.elements[1] = lightP0.elements[1] + Math.sin( lightRange.rayTo.angle / 180 * Math.PI ) * lightRange.rayTo.pointTo.distance;
+                lightP2.elements[0] = lightP0.elements[0] + Math.cos( lightRange.ray2.angle / 180 * Math.PI ) * lightRange.ray2.p2.distance;
+                lightP2.elements[1] = lightP0.elements[1] + Math.sin( lightRange.ray2.angle / 180 * Math.PI ) * lightRange.ray2.p2.distance;
 
                 // 探照区域的形状
                 let lightPList = [
@@ -586,6 +586,8 @@ class Component extends React.Component {
                 let lightRangeList: LightRange[] = [lightRange];
                 // 新的探照区域集合
                 let tempLightRangeList: LightRange[] = [];
+                // 渗透探照区域集合
+                let peneLightRangeList: LightRange[] = [];
                 // 所有格子，对光束进行影响
                 for (let blockI = 0; blockI < blockList.length; blockI++) {
                     let blockInst = blockList[blockI];
@@ -619,17 +621,17 @@ class Component extends React.Component {
                     for (let lightI = 0; lightI < lightRangeList.length; lightI++) {
                         let lightInst = lightRangeList[ lightI ];
                         let fromP1 = new CuonVector3();
-                        fromP1.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointFrom.distance;
-                        fromP1.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointFrom.distance;
+                        fromP1.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance;
+                        fromP1.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance;
                         let fromP2 = new CuonVector3();
-                        fromP2.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointTo.distance;
-                        fromP2.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointTo.distance;
+                        fromP2.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance;
+                        fromP2.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance;
                         let toP1 = new CuonVector3();
-                        toP1.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointFrom.distance;
-                        toP1.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointFrom.distance;
+                        toP1.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance;
+                        toP1.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance;
                         let toP2 = new CuonVector3();
-                        toP2.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance;
-                        toP2.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance;
+                        toP2.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance;
+                        toP2.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance;
                         // 探照区域形状
                         let lightShape = [
                             fromP1,
@@ -653,7 +655,7 @@ class Component extends React.Component {
                         });
                         // 只取范围以内的
                         angleList = angleList.filter((angle) => {
-                            return lightInst.rayFrom.angle < angle && angle < lightInst.rayTo.angle;
+                            return lightInst.ray1.angle < angle && angle < lightInst.ray2.angle;
                         });
                         // 去重
                         let angleSet: Set<number> = new Set();
@@ -669,8 +671,8 @@ class Component extends React.Component {
                             return angleA - angleB;
                         });
                         // 得到完整的角度划分
-                        angleList.unshift(lightInst.rayFrom.angle);
-                        angleList.push(lightInst.rayTo.angle);
+                        angleList.unshift(lightInst.ray1.angle);
+                        angleList.push(lightInst.ray2.angle);
                         // 每个角度都和前一个角度
                         for (let i = 0; i < angleList.length - 1; i++) {
                             // 当前角度
@@ -680,143 +682,416 @@ class Component extends React.Component {
 
                             // 起始射线起始点
                             let fFromDistance = this.GetDistanceAngleToLine(
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointFrom.distance,
-                                lightInst.rayTo.angle,
-                                lightInst.rayTo.pointFrom.distance,
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p1.distance,
+                                lightInst.ray2.angle,
+                                lightInst.ray2.p1.distance,
                                 fromAngle
                             );
                             // 起始射线起始强度
                             let fFromPower = this.GetDistancePointToPoint(
                                 fromAngle,
                                 fFromDistance,
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointFrom.distance
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p1.distance
                             )
                             /
                             this.GetDistancePointToPoint(
-                                lightInst.rayTo.angle,
-                                lightInst.rayTo.pointFrom.distance,
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointFrom.distance
+                                lightInst.ray2.angle,
+                                lightInst.ray2.p1.distance,
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p1.distance
                             )
-                            * (lightInst.rayTo.pointFrom.power - lightInst.rayFrom.pointFrom.power) 
-                            + lightInst.rayFrom.pointFrom.power;
+                            * (lightInst.ray2.p1.power - lightInst.ray1.p1.power) 
+                            + lightInst.ray1.p1.power;
 
                             // 起始射线终点
                             let fToDistance = this.GetDistanceAngleToLine(
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointTo.distance,
-                                lightInst.rayTo.angle,
-                                lightInst.rayTo.pointTo.distance,
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p2.distance,
+                                lightInst.ray2.angle,
+                                lightInst.ray2.p2.distance,
                                 fromAngle
                             );
                             // 起始射线终点强度
                             let fToPower = this.GetDistancePointToPoint(
                                 toAngle,
                                 fToDistance,
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointTo.distance
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p2.distance
                             )
                             /
                             this.GetDistancePointToPoint(
-                                lightInst.rayTo.angle,
-                                lightInst.rayTo.pointTo.distance,
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointTo.distance
+                                lightInst.ray2.angle,
+                                lightInst.ray2.p2.distance,
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p2.distance
                             )
-                            * (lightInst.rayTo.pointTo.power - lightInst.rayFrom.pointTo.power) 
-                            + lightInst.rayFrom.pointTo.power;
+                            * (lightInst.ray2.p2.power - lightInst.ray1.p2.power) 
+                            + lightInst.ray1.p2.power;
 
                             // 起始射线起始点
                             let tFromDistance = this.GetDistanceAngleToLine(
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointFrom.distance,
-                                lightInst.rayTo.angle,
-                                lightInst.rayTo.pointFrom.distance,
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p1.distance,
+                                lightInst.ray2.angle,
+                                lightInst.ray2.p1.distance,
                                 toAngle
                             );
                             // 起始射线起始强度
                             let tFromPower = this.GetDistancePointToPoint(
                                 toAngle,
                                 tFromDistance,
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointFrom.distance
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p1.distance
                             )
                             /
                             this.GetDistancePointToPoint(
-                                lightInst.rayTo.angle,
-                                lightInst.rayTo.pointFrom.distance,
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointFrom.distance
+                                lightInst.ray2.angle,
+                                lightInst.ray2.p1.distance,
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p1.distance
                             )
-                            * (lightInst.rayTo.pointFrom.power - lightInst.rayFrom.pointFrom.power) 
-                            + lightInst.rayFrom.pointFrom.power;
+                            * (lightInst.ray2.p1.power - lightInst.ray1.p1.power) 
+                            + lightInst.ray1.p1.power;
 
                             // 起始射线终点
                             let tToDistance = this.GetDistanceAngleToLine(
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointTo.distance,
-                                lightInst.rayTo.angle,
-                                lightInst.rayTo.pointTo.distance,
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p2.distance,
+                                lightInst.ray2.angle,
+                                lightInst.ray2.p2.distance,
                                 toAngle
                             );
                             // 起始射线终点强度
                             let tToPower = this.GetDistancePointToPoint(
                                 toAngle,
                                 tToDistance,
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointTo.distance
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p2.distance
                             )
                             /
                             this.GetDistancePointToPoint(
-                                lightInst.rayTo.angle,
-                                lightInst.rayTo.pointTo.distance,
-                                lightInst.rayFrom.angle,
-                                lightInst.rayFrom.pointTo.distance
+                                lightInst.ray2.angle,
+                                lightInst.ray2.p2.distance,
+                                lightInst.ray1.angle,
+                                lightInst.ray1.p2.distance
                             )
-                            * (lightInst.rayTo.pointTo.power - lightInst.rayFrom.pointTo.power) 
-                            + lightInst.rayFrom.pointTo.power;
+                            * (lightInst.ray2.p2.power - lightInst.ray1.p2.power) 
+                            + lightInst.ray1.p2.power;
                             // 生成一个新的探照区域
                             let genLightArea = ObjectPool.inst.Pop(LightRange.poolType);
                             genLightArea.centerOfCircle.elements[0] = lightInst.centerOfCircle.elements[0];
                             genLightArea.centerOfCircle.elements[1] = lightInst.centerOfCircle.elements[1];
-                            genLightArea.rayFrom.angle = fromAngle;
-                            genLightArea.rayFrom.pointFrom.distance = fFromDistance;
-                            genLightArea.rayFrom.pointFrom.power = fFromPower;
-                            genLightArea.rayFrom.pointTo.distance = fToDistance;
-                            genLightArea.rayFrom.pointTo.power = fToPower;
-                            genLightArea.rayTo.angle = toAngle;
-                            genLightArea.rayTo.pointFrom.distance = tFromDistance;
-                            genLightArea.rayTo.pointFrom.power = tFromPower;
-                            genLightArea.rayTo.pointTo.distance = tToDistance;
-                            genLightArea.rayTo.pointTo.power = tToPower;
+                            genLightArea.ray1.angle = fromAngle;
+                            genLightArea.ray1.p1.distance = fFromDistance;
+                            genLightArea.ray1.p1.power = fFromPower;
+                            genLightArea.ray1.p2.distance = fToDistance;
+                            genLightArea.ray1.p2.power = fToPower;
+                            genLightArea.ray2.angle = toAngle;
+                            genLightArea.ray2.p1.distance = tFromDistance;
+                            genLightArea.ray2.p1.power = tFromPower;
+                            genLightArea.ray2.p2.distance = tToDistance;
+                            genLightArea.ray2.p2.power = tToPower;
                             // 放入探照区域集合里面
                             tempLightRangeList.push(genLightArea);
                         };
                     };
+                    // 清除渗透集合
+                    peneLightRangeList.length = 0;
+                    // 穷举所有划分了的光线，进行渗透处理
+                    for (let tempI = 0; tempI < tempLightRangeList.length; tempI++) {
+                        let tempLightInst = tempLightRangeList[tempI];
+                        // 探照区域的 4 个关键点
+                        let fromP1 = [
+                            tempLightInst.centerOfCircle.elements[0] + Math.cos(tempLightInst.ray1.angle / 180 * Math.PI) * tempLightInst.ray1.p1.distance,
+                            tempLightInst.centerOfCircle.elements[1] + Math.sin(tempLightInst.ray1.angle / 180 * Math.PI) * tempLightInst.ray1.p1.distance
+                        ];
+                        let fromP2 = [
+                            tempLightInst.centerOfCircle.elements[0] + Math.cos(tempLightInst.ray1.angle / 180 * Math.PI) * tempLightInst.ray1.p2.distance,
+                            tempLightInst.centerOfCircle.elements[1] + Math.sin(tempLightInst.ray1.angle / 180 * Math.PI) * tempLightInst.ray1.p2.distance
+                        ];
+                        // 衰减速度
+                        let fromLowerSpeed: number = 0;
+                        if (tempLightInst.ray1.p1.distance != tempLightInst.ray1.p2.distance) {
+                            fromLowerSpeed = (tempLightInst.ray1.p2.power - tempLightInst.ray1.p1.power) / (tempLightInst.ray1.p2.distance - tempLightInst.ray1.p1.distance);
+                        };
+
+                        let toP1 = [
+                            tempLightInst.centerOfCircle.elements[0] + Math.cos(tempLightInst.ray2.angle / 180 * Math.PI) * tempLightInst.ray2.p1.distance,
+                            tempLightInst.centerOfCircle.elements[1] + Math.sin(tempLightInst.ray2.angle / 180 * Math.PI) * tempLightInst.ray2.p1.distance
+                        ];
+                        let toP2 = [
+                            tempLightInst.centerOfCircle.elements[0] + Math.cos(tempLightInst.ray2.angle / 180 * Math.PI) * tempLightInst.ray2.p2.distance,
+                            tempLightInst.centerOfCircle.elements[1] + Math.sin(tempLightInst.ray2.angle / 180 * Math.PI) * tempLightInst.ray2.p2.distance
+                        ];
+                        // 衰减速度
+                        let toLowerSpeed: number = 0;
+                        if (tempLightInst.ray2.p1.distance != tempLightInst.ray2.p2.distance) {
+                            toLowerSpeed = (tempLightInst.ray2.p2.power - tempLightInst.ray2.p1.power) / (tempLightInst.ray2.p2.distance - tempLightInst.ray2.p1.distance);
+                        };
+
+                        // 方块 4 个点所处角度
+                        let angleList: number[] = blockShape.map((point) => {
+                            return Math.atan2(point.elements[1] - tempLightInst.centerOfCircle.elements[1], point.elements[0] - tempLightInst.centerOfCircle.elements[0]) / Math.PI * 180;
+                        });
+                        // 去重
+                        let angleSet: Set<number> = new Set();
+                        angleList = angleList.filter((angle) => {
+                            if (angleSet.has(angle)) {
+                                return false;
+                            };
+                            angleSet.add(angle);
+                            return true;
+                        });
+                        // 排序
+                        angleList.sort((angleA, angleB) => {
+                            return angleA - angleB;
+                        });
+                        // 与方块无交集，直接采纳
+                        if (angleList[angleList.length - 1] <= tempLightInst.ray1.angle) {
+                            peneLightRangeList.push(tempLightInst);
+                            continue;
+                        };
+                        // 与方块无交集，直接采纳
+                        if (tempLightInst.ray2.angle <= angleList[0]) {
+                            peneLightRangeList.push(tempLightInst);
+                            continue;
+                        };
+                        // 起始射线的函数
+                        let kFrom = Math.tan(tempLightInst.ray1.angle / 180 * Math.PI);
+                        let bFrom = tempLightInst.centerOfCircle.elements[1] - kFrom * tempLightInst.centerOfCircle.elements[0];
+                        // 4 个交点
+                        let rayFPoints = [
+                            [
+                                left,
+                                kFrom * left + bFrom
+                            ],
+                            [
+                                right,
+                                kFrom * right + bFrom
+                            ],
+                            [
+                                (bottom - bFrom) / kFrom,
+                                bottom
+                            ],
+                            [
+                                (top - bFrom) / kFrom,
+                                top
+                            ]
+                        ];
+                        // 排序-就近优先
+                        rayFPoints.sort(( p1, p2 ) => {
+                            return ((p1[0] - tempLightInst.centerOfCircle.elements[0]) ** 2 + (p1[1] - tempLightInst.centerOfCircle.elements[1]) ** 2)
+                                - ((p2[0] - tempLightInst.centerOfCircle.elements[0]) ** 2 + (p2[1] - tempLightInst.centerOfCircle.elements[1]) ** 2)
+                        });
+                        // 记录强度
+                        rayFPoints.forEach(( point ) => {
+                            point[3] = Math.sqrt((point[0] - tempLightInst.centerOfCircle.elements[0]) ** 2 + (point[1] - tempLightInst.centerOfCircle.elements[1]) ** 2);
+                            point[2] = Math.sqrt(
+                                (
+                                    point[0] - fromP1[0]) ** 2 
+                                    + (point[1] - fromP1[1]) ** 2
+                                ) 
+                                / 
+                                (
+                                    tempLightInst.ray1.p2.distance 
+                                    - tempLightInst.ray1.p1.distance
+                                ) 
+                                * 
+                                (
+                                    
+                                    tempLightInst.ray1.p2.power
+                                    - tempLightInst.ray1.p1.power 
+                                ) 
+                                + tempLightInst.ray1.p2.power;
+                        });
+                        // 得到穿透厚度
+                        let fromCrossDistance = Math.sqrt((rayFPoints[1][0] - rayFPoints[2][0]) ** 2 + (rayFPoints[1][1] - rayFPoints[2][1]) ** 2);
+
+                        // 终点射线的函数
+                        let kTo = Math.tan(tempLightInst.ray2.angle / 180 * Math.PI);
+                        let bTo = tempLightInst.centerOfCircle.elements[1] - kTo * tempLightInst.centerOfCircle.elements[0];
+                        // 4 个交点
+                        let rayTPoints = [
+                            [
+                                left,
+                                kTo * left + bTo
+                            ],
+                            [
+                                right,
+                                kTo * right + bTo
+                            ],
+                            [
+                                (bottom - bTo) / kTo,
+                                bottom
+                            ],
+                            [
+                                (top - bTo) / kTo,
+                                top
+                            ]
+                        ];
+                        // 排序-就近优先
+                        rayTPoints.sort(( p1, p2 ) => {
+                            return ((p1[0] - tempLightInst.centerOfCircle.elements[0]) ** 2 + (p1[1] - tempLightInst.centerOfCircle.elements[1]) ** 2)
+                                - ((p2[0] - tempLightInst.centerOfCircle.elements[0]) ** 2 + (p2[1] - tempLightInst.centerOfCircle.elements[1]) ** 2)
+                        });
+                        // 记录强度
+                        rayTPoints.forEach(( point ) => {
+                            point[3] = Math.sqrt((point[0] - tempLightInst.centerOfCircle.elements[0]) ** 2 + (point[1] - tempLightInst.centerOfCircle.elements[1]) ** 2);
+                            point[2] = Math.sqrt(
+                                (
+                                    point[0] - toP1[0]) ** 2 
+                                    + (point[1] - toP1[1]) ** 2
+                                ) 
+                                / 
+                                (
+                                    tempLightInst.ray2.p2.distance 
+                                    - tempLightInst.ray2.p1.distance
+                                ) 
+                                * 
+                                (
+                                    
+                                    tempLightInst.ray2.p2.power
+                                    - tempLightInst.ray2.p1.power 
+                                ) 
+                                + tempLightInst.ray2.p2.power;
+                        });
+                        // 得到穿透厚度
+                        let toCrossDistance = Math.sqrt((rayTPoints[1][0] - rayTPoints[2][0]) ** 2 + (rayTPoints[1][1] - rayTPoints[2][1]) ** 2);
+
+                        // 部分 1
+                        let part1 = ObjectPool.inst.Pop(LightRange.poolType);
+                        // 圆心
+                        part1.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                        part1.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                        // 起始射线
+                        part1.ray1.angle = tempLightInst.ray1.angle;
+                        part1.ray1.p1.distance = tempLightInst.ray1.p1.distance;
+                        part1.ray1.p1.power = tempLightInst.ray1.p1.power;
+                        part1.ray1.p2.distance = rayFPoints[1][3];
+                        part1.ray1.p2.power = rayFPoints[1][2];
+                        // 结束射线
+                        part1.ray2.angle = tempLightInst.ray2.angle;
+                        part1.ray2.p1.distance = tempLightInst.ray2.p1.distance;
+                        part1.ray2.p1.power = tempLightInst.ray2.p1.power;
+                        part1.ray2.p2.distance = rayTPoints[1][3];
+                        part1.ray2.p2.power = rayTPoints[1][2];
+                        peneLightRangeList.push(part1);
+
+                        // 如果都突破不了
+                        if (rayFPoints[2][2] <= 0 && rayTPoints[2][2] <= 0) {
+                            let fRayDistance = rayFPoints[1][2] / (1 + fromLowerSpeed);
+                            let tRayDistance = rayTPoints[1][2] / (1 + toLowerSpeed);
+
+                            // 部分 2
+                            let part2 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 圆心
+                            part2.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part2.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part2.ray1.angle = tempLightInst.ray1.angle;
+                            part2.ray1.p1.distance = rayFPoints[1][3];
+                            part2.ray1.p1.power = rayFPoints[1][2];
+                            part2.ray1.p2.distance = fRayDistance;
+                            part2.ray1.p2.power = 0;
+                            // 结束射线
+                            part2.ray2.angle = tempLightInst.ray2.angle;
+                            part2.ray2.p1.distance = rayTPoints[1][3];
+                            part2.ray2.p1.power = rayTPoints[1][2];
+                            part2.ray2.p2.distance = tRayDistance;
+                            part2.ray2.p2.power = 0;
+                            peneLightRangeList.push(part2);
+                            continue;
+                        };
+                        // 如果都突破成功
+                        if (0 <= rayFPoints[2][2] && 0 <= rayTPoints[2][2]) {
+                            // 部分 2
+                            let part2 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 圆心
+                            part2.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part2.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part2.ray1.angle = tempLightInst.ray1.angle;
+                            part2.ray1.p1.distance = rayFPoints[1][3];
+                            part2.ray1.p1.power = rayFPoints[1][2];
+                            part2.ray1.p2.distance = rayFPoints[2][3];
+                            part2.ray1.p2.power = rayFPoints[2][2];
+                            // 结束射线
+                            part2.ray2.angle = tempLightInst.ray2.angle;
+                            part2.ray2.p1.distance = rayTPoints[1][3];
+                            part2.ray2.p1.power = rayTPoints[1][2];
+                            part2.ray2.p2.distance = rayTPoints[2][3];
+                            part2.ray2.p2.power = rayTPoints[2][2];
+                            peneLightRangeList.push(part2);
+
+                            // 部分 3
+                            let part3 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 圆心
+                            part3.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part3.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part3.ray1.angle = tempLightInst.ray1.angle;
+                            part3.ray1.p1.distance = rayFPoints[2][3];
+                            part3.ray1.p1.power = rayFPoints[2][2];
+                            // 附加衰减至 0 的距离
+                            part3.ray1.p2.distance = rayFPoints[2][3] + (fromLowerSpeed == 0 ? 0 : rayFPoints[2][2] / fromLowerSpeed);
+                            part3.ray1.p2.power = 0;
+                            // 结束射线
+                            part3.ray2.angle = tempLightInst.ray2.angle;
+                            part3.ray2.p1.distance = rayTPoints[2][3];
+                            part3.ray2.p1.power = rayTPoints[2][2];
+                            // 附加衰减至 0 的距离
+                            part3.ray2.p2.distance = rayTPoints[2][3] + (toLowerSpeed == 0 ? 0 : rayTPoints[2][2] / toLowerSpeed);
+                            part3.ray2.p2.power = 0;
+                            peneLightRangeList.push(part3);
+                            continue;
+                        };
+
+                        // 一边突破成功，一边突破不成功，某个比率使得，射线在恰好离开方块时候消亡
+                        // rate * (toCrossDistance - fromCrossDistance) + fromCrossDistance = rate * (rayTPoints[2][2] - rayFPoints[2][2]) + rayFPoints[2][2];
+                        // 计算恰好渗透到抵消的比率
+                        let rate: number = (rayFPoints[1][2] - fromCrossDistance) / ((toCrossDistance - fromCrossDistance) - (rayTPoints[2][2] - rayFPoints[2][2]));
+                        // 分割点 1
+                        let rateP1 = [(rayTPoints[1][0] - rayFPoints[1][0]) * rate + rayFPoints[1][0], (rayTPoints[1][1] - rayFPoints[1][1]) * rate + rayFPoints[1][1]];
+                        // 分割点 2
+                        let rateP2 = [(rayTPoints[2][0] - rayFPoints[2][0]) * rate + rayFPoints[2][0], (rayTPoints[2][1] - rayFPoints[2][1]) * rate + rayFPoints[2][1]];
+                        // 分割点 角度
+                        let rateAngle = Math.atan2(rateP2[1] - tempLightInst.centerOfCircle.elements[1], rateP2[0] - tempLightInst.centerOfCircle.elements[0]) / Math.PI * 180;
+
+                        // 如果是起始射线突出
+                        if (0 < rayFPoints[2][2]) {
+                            
+                            continue;
+                        };
+
+                        // 如果是终点射线突出
+                        if (0 < rayTPoints[2][2]) {
+                            continue;
+                        };
+                    };
                     lightRangeList.length = 0;
                     // 更换为新的探照区域集合
-                    lightRangeList.push(...tempLightRangeList);
+                    lightRangeList.push(...peneLightRangeList);
                 };
                 // 穷举所有探照区域
                 for (let i = 0; i < lightRangeList.length; i++) {
                     let lightInst = lightRangeList[i];
                     let fPFrom = [
-                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointFrom.distance,
-                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointFrom.distance
+                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance,
+                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance
                     ];
                     let fPTo = [
-                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointTo.distance,
-                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointTo.distance
+                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance,
+                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance
                     ];
                     let tPFrom = [
-                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointFrom.distance,
-                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointFrom.distance
+                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance,
+                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance
                     ];
                     let tPTo = [
-                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance,
-                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance
+                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance,
+                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance
                     ];
                     // 把所有探照区域都绘制出来
                     this.vertexNumberData.length = 0;

@@ -11,9 +11,9 @@ export default class LightRangeRay {
     /**
      * 射线起始点
      */
-    public pointFrom = new LightRangeRayPoint();
+    public p1 = new LightRangeRayPoint();
     /**
      * 射线终点
      */
-    public pointTo = new LightRangeRayPoint();
+    public p2 = new LightRangeRayPoint();
 }
