@@ -445,7 +445,7 @@ class Component extends React.Component {
                 blockPos.gridY = lightYRec.gridY;
 
                 // 经过的格子位置集合
-                let blockMap: Map<number, Map<number, BlockPos>> = new Map();
+                let crossedblockMap: Map<number, Map<number, BlockPos>> = new Map();
                 // 用于穷举的集合
                 let blockWalkerList: BlockPos[] = [blockPos];
                 // 已经穷举过的位置集合
@@ -453,11 +453,8 @@ class Component extends React.Component {
                 walkedMap.set(blockPos.gridX, new Map());
                 walkedMap.get(blockPos.gridX).set(blockPos.gridY, true);
 
-                let walkedAbleCout = 100;
-
                 // 得到格子联通图
                 while (0 < blockWalkerList.length) {
-                    walkedAbleCout--;
                     let pop = blockWalkerList.shift();
 
                     // 得到各个边界
@@ -504,10 +501,10 @@ class Component extends React.Component {
                     if (!root.CheckGridBlockEmpty(pop.gridX, pop.gridY)) 
                     {
                         // 确保记录起来
-                        if (!blockMap.has(pop.gridX)) {
-                            blockMap.set(pop.gridX, new Map());
+                        if (!crossedblockMap.has(pop.gridX)) {
+                            crossedblockMap.set(pop.gridX, new Map());
                         };
-                        blockMap.get(pop.gridX).set(pop.gridY, pop);
+                        crossedblockMap.get(pop.gridX).set(pop.gridY, pop);
                     };
                     
                     // 穷举所有相邻位置
@@ -537,7 +534,7 @@ class Component extends React.Component {
                 };
 
                 // 相关的格子全部绘制出来
-                blockMap.forEach(( blockList ) => {
+                crossedblockMap.forEach(( blockList ) => {
                     blockList.forEach(( block ) => {
                         this.DrawMark(
                             block.gridX,
@@ -563,6 +560,41 @@ class Component extends React.Component {
                     ],
                     WebGLRenderingContext.LINES
                 );
+
+                // 待处理的格子列表
+                let blockList: BlockPos[] = [];
+                crossedblockMap.forEach(( blockColl ) => {
+                    blockColl.forEach(( block ) => {
+                        blockList.push(block);
+                    });
+                });
+
+                // 排序，距离近的优先
+                blockList.sort((blockA, blockB) => {
+                    let ax = (blockA.gridX + 0.5) * config.rectSize;
+                    let ay = (blockA.gridY + 0.5) * config.rectSize;
+                    let bx = (blockB.gridX + 0.5) * config.rectSize;
+                    let by = (blockB.gridY + 0.5) * config.rectSize;
+
+                    return ((lightP0.elements[0] - ax) ** 2 + (lightP0.elements[1] - ay) ** 2)
+                         - ((lightP0.elements[0] - bx) ** 2 + (lightP0.elements[1] - by) ** 2)
+                });
+
+                // 目前所有的光束
+                let lightRangeList: LightRange[] = [lightRange];
+
+                // 所有格子，对光束进行影响
+                for (let blockI = 0; blockI < blockList.length; blockI++) {
+                    let blockInst = blockList[blockI];
+                    let left = blockInst.gridX * config.rectSize;
+                    let right = (blockInst.gridX + 1) * config.rectSize;
+                    let bottom = blockInst.gridY * config.rectSize;
+
+                    for (let lightI = 0; lightI < lightRangeList.length; lightI++) {
+                        let lightInst = lightRangeList[ lightI ];
+
+                    };
+                };
             };
         };
     }

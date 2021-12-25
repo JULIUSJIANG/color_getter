@@ -10,7 +10,7 @@ namespace config {
     /**
      * 方块尺寸
      */
-    export const rectSize = 20;
+    export const rectSize = 100;
 
     /**
      * 聚焦框的宽度
@@ -35,7 +35,7 @@ namespace config {
     /**
      * 光照距离
      */
-    export const lightDistance = rectSize * 20;
+    export const lightDistance = rectSize * 5;
 
     /**
      * 背景颜色
