@@ -155,7 +155,17 @@ namespace config {
         0,
         0,
         1
-    ]
+    ];
+
+    /**
+     * 光的射线颜色
+     */
+     export const lightSplitedColor = [
+        1,
+        1,
+        1,
+        0.7
+    ];
 };
 
 export default config;

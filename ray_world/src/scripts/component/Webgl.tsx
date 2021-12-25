@@ -406,6 +406,8 @@ class Component extends React.Component {
 
                 // 初始化探照光束
                 let lightRange = ObjectPool.inst.Pop(LightRange.poolType);
+                lightRange.centerOfCircle.elements[0] = (lightXRec.gridX + 0.5) * config.rectSize;
+                lightRange.centerOfCircle.elements[1] = (lightYRec.gridY + 0.5) * config.rectSize;
                 lightRange.rayFrom.angle = 0;
                 lightRange.rayFrom.pointFrom.power = 1;
                 lightRange.rayFrom.pointFrom.distance = 0;
@@ -582,18 +584,262 @@ class Component extends React.Component {
 
                 // 目前所有的光束
                 let lightRangeList: LightRange[] = [lightRange];
-
+                // 新的探照区域集合
+                let tempLightRangeList: LightRange[] = [];
                 // 所有格子，对光束进行影响
                 for (let blockI = 0; blockI < blockList.length; blockI++) {
                     let blockInst = blockList[blockI];
+                    // 方块边界
                     let left = blockInst.gridX * config.rectSize;
                     let right = (blockInst.gridX + 1) * config.rectSize;
                     let bottom = blockInst.gridY * config.rectSize;
-
+                    let top = (blockInst.gridY + 1) * config.rectSize;
+                    // 4 个边界点
+                    let pLB = new CuonVector3();
+                    pLB.elements[0] = left;
+                    pLB.elements[1] = bottom;
+                    let pRB = new CuonVector3();
+                    pRB.elements[0] = right;
+                    pRB.elements[1] = bottom;
+                    let pRT = new CuonVector3();
+                    pRT.elements[0] = right;
+                    pRT.elements[1] = top;
+                    let pLT = new CuonVector3();
+                    pLT.elements[0] = left;
+                    pLT.elements[1] = top;
+                    // 方块形状
+                    let blockShape = [
+                        pLB,
+                        pRB,
+                        pRT,
+                        pLT
+                    ];
+                    // 用于存储受方块切割后的探照区域
+                    tempLightRangeList.length = 0;
                     for (let lightI = 0; lightI < lightRangeList.length; lightI++) {
                         let lightInst = lightRangeList[ lightI ];
+                        let fromP1 = new CuonVector3();
+                        fromP1.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointFrom.distance;
+                        fromP1.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointFrom.distance;
+                        let fromP2 = new CuonVector3();
+                        fromP2.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointTo.distance;
+                        fromP2.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointTo.distance;
+                        let toP1 = new CuonVector3();
+                        toP1.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointFrom.distance;
+                        toP1.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointFrom.distance;
+                        let toP2 = new CuonVector3();
+                        toP2.elements[0] = lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance;
+                        toP2.elements[1] = lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance;
+                        // 探照区域形状
+                        let lightShape = [
+                            fromP1,
+                            fromP2,
+                            toP2,
+                            toP1
+                        ];
+                        // 检测是否有交集
+                        let hasIntersection = CuonVector3.CheckHasIntersection(
+                            blockShape,
+                            lightShape
+                        );
+                        // 不相干
+                        if (!hasIntersection) {
+                            tempLightRangeList.push(lightInst);
+                            continue;
+                        };
+                        // 方块 4 个点所处角度
+                        let angleList: number[] = blockShape.map((point) => {
+                            return Math.atan2(point.elements[1] - lightInst.centerOfCircle.elements[1], point.elements[0] - lightInst.centerOfCircle.elements[0]) / Math.PI * 180;
+                        });
+                        // 只取范围以内的
+                        angleList = angleList.filter((angle) => {
+                            return lightInst.rayFrom.angle < angle && angle < lightInst.rayTo.angle;
+                        });
+                        // 去重
+                        let angleSet: Set<number> = new Set();
+                        angleList = angleList.filter((angle) => {
+                            if (angleSet.has(angle)) {
+                                return false;
+                            };
+                            angleSet.add(angle);
+                            return true;
+                        });
+                        // 角度从小到大排序
+                        angleList.sort((angleA, angleB) => {
+                            return angleA - angleB;
+                        });
+                        // 得到完整的角度划分
+                        angleList.unshift(lightInst.rayFrom.angle);
+                        angleList.push(lightInst.rayTo.angle);
+                        // 每个角度都和前一个角度
+                        for (let i = 0; i < angleList.length - 1; i++) {
+                            // 当前角度
+                            let fromAngle = angleList[i];
+                            // 下一个角度
+                            let toAngle = angleList[i + 1];
 
+                            // 起始射线起始点
+                            let fFromDistance = this.GetDistanceAngleToLine(
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointFrom.distance,
+                                lightInst.rayTo.angle,
+                                lightInst.rayTo.pointFrom.distance,
+                                fromAngle
+                            );
+                            // 起始射线起始强度
+                            let fFromPower = this.GetDistancePointToPoint(
+                                fromAngle,
+                                fFromDistance,
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointFrom.distance
+                            )
+                            /
+                            this.GetDistancePointToPoint(
+                                lightInst.rayTo.angle,
+                                lightInst.rayTo.pointFrom.distance,
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointFrom.distance
+                            )
+                            * (lightInst.rayTo.pointFrom.power - lightInst.rayFrom.pointFrom.power) 
+                            + lightInst.rayFrom.pointFrom.power;
+
+                            // 起始射线终点
+                            let fToDistance = this.GetDistanceAngleToLine(
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointTo.distance,
+                                lightInst.rayTo.angle,
+                                lightInst.rayTo.pointTo.distance,
+                                fromAngle
+                            );
+                            // 起始射线终点强度
+                            let fToPower = this.GetDistancePointToPoint(
+                                toAngle,
+                                fToDistance,
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointTo.distance
+                            )
+                            /
+                            this.GetDistancePointToPoint(
+                                lightInst.rayTo.angle,
+                                lightInst.rayTo.pointTo.distance,
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointTo.distance
+                            )
+                            * (lightInst.rayTo.pointTo.power - lightInst.rayFrom.pointTo.power) 
+                            + lightInst.rayFrom.pointTo.power;
+
+                            // 起始射线起始点
+                            let tFromDistance = this.GetDistanceAngleToLine(
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointFrom.distance,
+                                lightInst.rayTo.angle,
+                                lightInst.rayTo.pointFrom.distance,
+                                toAngle
+                            );
+                            // 起始射线起始强度
+                            let tFromPower = this.GetDistancePointToPoint(
+                                toAngle,
+                                tFromDistance,
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointFrom.distance
+                            )
+                            /
+                            this.GetDistancePointToPoint(
+                                lightInst.rayTo.angle,
+                                lightInst.rayTo.pointFrom.distance,
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointFrom.distance
+                            )
+                            * (lightInst.rayTo.pointFrom.power - lightInst.rayFrom.pointFrom.power) 
+                            + lightInst.rayFrom.pointFrom.power;
+
+                            // 起始射线终点
+                            let tToDistance = this.GetDistanceAngleToLine(
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointTo.distance,
+                                lightInst.rayTo.angle,
+                                lightInst.rayTo.pointTo.distance,
+                                toAngle
+                            );
+                            // 起始射线终点强度
+                            let tToPower = this.GetDistancePointToPoint(
+                                toAngle,
+                                tToDistance,
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointTo.distance
+                            )
+                            /
+                            this.GetDistancePointToPoint(
+                                lightInst.rayTo.angle,
+                                lightInst.rayTo.pointTo.distance,
+                                lightInst.rayFrom.angle,
+                                lightInst.rayFrom.pointTo.distance
+                            )
+                            * (lightInst.rayTo.pointTo.power - lightInst.rayFrom.pointTo.power) 
+                            + lightInst.rayFrom.pointTo.power;
+                            // 生成一个新的探照区域
+                            let genLightArea = ObjectPool.inst.Pop(LightRange.poolType);
+                            genLightArea.centerOfCircle.elements[0] = lightInst.centerOfCircle.elements[0];
+                            genLightArea.centerOfCircle.elements[1] = lightInst.centerOfCircle.elements[1];
+                            genLightArea.rayFrom.angle = fromAngle;
+                            genLightArea.rayFrom.pointFrom.distance = fFromDistance;
+                            genLightArea.rayFrom.pointFrom.power = fFromPower;
+                            genLightArea.rayFrom.pointTo.distance = fToDistance;
+                            genLightArea.rayFrom.pointTo.power = fToPower;
+                            genLightArea.rayTo.angle = toAngle;
+                            genLightArea.rayTo.pointFrom.distance = tFromDistance;
+                            genLightArea.rayTo.pointFrom.power = tFromPower;
+                            genLightArea.rayTo.pointTo.distance = tToDistance;
+                            genLightArea.rayTo.pointTo.power = tToPower;
+                            // 放入探照区域集合里面
+                            tempLightRangeList.push(genLightArea);
+                        };
                     };
+                    lightRangeList.length = 0;
+                    // 更换为新的探照区域集合
+                    lightRangeList.push(...tempLightRangeList);
+                };
+
+                // 穷举所有探照区域
+                for (let i = 0; i < lightRangeList.length; i++) {
+                    let lightInst = lightRangeList[i];
+                    let fPFrom = [
+                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointFrom.distance,
+                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointFrom.distance
+                    ];
+                    let fPTo = [
+                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointTo.distance,
+                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayFrom.angle / 180 * Math.PI) * lightInst.rayFrom.pointTo.distance
+                    ];
+                    let tPFrom = [
+                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointFrom.distance,
+                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointFrom.distance
+                    ];
+                    let tPTo = [
+                        lightInst.centerOfCircle.elements[0] + Math.cos(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance,
+                        lightInst.centerOfCircle.elements[1] + Math.sin(lightInst.rayTo.angle / 180 * Math.PI) * lightInst.rayTo.pointTo.distance
+                    ];
+                    // 4 边形数据
+                    this.vertexNumberData.push(...[
+                        ...fPFrom, 0, ...config.lightAreaColor,
+                        ...fPTo, 0, ...config.lightAreaColor,
+                        ...tPTo, 0, ...config.lightAreaColor,
+                        ...tPFrom, 0, ...config.lightAreaColor
+                    ]);
+                    this.shapeNumberData.push(...[
+                        0, 1,
+                        1, 2,
+                        2, 3,
+                        3, 0
+                    ]);
+                    // 把所有探照区域都绘制出来
+                    this.vertexNumberData.length = 0;
+                    this.shapeNumberData.length = 0;
+                    this.DrawByElementData(
+                        this.vertexNumberData,
+                        this.shapeNumberData,
+                        WebGLRenderingContext.LINES
+                    );
                 };
             };
         };
@@ -610,6 +856,25 @@ class Component extends React.Component {
     ];
 
     /**
+     * 获取点 1、2 的距离
+     * @param a1 
+     * @param d1 
+     * @param a2 
+     * @param d2 
+     */
+    GetDistancePointToPoint (
+        a1: number,
+        d1: number,
+        a2: number,
+        d2: number
+    )
+    {
+        let pos1 = [Math.cos(a1 / 180 * Math.PI) * d1, Math.sin(a1 / 180 * Math.PI) * d1];
+        let pos2 = [Math.cos(a2 / 180 * Math.PI) * d2, Math.sin(a2 / 180 * Math.PI) * d2];
+        return Math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos2[0] - pos2[0]) ** 2);
+    }
+
+    /**
      * 取得射线 angle 与点 1、2 连线的交点距离
      * @param a1 
      * @param d1 
@@ -618,7 +883,7 @@ class Component extends React.Component {
      * @param angle 
      * @returns 
      */
-    GetDistance (
+    GetDistanceAngleToLine (
         a1: number,
         d1: number,
         a2: number,
