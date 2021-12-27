@@ -1054,19 +1054,146 @@ class Component extends React.Component {
                         let rate: number = (rayFPoints[1][2] - fromCrossDistance) / ((toCrossDistance - fromCrossDistance) - (rayTPoints[2][2] - rayFPoints[2][2]));
                         // 分割点 1
                         let rateP1 = [(rayTPoints[1][0] - rayFPoints[1][0]) * rate + rayFPoints[1][0], (rayTPoints[1][1] - rayFPoints[1][1]) * rate + rayFPoints[1][1]];
+                        // 能量 1
+                        let powerP1 = (rayTPoints[1][2] - rayFPoints[1][2]) * rate + rayFPoints[1][2];
+                        // 距离 p1
+                        let distanceP1 = Math.sqrt((rateP1[0] - tempLightInst.centerOfCircle.elements[0]) ** 2 + (rateP1[1] - tempLightInst.centerOfCircle.elements[1]) ** 2);
                         // 分割点 2
                         let rateP2 = [(rayTPoints[2][0] - rayFPoints[2][0]) * rate + rayFPoints[2][0], (rayTPoints[2][1] - rayFPoints[2][1]) * rate + rayFPoints[2][1]];
+                        // 能量 2
+                        let powerP2 = (rayTPoints[2][2] - rayFPoints[2][2]) * rate + rayFPoints[2][2];
                         // 分割点 角度
                         let rateAngle = Math.atan2(rateP2[1] - tempLightInst.centerOfCircle.elements[1], rateP2[0] - tempLightInst.centerOfCircle.elements[0]) / Math.PI * 180;
+                        // 距离 p2
+                        let distanceP2 = Math.sqrt((rateP2[0] - tempLightInst.centerOfCircle.elements[0]) ** 2 + (rateP2[1] - tempLightInst.centerOfCircle.elements[1]) ** 2);
 
                         // 如果是起始射线突出
                         if (0 < rayFPoints[2][2]) {
-                            
+                            // 部分 2
+                            let part2 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 圆心
+                            part2.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part2.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part2.ray1.angle = tempLightInst.ray1.angle;
+                            part2.ray1.p1.distance = rayFPoints[1][3];
+                            part2.ray1.p1.power = rayFPoints[1][2];
+                            part2.ray1.p2.distance = rayFPoints[2][3];
+                            part2.ray1.p2.power = rayFPoints[2][2];
+                            // 结束射线
+                            part2.ray2.angle = rateAngle;
+                            part2.ray2.p1.distance = distanceP1;
+                            part2.ray2.p1.power = powerP1;
+                            part2.ray2.p2.distance = distanceP2;
+                            part2.ray2.p2.power = 0;
+                            peneLightRangeList.push(part2);
+
+                            // 部分 3
+                            let part3 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 左方渗透距离
+                            let peneDistancePart3 = rayTPoints[1][2] / (1 + toLowerSpeed);
+                            // 圆心
+                            part3.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part3.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part3.ray1.angle = rateAngle;
+                            part3.ray1.p1.distance = distanceP1;
+                            part3.ray1.p1.power = powerP1;
+                            part3.ray1.p2.distance = distanceP2;
+                            part3.ray1.p2.power = 0;
+                            // 结束射线
+                            part3.ray2.angle = tempLightInst.ray2.angle,
+                            part3.ray2.p1.distance = rayTPoints[1][3];
+                            part3.ray2.p1.power = rayTPoints[1][2];
+                            part3.ray2.p2.distance = rayTPoints[1][3] + peneDistancePart3;
+                            part3.ray2.p2.power = 0;
+                            peneLightRangeList.push(part3);
+
+                            // 部分 4
+                            let part4 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 右方渗透距离
+                            let peneDistancePart4 = rayFPoints[2][2];
+                            // 圆心
+                            part4.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part4.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part4.ray1.angle = tempLightInst.ray1.angle;
+                            part4.ray1.p1.distance = rayFPoints[2][3];
+                            part4.ray1.p1.power = rayFPoints[2][2];
+                            part4.ray1.p2.distance = rayFPoints[2][3] + peneDistancePart4;
+                            part4.ray1.p2.power = 0;
+                            // 结束射线
+                            part4.ray2.angle = rateAngle;
+                            part4.ray2.p1.distance = distanceP2;
+                            part4.ray2.p1.power = 0;
+                            part4.ray2.p2.distance = distanceP2;
+                            part4.ray2.p2.power = 0;
+                            peneLightRangeList.push(part4);
                             continue;
                         };
 
                         // 如果是终点射线突出
                         if (0 < rayTPoints[2][2]) {
+                            // 部分 2
+                            let part2 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 圆心
+                            part2.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part2.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part2.ray1.angle = rateAngle;
+                            part2.ray1.p1.distance = distanceP1;
+                            part2.ray1.p1.power = powerP1;
+                            part2.ray1.p2.distance = distanceP2;
+                            part2.ray1.p2.power = 0;
+                            // 结束射线
+                            part2.ray2.angle = tempLightInst.ray2.angle;
+                            part2.ray2.p1.distance = rayTPoints[1][3];
+                            part2.ray2.p1.power = rayTPoints[1][2];
+                            part2.ray2.p2.distance = rayTPoints[2][3];
+                            part2.ray2.p2.power = rayTPoints[2][2];
+                            peneLightRangeList.push(part2);
+
+                            // 部分 3
+                            let part3 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 右方渗透距离
+                            let peneDistancePart3 = rayFPoints[1][2] / (1 + fromLowerSpeed);
+                            // 圆心
+                            part3.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part3.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part3.ray1.angle = tempLightInst.ray1.angle,
+                            part3.ray1.p1.distance = rayFPoints[1][3];
+                            part3.ray1.p1.power = rayFPoints[1][2];
+                            part3.ray1.p2.distance = rayFPoints[1][3] + peneDistancePart3;
+                            part3.ray1.p2.power = 0;
+                            // 结束射线
+                            part3.ray2.angle = rateAngle;
+                            part3.ray2.p1.distance = distanceP1;
+                            part3.ray2.p1.power = powerP1;
+                            part3.ray2.p2.distance = distanceP2;
+                            part3.ray2.p2.power = 0;
+                            peneLightRangeList.push(part3);
+
+                            // 部分 4
+                            let part4 = ObjectPool.inst.Pop(LightRange.poolType);
+                            // 右方渗透距离
+                            let peneDistancePart4 = rayFPoints[2][2];
+                            // 圆心
+                            part4.centerOfCircle.elements[0] = tempLightInst.centerOfCircle.elements[0];
+                            part4.centerOfCircle.elements[1] = tempLightInst.centerOfCircle.elements[1];
+                            // 起始射线
+                            part4.ray1.angle = rateAngle;
+                            part4.ray1.p1.distance = distanceP2;
+                            part4.ray1.p1.power = 0;
+                            part4.ray1.p2.distance = distanceP2;
+                            part4.ray1.p2.power = 0;
+                            // 结束射1线
+                            part4.ray2.angle = tempLightInst.ray2.angle;
+                            part4.ray2.p1.distance = rayTPoints[2][3];
+                            part4.ray2.p1.power = rayTPoints[2][2];
+                            part4.ray2.p2.distance = rayTPoints[2][3] + peneDistancePart4;
+                            part4.ray2.p2.power = 0;
+                            peneLightRangeList.push(part4);
                             continue;
                         };
                     };
