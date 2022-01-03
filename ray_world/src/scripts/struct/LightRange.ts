@@ -376,7 +376,7 @@ export default class LightRange {
                     part4.ray1.p2.distance = distanceP2;
                     part4.ray1.p2.power = 0;
                     // 结束射线
-                    part4.ray2.angle = tempLightInst.ray2.angle,
+                    part4.ray2.angle = tempLightInst.ray2.angle;
                     part4.ray2.p1.distance = ray2Data.crossPoint[0].distance;
                     part4.ray2.p1.power = ray2Data.crossPoint[0].power;
                     part4.ray2.p2.distance = ray2Data.crossPoint[0].distance + peneDistancePart3;
@@ -396,7 +396,7 @@ export default class LightRange {
                     part2.pixelPos.elements[0] = tempLightInst.pixelPos.elements[0];
                     part2.pixelPos.elements[1] = tempLightInst.pixelPos.elements[1];
                     // 起始射线
-                    part2.ray1.angle = tempLightInst.ray1.angle,
+                    part2.ray1.angle = tempLightInst.ray1.angle;
                     part2.ray1.p1.distance = ray1Data.crossPoint[0].distance;
                     part2.ray1.p1.power = ray1Data.crossPoint[0].power;
                     part2.ray1.p2.distance = ray1Data.crossPoint[0].distance + peneDistancePart3;
