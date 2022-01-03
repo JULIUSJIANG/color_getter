@@ -395,6 +395,11 @@ class Component extends React.Component {
     }
 
     /**
+     * 探照区域列表
+     */
+    _lightRangeList: LightRange[] = [];
+
+    /**
      * 绘制光照范围
      */
     DrawLightArea () {
@@ -413,6 +418,7 @@ class Component extends React.Component {
             };
         };
 
+        this._lightRangeList.length = 0;
         // 穷举所有光源
         for (let lightXI = 0; lightXI < root.store.getState().lightXRec.length; lightXI++) {
             let lightXRec = root.store.getState().lightXRec[lightXI];
@@ -465,50 +471,50 @@ class Component extends React.Component {
                 
                 // 进行数据刷新
                 lightRange.RefreshCache(config.rectSize, gridMap);
-                
-                let lightRangeList: LightRange[];
-                // 穷举所有探照区域
-                for (let i = 0; i < lightRangeList.length; i++) {
-                    let lightInst = lightRangeList[i];
-                    let fPFrom = [
-                        lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance,
-                        lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance
-                    ];
-                    let fPTo = [
-                        lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance,
-                        lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance
-                    ];
-                    let tPFrom = [
-                        lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance,
-                        lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance
-                    ];
-                    let tPTo = [
-                        lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance,
-                        lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance
-                    ];
-                    // 把所有探照区域都绘制出来
-                    this.vertexNumberData.length = 0;
-                    this.shapeNumberData.length = 0;
-                    // 4 边形数据
-                    this.vertexNumberData.push(...[
-                        ...fPFrom, 0, ...config.lightSplitedColor,
-                        ...fPTo, 0, ...config.lightSplitedColor,
-                        ...tPTo, 0, ...config.lightSplitedColor,
-                        ...tPFrom, 0, ...config.lightSplitedColor
-                    ]);
-                    this.shapeNumberData.push(...[
-                        0, 1,
-                        1, 2,
-                        2, 3,
-                        3, 0
-                    ]);
-                    this.DrawByElementData(
-                        this.vertexNumberData,
-                        this.shapeNumberData,
-                        WebGLRenderingContext.LINES
-                    );
-                };
+                this._lightRangeList.push(...lightRange.currRangeList);
             };
+        };
+        
+        // 穷举所有探照区域
+        for (let i = 0; i < this._lightRangeList.length; i++) {
+            let lightInst = this._lightRangeList[i];
+            let fPFrom = [
+                lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance,
+                lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance
+            ];
+            let fPTo = [
+                lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance,
+                lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance
+            ];
+            let tPFrom = [
+                lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance,
+                lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance
+            ];
+            let tPTo = [
+                lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance,
+                lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance
+            ];
+            // 把所有探照区域都绘制出来
+            this.vertexNumberData.length = 0;
+            this.shapeNumberData.length = 0;
+            // 4 边形数据
+            this.vertexNumberData.push(...[
+                ...fPFrom, 0, ...config.lightSplitedColor,
+                ...fPTo, 0, ...config.lightSplitedColor,
+                ...tPTo, 0, ...config.lightSplitedColor,
+                ...tPFrom, 0, ...config.lightSplitedColor
+            ]);
+            this.shapeNumberData.push(...[
+                0, 1,
+                1, 2,
+                2, 3,
+                3, 0
+            ]);
+            this.DrawByElementData(
+                this.vertexNumberData,
+                this.shapeNumberData,
+                WebGLRenderingContext.LINES
+            );
         };
     }
 

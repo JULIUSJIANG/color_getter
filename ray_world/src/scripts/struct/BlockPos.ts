@@ -1,5 +1,6 @@
 import ObjectPool from "../../lib/object_pool/ObjectPool";
 import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
+import utilCollection from "../../lib/UtilCollection";
 import CuonVector3 from "../../lib/webgl/CuonVector3";
 import InterSectionRecRayToBlock from "./InterSectionRecRayToBlock";
 import InterSectionRecRayToLine from "./InterSectionRecRayToLine";
@@ -131,6 +132,31 @@ export default class BlockPos {
             crossPoint: points,
             crossDistance: crossDistance
         };
+    }
+
+    /**
+     * 获取角度列表
+     * @param pixelPos 
+     * @param area1 
+     * @param area2 
+     */
+    public GetAngleList (pixelPos: CuonVector3, area1: number, area2: number) {
+        // 方块 4 个点所处角度
+        let angleList: number[] = [];
+        this.areaShape.forEach(( blockPoint ) => {
+            angleList.push(Math.atan2(blockPoint.elements[1] - pixelPos.elements[1], blockPoint.elements[0] - pixelPos.elements[0]));
+        });
+        // 只取范围以内的
+        angleList = angleList.filter((angle) => {
+            return area1 < angle && angle < area2;
+        });
+        // 去重
+        angleList = utilCollection.RemRepeatForList(angleList);
+        // 角度从小到大排序
+        angleList.sort((angleA, angleB) => {
+            return angleA - angleB;
+        });
+        return angleList;
     }
 
     /**
