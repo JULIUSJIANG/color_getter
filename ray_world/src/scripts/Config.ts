@@ -162,9 +162,8 @@ namespace config {
      */
     export const lightSplitedColor = [
         1,
-        0,
-        0,
-        0.5
+        1,
+        1
     ];
 
     /**

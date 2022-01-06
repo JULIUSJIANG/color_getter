@@ -134,10 +134,10 @@ class Component extends React.Component {
         this.DrawBgGrid();
         perfAnalyse.Rec(`DrawBlock`);
         this.DrawBlock();
-        perfAnalyse.Rec(`DrawLightArea`);
-        this.DrawLightArea();
         perfAnalyse.Rec(`DrawLightPoint`);
         this.DrawLightPoint();
+        perfAnalyse.Rec(`DrawLightArea`);
+        this.DrawLightArea();
         perfAnalyse.Rec(`DrawTouch`);
         this.DrawTouch();
         perfAnalyse.Rec(`End`);
@@ -485,10 +485,10 @@ class Component extends React.Component {
             this.shapeNumberData.length = 0;
             // 4 边形数据
             this.vertexNumberData.push(...[
-                lightInst.ray1.p1.pixelPos.elements[0], lightInst.ray1.p1.pixelPos.elements[1], 0, ...config.lightSplitedColor,
-                lightInst.ray1.p2.pixelPos.elements[0], lightInst.ray1.p2.pixelPos.elements[1], 0, ...config.lightSplitedColor,
-                lightInst.ray2.p2.pixelPos.elements[0], lightInst.ray2.p2.pixelPos.elements[1], 0, ...config.lightSplitedColor,
-                lightInst.ray2.p1.pixelPos.elements[0], lightInst.ray2.p1.pixelPos.elements[1], 0, ...config.lightSplitedColor,
+                lightInst.ray1.p1.pixelPos.elements[0], lightInst.ray1.p1.pixelPos.elements[1], 0, ...config.lightSplitedColor.map((ele) => ele * lightInst.ray1.p1.power / config.lightDistance), 1,
+                lightInst.ray1.p2.pixelPos.elements[0], lightInst.ray1.p2.pixelPos.elements[1], 0, ...config.lightSplitedColor.map((ele) => ele * lightInst.ray1.p2.power / config.lightDistance), 1,
+                lightInst.ray2.p2.pixelPos.elements[0], lightInst.ray2.p2.pixelPos.elements[1], 0, ...config.lightSplitedColor.map((ele) => ele * lightInst.ray2.p2.power / config.lightDistance), 1,
+                lightInst.ray2.p1.pixelPos.elements[0], lightInst.ray2.p1.pixelPos.elements[1], 0, ...config.lightSplitedColor.map((ele) => ele * lightInst.ray2.p1.power / config.lightDistance), 1
             ]);
             this.shapeNumberData.push(...[
                 0, 1,
