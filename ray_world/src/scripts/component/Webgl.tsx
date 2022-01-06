@@ -440,7 +440,8 @@ class Component extends React.Component {
                 lightRange.ray2.p2.power = 0;
                 lightRange.ray2.p2.distance = config.lightDistance;
                 lightRange.RefreshCache(config.rectSize, gridMap);
-
+                lightRange.ReCalLightRange(config.rectSize, gridMap);
+                this._lightRangeList.push(...lightRange.currRangeList);
                 // 相关的格子全部绘制出来
                 lightRange.crossedBlockMap.forEach(( blockList ) => {
                     blockList.forEach(( block ) => {
@@ -455,60 +456,45 @@ class Component extends React.Component {
                 });
 
                 // 绘制探照区域提示框
-                this.DrawByElementData(
-                    [
-                        lightRange.pixelPos.elements[0], lightRange.pixelPos.elements[1], lightRange.pixelPos.elements[2], ...config.lightRayColor,
-                        lightRange.ray1.p2.pos.elements[0], lightRange.ray1.p2.pos.elements[1], lightRange.ray1.p2.pos.elements[2], ...config.lightRayColor,
-                        lightRange.ray2.p2.pos.elements[0], lightRange.ray2.p2.pos.elements[1], lightRange.ray2.p2.pos.elements[2], ...config.lightRayColor
-                    ],
-                    [
-                        0, 1,
-                        1, 2,
-                        2, 0
-                    ],
-                    WebGLRenderingContext.LINES
-                );
-                
-                // 进行数据刷新
-                lightRange.RefreshCache(config.rectSize, gridMap);
-                this._lightRangeList.push(...lightRange.currRangeList);
+                // this.DrawByElementData(
+                //     [
+                //         lightRange.pixelPos.elements[0], lightRange.pixelPos.elements[1], lightRange.pixelPos.elements[2], ...config.lightRayColor,
+                //         lightRange.ray1.p2.pixelPos.elements[0], lightRange.ray1.p2.pixelPos.elements[1], lightRange.ray1.p2.pixelPos.elements[2], ...config.lightRayColor,
+                //         lightRange.ray2.p2.pixelPos.elements[0], lightRange.ray2.p2.pixelPos.elements[1], lightRange.ray2.p2.pixelPos.elements[2], ...config.lightRayColor
+                //     ],
+                //     [
+                //         0, 1,
+                //         1, 2,
+                //         2, 0
+                //     ],
+                //     WebGLRenderingContext.LINES
+                // );
             };
         };
-        
+        if (config.targetPart != null) {
+            console.log(this._lightRangeList[config.targetPart]);
+        };
         // 穷举所有探照区域
         for (let i = 0; i < this._lightRangeList.length; i++) {
+            if (config.targetPart != null && i != config.targetPart) {
+                continue;
+            };
             let lightInst = this._lightRangeList[i];
-            let fPFrom = [
-                lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance,
-                lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p1.distance
-            ];
-            let fPTo = [
-                lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance,
-                lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray1.angle / 180 * Math.PI) * lightInst.ray1.p2.distance
-            ];
-            let tPFrom = [
-                lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance,
-                lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p1.distance
-            ];
-            let tPTo = [
-                lightInst.pixelPos.elements[0] + Math.cos(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance,
-                lightInst.pixelPos.elements[1] + Math.sin(lightInst.ray2.angle / 180 * Math.PI) * lightInst.ray2.p2.distance
-            ];
             // 把所有探照区域都绘制出来
             this.vertexNumberData.length = 0;
             this.shapeNumberData.length = 0;
             // 4 边形数据
             this.vertexNumberData.push(...[
-                ...fPFrom, 0, ...config.lightSplitedColor,
-                ...fPTo, 0, ...config.lightSplitedColor,
-                ...tPTo, 0, ...config.lightSplitedColor,
-                ...tPFrom, 0, ...config.lightSplitedColor
+                lightInst.ray1.p1.pixelPos.elements[0], lightInst.ray1.p1.pixelPos.elements[1], 0, ...config.lightSplitedColor,
+                lightInst.ray1.p2.pixelPos.elements[0], lightInst.ray1.p2.pixelPos.elements[1], 0, ...config.lightSplitedColor,
+                lightInst.ray2.p2.pixelPos.elements[0], lightInst.ray2.p2.pixelPos.elements[1], 0, ...config.lightSplitedColor,
+                lightInst.ray2.p1.pixelPos.elements[0], lightInst.ray2.p1.pixelPos.elements[1], 0, ...config.lightSplitedColor,
             ]);
             this.shapeNumberData.push(...[
                 0, 1,
                 1, 2,
                 2, 3,
-                3, 0
+                3, 0,
             ]);
             this.DrawByElementData(
                 this.vertexNumberData,

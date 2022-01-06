@@ -3,6 +3,7 @@ import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
 import utilCollection from "../../lib/UtilCollection";
 import utilMath from "../../lib/UtilMath";
 import CuonVector3 from "../../lib/webgl/CuonVector3";
+import config from "../Config";
 import BlockPos from "./BlockPos";
 import InterSectionRecRayToLine from "./InterSectionRecRayToLine";
 import LightRangeRay from "./LightRangeRay";
@@ -50,10 +51,10 @@ export default class LightRange {
 
     public constructor () {
         this.areaShape = [
-            this.ray1.p1.pos,
-            this.ray1.p2.pos,
-            this.ray2.p2.pos,
-            this.ray2.p1.pos
+            this.ray1.p1.pixelPos,
+            this.ray1.p2.pixelPos,
+            this.ray2.p2.pixelPos,
+            this.ray2.p1.pixelPos
         ];
     }
 
@@ -68,12 +69,9 @@ export default class LightRange {
         this.ray1.RefreshCache(this.pixelPos);
         this.ray2.RefreshCache(this.pixelPos);
 
-        // 先回收全部
-        this.crossedBlockMap.forEach(( crossedY ) => {
-            crossedY.forEach(( block ) => {
-                ObjectPool.inst.Push(BlockPos.poolType, block);
-            });
-        });
+        this.distanceP1 = CuonVector3.Distance(this.ray1.p1.pixelPos, this.ray2.p1.pixelPos);
+        this.distanceP2 = CuonVector3.Distance(this.ray1.p2.pixelPos, this.ray2.p2.pixelPos);
+
         // 清除全部的记录
         this.crossedBlockMap.clear();
         let blockWalkerList = [this.gridPos];
@@ -97,7 +95,7 @@ export default class LightRange {
             // 这个位置确实有格子
             if (!CheckEmpty(gridMap, pop.gridPos.elements[0], pop.gridPos.elements[1])) {
                 // 确保记录起来
-                if (this.crossedBlockMap.has(pop.gridPos.elements[0])) {
+                if (!this.crossedBlockMap.has(pop.gridPos.elements[0])) {
                     this.crossedBlockMap.set(pop.gridPos.elements[0], new Map());
                 };
                 this.crossedBlockMap.get(pop.gridPos.elements[0]).set(pop.gridPos.elements[1], pop);
@@ -111,8 +109,6 @@ export default class LightRange {
                 let nearY = pop.gridPos.elements[1] + nearData[1];
                 // 如果已穷举过该位置，忽略
                 if (walkedMap.has(nearX) && walkedMap.get(nearX).has(nearY)) {
-                    // 回收
-                    ObjectPool.inst.Push(BlockPos.poolType, pop);
                     continue;
                 };
                 // 标记为该位置已穷举过
@@ -128,11 +124,16 @@ export default class LightRange {
                 nearInst.RefreshCache(gridSize);
                 // 等候穷举
                 blockWalkerList.push(nearInst);
-                // 回收
-                ObjectPool.inst.Push(BlockPos.poolType, pop);
             };
         };
+    }
 
+    /**
+     * 重新计算探照区域
+     * @param gridSize 
+     * @param gridMap 
+     */
+    public ReCalLightRange (gridSize: number, gridMap: Map<number, Map<number, boolean>>) {
         // 先清空
         let blockList: BlockPos[] = [];
         let distanceMap: Map<BlockPos, number> = new Map();
@@ -172,22 +173,34 @@ export default class LightRange {
             this.currRangeList.length = 0;
             this.currRangeList.push(...currCollList);
         };
-        // 到这里的时候，currCollList 里面全是受到格子按角度分割后的探照区域
-
         // 所有格子，按角度对光束进行渗透
         for (let blockI = 0; blockI < blockList.length; blockI++) {
             let blockInst = blockList[blockI];
             let currCollList: LightRange[] = [];
+            // 放入集合里面
+            let push = (range: LightRange) => {
+                currCollList.push(range);
+                if (config.targetPart != null && currCollList.length == config.targetPart + 1) {
+                    console.error(``);
+                };
+            };
+            // 进行日志打印
+            let log = (...args: any[]) => {
+                if (config.targetPart == null || currCollList.length != config.targetPart) {
+                    return;
+                };
+                console.log(...args);
+            };
             // 穷举所有划分了的光线，进行渗透处理
             for (let tempI = 0; tempI < this.currRangeList.length; tempI++) {
                 // 分区实例
                 let tempLightInst = this.currRangeList[tempI];
                 // 与方块无交集，直接采纳
                 if (
-                    tempLightInst.CheckCrossed(blockInst.gridPos.elements[0], blockInst.gridPos.elements[1])
+                    !tempLightInst.CheckCrossed(blockInst.gridPos.elements[0], blockInst.gridPos.elements[1])
                 )
                 {
-                    currCollList.push(tempLightInst);
+                    push(tempLightInst);
                     continue;
                 };
                 // 射线 1 的穿透数据
@@ -218,6 +231,8 @@ export default class LightRange {
                 part1.ray2.p1.power = tempLightInst.ray2.p1.power;
                 part1.ray2.p2.distance = ray2Data.crossPoint[0].distance;
                 part1.ray2.p2.power = ray2Data.crossPoint[0].power;
+                part1.RefreshCache(gridSize, gridMap);
+                push(part1);
 
                 // 如果都突破不了
                 if (ray1Data.crossPoint[1].power <= 0 && ray2Data.crossPoint[1].power <= 0) {
@@ -242,7 +257,7 @@ export default class LightRange {
                     part2.ray2.p2.power = 0;
                     // 刷新缓存数据
                     part2.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part2);
+                    push(part2);
                     continue;
                 };
 
@@ -267,7 +282,7 @@ export default class LightRange {
                     part2.ray2.p2.power = ray2Data.crossPoint[1].power;
                     // 刷新缓存数据
                     part2.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part2);
+                    push(part2);
 
                     // 部分 3
                     let part3 = ObjectPool.inst.Pop(LightRange.poolType);
@@ -286,7 +301,7 @@ export default class LightRange {
                     tempLightInst.ray2.Pene(ray2Data.crossPoint[1].distance, ray2Data.crossPoint[1].power, part3.ray2.p2);
                     // 刷新缓存数据
                     part3.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part3);
+                    push(part3);
                     continue;
                 };
 
@@ -338,7 +353,7 @@ export default class LightRange {
                     part2.ray2.p2.power = 0;
                     // 刷新缓存
                     part2.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part2);
+                    push(part2);
 
                     // 部分 3
                     let part3 = ObjectPool.inst.Pop(LightRange.poolType);
@@ -360,7 +375,7 @@ export default class LightRange {
                     part3.ray2.p2.distance = distanceP2;
                     part3.ray2.p2.power = 0;
                     part3.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part3);
+                    push(part3);
 
                     // 部分 4
                     let part4 = ObjectPool.inst.Pop(LightRange.poolType);
@@ -382,7 +397,7 @@ export default class LightRange {
                     part4.ray2.p2.distance = ray2Data.crossPoint[0].distance + peneDistancePart3;
                     part4.ray2.p2.power = 0;
                     part4.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part4);
+                    push(part4);
                     continue;
                 };
 
@@ -408,7 +423,7 @@ export default class LightRange {
                     part2.ray2.p2.distance = distanceP2;
                     part2.ray2.p2.power = 0;
                     part2.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part2);
+                    push(part2);
 
                     // 部分 3
                     let part3 = ObjectPool.inst.Pop(LightRange.poolType);
@@ -429,7 +444,7 @@ export default class LightRange {
                     part3.ray2.p2.distance = ray2Data.crossPoint[1].power;
                     // 刷新缓存
                     part3.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part3);
+                    push(part3);
 
                     // 部分 4
                     let part4 = ObjectPool.inst.Pop(LightRange.poolType);
@@ -451,7 +466,7 @@ export default class LightRange {
                     part4.ray2.p2.distance = ray2Data.crossPoint[1].distance + peneDistancePart4;
                     part4.ray2.p2.power = 0;
                     part4.RefreshCache(gridSize, gridMap);
-                    currCollList.push(part4);
+                    push(part4);
                     continue;
                 };
             };
@@ -518,16 +533,22 @@ export default class LightRange {
             this.ray2.p1.distance,
             angle
         );
-        let p1Power = utilMath.GetDistancePointToPoint(
-            angle,
-            p1Distance,
-            this.ray1.angle,
-            this.ray1.p1.distance
-        )
-        /
-        this.distanceP1
-        * (this.ray2.p1.power - this.ray1.p1.power)
-        + this.ray1.p1.power;
+        let p1Power = 0;
+        if (this.distanceP1 != 0) {
+            p1Power = utilMath.GetDistancePointToPoint(
+                angle,
+                p1Distance,
+                this.ray1.angle,
+                this.ray1.p1.distance
+            )
+            /
+            this.distanceP1
+            * (this.ray2.p1.power - this.ray1.p1.power);
+        };
+        p1Power += this.ray1.p1.power;
+        if (isNaN(p1Power)) {
+            console.log(`angle[${angle}] p1Distance[${p1Distance}] this.ray1.angle[${this.ray1.angle}] this.ray1.p1.distance[${this.ray1.p1.distance}] this.distanceP1[${this.distanceP1}] this.ray2.p1.power[${this.ray2.p1.power}] this.ray1.p1.power[${this.ray1.p1.power}]`);
+        };
 
         // r1p2
         let p2Distance = utilMath.GetDistanceAngleToLine(
@@ -537,16 +558,19 @@ export default class LightRange {
             this.ray2.p2.distance,
             angle
         );
-        let p2Power = utilMath.GetDistancePointToPoint(
-            angle,
-            p2Distance,
-            this.ray1.angle,
-            this.ray1.p2.distance
-        )
-        /
-        this.distanceP2
-        * (this.ray2.p2.power - this.ray1.p2.power)
-        + this.ray1.p2.power;
+        let p2Power = 0;
+        if (this.distanceP2 != 0) {
+            p2Power = utilMath.GetDistancePointToPoint(
+                angle,
+                p2Distance,
+                this.ray1.angle,
+                this.ray1.p2.distance
+            )
+            /
+            this.distanceP2
+            * (this.ray2.p2.power - this.ray1.p2.power);
+        };
+        p2Power += this.ray1.p2.power;
 
         container.angle = angle;
         container.p1.distance = p1Distance;

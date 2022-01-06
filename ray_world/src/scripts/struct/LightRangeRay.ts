@@ -61,7 +61,7 @@ export default class LightRangeRay {
             endPower = currPower;
         }
         else {
-            endDistance = currDistance + currPower / this.lowerSpeed;
+            endDistance = currDistance - currPower / this.lowerSpeed;
             endPower = 0;
         };
         container.distance = endDistance;

@@ -113,7 +113,6 @@ export default class BlockPos {
         // 初始化缓存的数据
         points.forEach(( point ) => {
             point.distance = Math.sqrt((point.pixelPos.elements[0] - centerPos.elements[0])**2 + (point.pixelPos.elements[1] - centerPos.elements[1])**2);
-            point.power = (point.distance - ray.p1.distance) * ray.lowerSpeed + ray.p1.power;
         });
 
         // 排序-就近优先
@@ -124,6 +123,15 @@ export default class BlockPos {
         // 移除多余点
         points.splice(0, 1);
         points.splice(points.length - 1, 1);
+
+        // 初始化缓存的数据
+        points.forEach(( point, index ) => {
+            point.power = (point.distance - ray.p1.distance) * ray.lowerSpeed + ray.p1.power;
+            // 穿出点能量受阻尼影响进一步衰弱
+            if (index == 1) {
+                point.power -= (point.distance - points[0].distance);
+            };
+        });
 
         // 得到穿透厚度
         let crossDistance = points[1].distance - points[0].distance;
@@ -144,7 +152,7 @@ export default class BlockPos {
         // 方块 4 个点所处角度
         let angleList: number[] = [];
         this.areaShape.forEach(( blockPoint ) => {
-            angleList.push(Math.atan2(blockPoint.elements[1] - pixelPos.elements[1], blockPoint.elements[0] - pixelPos.elements[0]));
+            angleList.push(Math.atan2(blockPoint.elements[1] - pixelPos.elements[1], blockPoint.elements[0] - pixelPos.elements[0]) / Math.PI * 180);
         });
         // 只取范围以内的
         angleList = angleList.filter((angle) => {

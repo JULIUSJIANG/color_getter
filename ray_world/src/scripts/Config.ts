@@ -35,7 +35,7 @@ namespace config {
     /**
      * 光照距离
      */
-    export const lightDistance = rectSize * 5;
+    export const lightDistance = rectSize * 6;
 
     /**
      * 背景颜色
@@ -111,9 +111,9 @@ namespace config {
      * 方块主体颜色
      */
     export const blockBgColor = [
-        1,
-        1,
-        0,
+        0.2,
+        0.2,
+        0.2,
         1
     ];
 
@@ -154,18 +154,23 @@ namespace config {
         1,
         0,
         0,
-        1
+        0.2
     ];
 
     /**
      * 光的射线颜色
      */
-     export const lightSplitedColor = [
+    export const lightSplitedColor = [
         1,
-        1,
-        1,
-        0.1
+        0,
+        0,
+        0.5
     ];
+
+    /**
+     * 目标部分
+     */
+    export const targetPart = null as number;
 };
 
 export default config;

@@ -114,6 +114,20 @@ namespace CuonVector3 {
     }
 
     /**
+     * 获取俩个点的距离
+     * @param p1 
+     * @param p2 
+     * @returns 
+     */
+    export function Distance (p1: CuonVector3, p2: CuonVector3) {
+        return Math.sqrt(
+            (p1.elements[0] - p2.elements[0]) ** 2
+            + (p1.elements[1] - p2.elements[1]) ** 2
+            + (p1.elements[2] - p2.elements[2]) ** 2
+        );
+    }
+
+    /**
      * 俩个点集合按逆时针顺序分别组成俩个形状，检测俩个形状是否有交集
      * @param shape1 
      * @param shape2 
