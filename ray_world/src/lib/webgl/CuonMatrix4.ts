@@ -95,10 +95,9 @@ class CuonMatrix4 {
      * @param pos 
      * @returns 
      */
-    public multiplyVector3 (pos: CuonVector3) {
+    public multiplyVector3 (pos: CuonVector3, v: CuonVector3) {
         var e = this.elements;
         var p = pos.elements;
-        var v = new CuonVector3();
         var result = v.elements;
       
         result[0] = p[0] * e[0] + p[1] * e[4] + p[2] * e[ 8] + e[12];
@@ -113,10 +112,9 @@ class CuonMatrix4 {
      * @param pos 
      * @returns 
      */
-    public multiplyVector4 (pos: CuonVector4) {
+    public multiplyVector4 (pos: CuonVector4, v = new CuonVector4()) {
       var e = this.elements;
       var p = pos.elements;
-      var v = new CuonVector4();
       var result = v.elements;
     
       result[0] = p[0] * e[0] + p[1] * e[4] + p[2] * e[ 8] + p[3] * e[12];

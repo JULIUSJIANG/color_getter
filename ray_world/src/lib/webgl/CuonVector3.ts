@@ -1,4 +1,5 @@
 import CuonMatrix4 from "./CuonMatrix4";
+import CuonVector4 from "./CuonVector4";
 
 /**
  * 3 维向量
@@ -12,6 +13,15 @@ class CuonVector3 {
     public constructor () {
         var v = new Float32Array(3);
         this.elements = v;
+    }
+
+    /**
+     * 拷贝
+     * @param container 
+     */
+    public Clone (container = new CuonVector3()) {
+        container.elements[0] = this.elements[0];
+        container.elements[1] = this.elements[1];
     }
 
     /**
@@ -39,8 +49,23 @@ class CuonVector3 {
      * 获取右向量
      * @returns 
      */
-    public GetRight () {
-        return rightMat4.multiplyVector3(this);
+    public GetRight (v: CuonVector3) {
+        return rightMat4.multiplyVector3(
+            this, 
+            v
+        );
+    }
+
+    /**
+     * 获取左向量
+     * @param v 
+     * @returns 
+     */
+    public GetLeft (v: CuonVector3) {
+        return leftMat4.multiplyVector3(
+            this,
+            v
+        );
     }
 
     /**
@@ -53,7 +78,7 @@ class CuonVector3 {
             return false;
         };
         // 获取右向量
-        let right = this.GetRight();
+        let right = this.GetRight(new CuonVector3());
         // 如果集合里面所有点在右向量的投影均大于等于 0，那么确实全部都在右侧
         if (posList.every((pos) => {
             let dot = CuonVector3.Dot(right, pos);
@@ -97,6 +122,24 @@ namespace CuonVector3 {
     )
     {
         return vec1.elements[0] * vec2.elements[0] + vec1.elements[1] * vec2.elements[1] + vec1.elements[2] * vec2.elements[2];
+    }
+    
+    /**
+     * 
+     * @param p0x 
+     * @param p0y 
+     * @param p1x 
+     * @param p1y 
+     * @returns 
+     */
+    export function DotByNumber (
+        p0x: number,
+        p0y: number,
+        p1x: number,
+        p1y: number    
+    ) 
+    {
+        return p0x * p1x + p0y + p1y;
     }
 
     /**
@@ -163,10 +206,73 @@ namespace CuonVector3 {
         };
         return true;
     }
+
+    let _mat = new CuonMatrix4();
+
+    let _vec3 = new CuonVector4();
+
+    /**
+     * 获取直线 1 与直线 2 的交点
+     * @param k1 
+     * @param b1 
+     * @param k2 
+     * @param b2 
+     * @param p 
+     */
+    export function GetIntersection (k1Right: CuonVector3, b1: CuonVector3, k2Right: CuonVector3, b2: CuonVector3, p: CuonVector3 = new CuonVector3()) {
+        let k1rx = k1Right.elements[0];
+        let k1ry = k1Right.elements[1];
+        let b1x = b1.elements[0];
+        let b1y = b1.elements[1];
+
+        let k2rx = k2Right.elements[0];
+        let k2ry = k2Right.elements[1];
+        let b2x = b2.elements[0];
+        let b2y = b2.elements[1];
+
+        // (x - b1x) * k1rx + (y - b1y) * k1ry = 0;
+        // (x - b2x) * k2rx + (y - b2y) * k2ry = 0;
+        _mat.elements[0] = k1rx;    _mat.elements[4] = k1ry;    _mat.elements[8] = 0;   _mat.elements[12] = 0;
+        _mat.elements[1] = k2rx;    _mat.elements[5] = k2ry;    _mat.elements[9] = 0;   _mat.elements[13] = 0;
+        _mat.elements[2] = 0;       _mat.elements[6] = 0;       _mat.elements[10] = 1;  _mat.elements[14] = 0;
+        _mat.elements[3] = 0;       _mat.elements[7] = 0;       _mat.elements[11] = 0;  _mat.elements[15] = 1;
+
+        _vec3.elements[0] = k1ry * b1y + k1rx * b1x;
+        _vec3.elements[1] = k2ry * b2y + k2rx * b2x;
+        _vec3.elements[2] = 1;
+        _vec3.elements[3] = 1;
+
+        _mat.invert();
+        _mat.multiplyVector4(_vec3, p);
+
+        return p;
+    }
+
+    /**
+     * 获取向量长度的平方
+     * @param x 
+     * @param y 
+     */
+    export function GetLen (x: number, y: number) {
+        return Math.sqrt(GetLenPow2(x, y));
+    }
+
+    /**
+     * 获取向量长度的平方
+     * @param x 
+     * @param y 
+     */
+    export function GetLenPow2 (x: number, y: number) {
+        return x ** 2 + y ** 2;
+    }
 }
 
 // 用于向右偏转的矩阵
 const rightMat4 = new CuonMatrix4();
 rightMat4.setRotate(-90, 0, 0, 1);
+
+// 用于向左偏转的矩阵
+const leftMat4 = new CuonMatrix4();
+leftMat4.setRotate(90, 0, 0, 1);
 
 export default CuonVector3;
