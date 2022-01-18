@@ -28,7 +28,7 @@ namespace utilMath {
         p12.elements[0] = p2[0] - p1[0];
         p12.elements[1] = p2[1] - p1[1];
 
-        let right = p12.GetRight();
+        let right = p12.GetRight(new CuonVector3());
         let cosAngle = Math.cos(angle);
         let sinAngle = Math.sin(angle);
         let deno = (cosAngle * right.elements[0] + sinAngle * right.elements[1]);

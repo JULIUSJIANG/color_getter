@@ -4,7 +4,6 @@ import utilCollection from "../../lib/UtilCollection";
 import CuonVector3 from "../../lib/webgl/CuonVector3";
 import InterSectionRecRayToBlock from "./InterSectionRecRayToBlock";
 import InterSectionRecRayToLine from "./InterSectionRecRayToLine";
-import LightRangeRay from "./LightRangeRay";
 
 /**
  * 方块位
@@ -83,63 +82,6 @@ export default class BlockPos {
 
         this.pixelLT.elements[0] = this.pixelLeft;
         this.pixelLT.elements[1] = this.pixelTop;
-    }
-
-    /**
-     * 获取射线的穿透数据
-     * @param centerPos 
-     * @param ray 
-     */
-    public GetRayData (centerPos: CuonVector3, ray: LightRangeRay): InterSectionRecRayToBlock {
-        // r1 的 4 个交点
-        let points = [
-            ObjectPool.inst.Pop(InterSectionRecRayToLine.poolType),
-            ObjectPool.inst.Pop(InterSectionRecRayToLine.poolType),
-            ObjectPool.inst.Pop(InterSectionRecRayToLine.poolType),
-            ObjectPool.inst.Pop(InterSectionRecRayToLine.poolType)
-        ];
-        points[0].pixelPos.elements[0] = this.pixelLeft;
-        points[0].pixelPos.elements[1] = ray.k * this.pixelLeft + ray.b;
-
-        points[1].pixelPos.elements[0] = this.pixelRight;
-        points[1].pixelPos.elements[1] = ray.k * this.pixelRight + ray.b;
-
-        points[2].pixelPos.elements[0] = (this.pixelBottom - ray.b) / ray.k;
-        points[2].pixelPos.elements[1] = this.pixelBottom;
-
-        points[3].pixelPos.elements[0] = (this.pixelTop - ray.b) / ray.k;
-        points[3].pixelPos.elements[1] = this.pixelTop;
-
-        // 初始化缓存的数据
-        points.forEach(( point ) => {
-            point.distance = Math.sqrt((point.pixelPos.elements[0] - centerPos.elements[0])**2 + (point.pixelPos.elements[1] - centerPos.elements[1])**2);
-        });
-
-        // 排序-就近优先
-        points.sort((p1, p2) => {
-            return p1.distance - p2.distance;
-        });
-
-        // 移除多余点
-        points.splice(0, 1);
-        points.splice(points.length - 1, 1);
-
-        // 初始化缓存的数据
-        points.forEach(( point, index ) => {
-            point.power = (point.distance - ray.p1.distance) * ray.lowerSpeed + ray.p1.power;
-            // 穿出点能量受阻尼影响进一步衰弱
-            if (index == 1) {
-                point.power -= (point.distance - points[0].distance);
-            };
-        });
-
-        // 得到穿透厚度
-        let crossDistance = points[1].distance - points[0].distance;
-
-        return {
-            crossPoint: points,
-            crossDistance: crossDistance
-        };
     }
 
     /**

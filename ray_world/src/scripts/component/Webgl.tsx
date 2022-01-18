@@ -9,9 +9,7 @@ import root from "../Root";
 import CuonVector3 from "../../lib/webgl/CuonVector3";
 import perfAnalyse from "../../lib/perf_analyse/PerfAnalyse";
 import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
-import LightRange from "../struct/LightRange";
 import ObjectPool from "../../lib/object_pool/ObjectPool";
-import BlockPos from "../struct/BlockPos";
 
 /**
  * 绘制-主内容
@@ -395,11 +393,6 @@ class Component extends React.Component {
     }
 
     /**
-     * 探照区域列表
-     */
-    _lightRangeList: LightRange[] = [];
-
-    /**
      * 绘制光照范围
      */
     DrawLightArea () {
@@ -416,91 +409,6 @@ class Component extends React.Component {
                 };
                 gridMap.get(xRec.gridX).set(yRec.gridY, true);
             };
-        };
-
-        this._lightRangeList.length = 0;
-        // 穷举所有光源
-        for (let lightXI = 0; lightXI < root.store.getState().lightXRec.length; lightXI++) {
-            let lightXRec = root.store.getState().lightXRec[lightXI];
-            for (let lightYI = 0; lightYI < lightXRec.yCollect.length; lightYI++) {
-                let lightYRec = lightXRec.yCollect[lightYI];
-
-                // 初始化探照光束
-                let lightRange = ObjectPool.inst.Pop(LightRange.poolType);
-                lightRange.pixelPos.elements[0] = (lightXRec.gridX + 0.5) * config.rectSize;
-                lightRange.pixelPos.elements[1] = (lightYRec.gridY + 0.5) * config.rectSize;
-                lightRange.ray1.angle = 0;
-                lightRange.ray1.p1.power = config.lightDistance;
-                lightRange.ray1.p1.distance = 0;
-                lightRange.ray1.p2.power = 0;
-                lightRange.ray1.p2.distance = config.lightDistance;
-                lightRange.ray2.angle = 30;
-                lightRange.ray2.p1.power = config.lightDistance;
-                lightRange.ray2.p1.distance = 0;
-                lightRange.ray2.p2.power = 0;
-                lightRange.ray2.p2.distance = config.lightDistance;
-                lightRange.RefreshCache(config.rectSize, gridMap);
-                lightRange.ReCalLightRange(config.rectSize, gridMap);
-                this._lightRangeList.push(...lightRange.currRangeList);
-                // 相关的格子全部绘制出来
-                lightRange.crossedBlockMap.forEach(( blockList ) => {
-                    blockList.forEach(( block ) => {
-                        this.DrawMark(
-                            block.gridPos.elements[0],
-                            block.gridPos.elements[1],
-                            config.rectSize / 4,
-                            0,
-                            [1, 0, 0, 1]
-                        );
-                    });
-                });
-
-                // 绘制探照区域提示框
-                // this.DrawByElementData(
-                //     [
-                //         lightRange.pixelPos.elements[0], lightRange.pixelPos.elements[1], lightRange.pixelPos.elements[2], ...config.lightRayColor,
-                //         lightRange.ray1.p2.pixelPos.elements[0], lightRange.ray1.p2.pixelPos.elements[1], lightRange.ray1.p2.pixelPos.elements[2], ...config.lightRayColor,
-                //         lightRange.ray2.p2.pixelPos.elements[0], lightRange.ray2.p2.pixelPos.elements[1], lightRange.ray2.p2.pixelPos.elements[2], ...config.lightRayColor
-                //     ],
-                //     [
-                //         0, 1,
-                //         1, 2,
-                //         2, 0
-                //     ],
-                //     WebGLRenderingContext.LINES
-                // );
-            };
-        };
-        if (config.targetPart != null) {
-            console.log(this._lightRangeList[config.targetPart]);
-        };
-        // 穷举所有探照区域
-        for (let i = 0; i < this._lightRangeList.length; i++) {
-            if (config.targetPart != null && i != config.targetPart) {
-                continue;
-            };
-            let lightInst = this._lightRangeList[i];
-            // 把所有探照区域都绘制出来
-            this.vertexNumberData.length = 0;
-            this.shapeNumberData.length = 0;
-            // 4 边形数据
-            this.vertexNumberData.push(...[
-                lightInst.ray1.p1.pixelPos.elements[0], lightInst.ray1.p1.pixelPos.elements[1], 0, ...config.lightSplitedColor.map((ele) => ele * lightInst.ray1.p1.power / config.lightDistance), 1,
-                lightInst.ray1.p2.pixelPos.elements[0], lightInst.ray1.p2.pixelPos.elements[1], 0, ...config.lightSplitedColor.map((ele) => ele * lightInst.ray1.p2.power / config.lightDistance), 1,
-                lightInst.ray2.p2.pixelPos.elements[0], lightInst.ray2.p2.pixelPos.elements[1], 0, ...config.lightSplitedColor.map((ele) => ele * lightInst.ray2.p2.power / config.lightDistance), 1,
-                lightInst.ray2.p1.pixelPos.elements[0], lightInst.ray2.p1.pixelPos.elements[1], 0, ...config.lightSplitedColor.map((ele) => ele * lightInst.ray2.p1.power / config.lightDistance), 1
-            ]);
-            this.shapeNumberData.push(...[
-                0, 1,
-                1, 2,
-                2, 3,
-                3, 0,
-            ]);
-            this.DrawByElementData(
-                this.vertexNumberData,
-                this.shapeNumberData,
-                WebGLRenderingContext.LINES
-            );
         };
     }
 
@@ -550,7 +458,7 @@ class Component extends React.Component {
         p12.elements[0] = p2[0] - p1[0];
         p12.elements[1] = p2[1] - p1[1];
 
-        let right = p12.GetRight();
+        let right = p12.GetRight(new CuonVector3());
         let cosAngle = Math.cos(angle);
         let sinAngle = Math.sin(angle);
         let deno = (cosAngle * right.elements[0] + sinAngle * right.elements[1]);

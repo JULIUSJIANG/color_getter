@@ -1,11 +1,9 @@
 import LightSeepData from "./LightSeepData";
 import LightSeepRange from "./LightSeepRange";
-import LightSeepPartVertext from "./LightSeepPartVertext";
 import LightSeepPart from "./LightSeepPart";
 import LightSeepRect from "./LightSeepRect";
 import CuonVector3 from "../webgl/CuonVector3";
 import LightSeepRangeRay from "./LightSeepRangeRay";
-import LightRangeRay from "../../scripts/struct/LightRangeRay";
 
 /**
  * 射线状态
