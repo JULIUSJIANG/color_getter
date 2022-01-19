@@ -10,6 +10,10 @@ import CuonVector3 from "../../lib/webgl/CuonVector3";
 import perfAnalyse from "../../lib/perf_analyse/PerfAnalyse";
 import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
 import ObjectPool from "../../lib/object_pool/ObjectPool";
+import LightSeepRect from "../../lib/light_seep/LightSeepRect";
+import lightSeepRange from "../../lib/light_seep/LightSeepRange";
+import lightSeep from "../../lib/light_seep/LightSeep";
+import LightSeepPart from "../../lib/light_seep/LightSeepPart";
 
 /**
  * 绘制-主内容
@@ -396,18 +400,109 @@ class Component extends React.Component {
      * 绘制光照范围
      */
     DrawLightArea () {
-        // 地图字典
-        let gridMap: Map<number, Map<number, boolean>> = new Map();
-        // 绘制边缘颜色
+        let rectList: LightSeepRect[] = [];
+        // 取得所有格子的集合
         for (let xI = 0; xI < root.store.getState().blockXRec.length; xI++) {
             let xRec = root.store.getState().blockXRec[xI];
             for (let yI = 0; yI < xRec.yCollect.length; yI++) {
                 let yRec = xRec.yCollect[yI];
-                // 记录所有位置的格子
-                if (!gridMap.has(xRec.gridX)) {
-                    gridMap.set(xRec.gridX, new Map());
+                let rect = new LightSeepRect();
+                rect.LoadData(
+                    1,
+                    (xRec.gridX + 0.5) * config.rectSize,
+                    (yRec.gridY + 0.5) * config.rectSize,
+                    0, 
+                    config.rectSize,
+                    config.rectSize
+                );
+                rectList.push(rect);
+            };
+        };
+
+        // 穷举所有光照范围
+        for (let xI = 0; xI < root.store.getState().lightXRec.length; xI++) {
+            let xRec = root.store.getState().lightXRec[xI];
+            for (let yI = 0; yI < xRec.yCollect.length; yI++) {
+                let yRec = xRec.yCollect[yI];
+                let posX = (xRec.gridX + 0.5) * config.rectSize;
+                let posY = (yRec.gridY + 0.5) * config.rectSize;
+                for (let areaI = 0; areaI < config.lightArea.length; areaI++) {
+                    let area = config.lightArea[areaI];
+                    let r0angle = area[0];
+
+                    let r1angle = area[1];
+                    let seepRange = new lightSeepRange();
+                    seepRange.LoadData(
+                        posX,
+                        posY,
+                        config.lightDistance,
+
+                        config.lightDistance * Math.cos(r0angle) + posX,
+                        config.lightDistance * Math.sin(r0angle) + posY,
+                        0,
+
+                        posX,
+                        posY,
+                        config.lightDistance,
+
+                        config.lightDistance * Math.cos(r1angle) + posX,
+                        config.lightDistance * Math.sin(r1angle) + posY,
+                        0
+                    );
+
+                    if (root.store.getState().drawArea) {
+                        // 绘制区域
+                        this.DrawByElementData(
+                            [
+                                seepRange.pList[0].elements[0], seepRange.pList[0].elements[1], 0, ...config.lightRayColor,
+                                seepRange.pList[1].elements[0], seepRange.pList[1].elements[1], 0, ...config.lightRayColor,
+                                seepRange.pList[2].elements[0], seepRange.pList[2].elements[1], 0, ...config.lightRayColor,
+                                seepRange.pList[3].elements[0], seepRange.pList[3].elements[1], 0, ...config.lightRayColor
+                            ],
+                            [
+                                0, 1,
+                                1, 2,
+                                2, 3,
+                                3, 0
+                            ],
+                            WebGLRenderingContext.LINES
+                        );
+                    };
+
+                    // 过滤出有交集的方块集合
+                    let hittedRect = rectList.filter((rect) => {
+                        return CuonVector3.CheckHasIntersection(rect.pList, seepRange.pList);
+                    });
+                    let vertexList: LightSeepPart[] = [];
+                    lightSeep.GetVertext(
+                        seepRange,
+                        hittedRect,
+                        vertexList
+                    );
+
+                    // 得到绘制数据
+                    let drawData: number[] = [];
+                    vertexList.forEach(( val ) => {
+                        let drawData = val.vertextList.map(( vertex ) => {
+                            return [vertex.pos.elements[0], vertex.pos.elements[1], 0, ...config.lightAreaColor];
+                        });
+                        drawData.push(...drawData);
+                    });
+
+                    if (root.store.getState().drawSeep) {
+                        // 绘制出来
+                        this.DrawByElementData(
+                            drawData,
+                            [
+                                0, 1,
+                                1, 2,
+                                2, 3,
+                                3, 0
+                            ],
+                            WebGLRenderingContext.LINES
+                        );
+                    };
                 };
-                gridMap.get(xRec.gridX).set(yRec.gridY, true);
             };
         };
     }

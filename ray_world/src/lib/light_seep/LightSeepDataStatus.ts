@@ -36,12 +36,12 @@ namespace LightSeepDataStatus {
     /**
      * 所有类型实例的记录
      */
-    export let instMap: Map<number, LightSeepDataStatus> = new Map();
+    export const instMap: Map<number, LightSeepDataStatus> = new Map();
 
     /**
      * 够不着
      */
-    export let outOfReach = new LightSeepDataStatus(
+    export const outOfReach = new LightSeepDataStatus(
         0,
         [
             // 够不着
@@ -187,7 +187,7 @@ namespace LightSeepDataStatus {
     /**
      * 受限于方块之中
      */
-    export let block = new LightSeepDataStatus (
+    export const block = new LightSeepDataStatus (
         1,
         [
             // 够不着
@@ -206,7 +206,7 @@ namespace LightSeepDataStatus {
 
                 let part1 = new LightSeepPart();
                 part1.vertextList[0].LoadDataByRayPoint(range.ray0.p0);
-                part1.vertextList[1].LoadDataByRayPoint(ray0Seep.cacheP0.rayPoint),
+                part1.vertextList[1].LoadDataByRayPoint(ray0Seep.cacheP0.rayPoint);
                 part1.vertextList[2].LoadData(
                     splitedP1Pos.elements[0],
                     splitedP1Pos.elements[1],
@@ -323,7 +323,7 @@ namespace LightSeepDataStatus {
     /**
      * 成功穿透
      */
-    export let through = new LightSeepDataStatus(
+    export const through = new LightSeepDataStatus(
         2,
         [
             // 够不着

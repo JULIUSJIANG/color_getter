@@ -6,6 +6,7 @@ import {connect} from 'react-redux';
 import { Provider } from 'react-redux';
 import perfAnalyse from "../../lib/perf_analyse/PerfAnalyse";
 import MsgDisplay from "./MsgDisplay";
+import BottomNav from "./BottomNav";
 
 /**
  * 全局环境的组件
@@ -23,6 +24,7 @@ class Component extends React.Component {
             <div style={{width: "100%", height: "100%"}}>
                 {root.store.getState().disableWebgl ? null : <Webgl/>}
                 <TopNav/>
+                <BottomNav/>
                 <MsgDisplay/>
             </div>
         );

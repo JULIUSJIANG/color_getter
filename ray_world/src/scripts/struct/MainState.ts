@@ -56,6 +56,16 @@ export default class MainState {
     lightXRec: LightGridXRec[];
 
     /**
+     * 绘制区域
+     */
+    drawArea: boolean;
+
+    /**
+     * 绘制渗透数据
+     */
+    drawSeep: boolean;
+
+    /**
      * 默认值
      */
     public static def: MainState = {
@@ -68,6 +78,8 @@ export default class MainState {
         focusGridY: 0,
         isPressed: false,
         blockXRec: [],
-        lightXRec: []
+        lightXRec: [],
+        drawArea: true,
+        drawSeep: true
     };
 };

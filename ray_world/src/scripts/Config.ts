@@ -5,7 +5,7 @@ namespace config {
     /**
      * 本地存储的时候采用的 key
      */
-    export const storageKey = `data28`;
+    export const storageKey = `data31`;
 
     /**
      * 方块尺寸
@@ -170,6 +170,13 @@ namespace config {
      * 目标部分
      */
     export const targetPart = null as number;
+
+    /**
+     * 光范围
+     */
+    export const lightArea = [
+        [0, 30]
+    ]
 };
 
 export default config;

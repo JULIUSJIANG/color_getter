@@ -83,7 +83,7 @@ namespace root {
     /**
      * 进行数据初始化
      */
-    export const reducerInit = new RootAction<MainState> (
+     export const reducerInit = new RootAction<MainState> (
         (state, t) => {
             return t;
         }
@@ -293,6 +293,32 @@ namespace root {
             xRec.yCollect.splice(xRec.yCollect.indexOf(yRec), 1);
             return {
                 ...state,
+                version: state.version + 1
+            };
+        }
+    );
+
+    /**
+     * 设置区域绘制许可
+     */
+    export const reducerSetDrawArea = new RootAction<boolean> (
+        (state, val) => {
+            return {
+                ...state,
+                drawArea: val,
+                version: state.version + 1
+            };
+        }
+    );
+
+    /**
+     * 设置渗透绘制许可
+     */
+    export const reducerSetDrawSeep = new RootAction<boolean>(
+        (state, val) => {
+            return {
+                ...state,
+                drawSeep: val,
                 version: state.version + 1
             };
         }
