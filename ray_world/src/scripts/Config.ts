@@ -175,7 +175,7 @@ namespace config {
      * 光范围
      */
     export const lightArea = [
-        [0, 30]
+        [0, Math.PI / 6]
     ]
 };
 

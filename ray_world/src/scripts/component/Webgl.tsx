@@ -473,6 +473,7 @@ class Component extends React.Component {
                     let hittedRect = rectList.filter((rect) => {
                         return CuonVector3.CheckHasIntersection(rect.pList, seepRange.pList);
                     });
+
                     let vertexList: LightSeepPart[] = [];
                     lightSeep.GetVertext(
                         seepRange,

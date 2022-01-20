@@ -95,17 +95,17 @@ class LightSeepRect {
 
         this.vecX.GetLeft(this.vecY);
 
-        this.prt.elements[0] = this.pos.elements[0] + this.vecX.elements[0] * this.size.elements[0] / 2 + this.vecY.elements[0] * this.size.elements[1];
-        this.prt.elements[1] = this.pos.elements[1] + this.vecX.elements[1] * this.size.elements[1] / 2 + this.vecY.elements[1] * this.size.elements[1];
+        this.prt.elements[0] = this.pos.elements[0] + this.vecX.elements[0] * this.size.elements[0] / 2 + this.vecY.elements[0] * this.size.elements[1] / 2;
+        this.prt.elements[1] = this.pos.elements[1] + this.vecX.elements[1] * this.size.elements[1] / 2 + this.vecY.elements[1] * this.size.elements[1] / 2;
 
-        this.prb.elements[0] = this.pos.elements[0] + this.vecX.elements[0] * this.size.elements[0] / 2 - this.vecY.elements[0] * this.size.elements[1];
-        this.prb.elements[1] = this.pos.elements[1] + this.vecX.elements[1] * this.size.elements[1] / 2 - this.vecY.elements[1] * this.size.elements[1];
+        this.prb.elements[0] = this.pos.elements[0] + this.vecX.elements[0] * this.size.elements[0] / 2 - this.vecY.elements[0] * this.size.elements[1] / 2;
+        this.prb.elements[1] = this.pos.elements[1] + this.vecX.elements[1] * this.size.elements[1] / 2 - this.vecY.elements[1] * this.size.elements[1] / 2;
 
-        this.plb.elements[0] = this.pos.elements[0] - this.vecX.elements[0] * this.size.elements[0] / 2 - this.vecY.elements[0] * this.size.elements[1];
-        this.plb.elements[1] = this.pos.elements[1] - this.vecX.elements[1] * this.size.elements[1] / 2 - this.vecY.elements[1] * this.size.elements[1];
+        this.plb.elements[0] = this.pos.elements[0] - this.vecX.elements[0] * this.size.elements[0] / 2 - this.vecY.elements[0] * this.size.elements[1] / 2;
+        this.plb.elements[1] = this.pos.elements[1] - this.vecX.elements[1] * this.size.elements[1] / 2 - this.vecY.elements[1] * this.size.elements[1] / 2;
 
-        this.plt.elements[0] = this.pos.elements[0] - this.vecX.elements[0] * this.size.elements[0] / 2 + this.vecY.elements[0] * this.size.elements[1];
-        this.plt.elements[1] = this.pos.elements[1] - this.vecX.elements[1] * this.size.elements[1] / 2 + this.vecY.elements[1] * this.size.elements[1];
+        this.plt.elements[0] = this.pos.elements[0] - this.vecX.elements[0] * this.size.elements[0] / 2 + this.vecY.elements[0] * this.size.elements[1] / 2;
+        this.plt.elements[1] = this.pos.elements[1] - this.vecX.elements[1] * this.size.elements[1] / 2 + this.vecY.elements[1] * this.size.elements[1] / 2;
     }
 
     /**

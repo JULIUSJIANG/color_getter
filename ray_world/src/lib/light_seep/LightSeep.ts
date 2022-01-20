@@ -233,14 +233,14 @@ namespace lightSeep {
     function SplitLightRangeByAngle (range: lightSeepRange, rect: LightSeepRect, itemList: lightSeepRange[]) {
         let weightList: WeightRec[] = [];
         for (let pIndex = 0; pIndex < rect.pList.length; pIndex++) {
-            let p2 = rect.pList[pIndex];
-            let p1 = new CuonVector3();
+            let p1 = rect.pList[pIndex];
+            let p0 = new CuonVector3();
             range.GetPenetratePos(
-                p2,
-                p1
+                p1,
+                p0
             );
             // 角度
-            let angle = Math.atan2(p2.elements[1] - p1.elements[1], p2.elements[0] - p1.elements[0]);
+            let angle = Math.atan2(p1.elements[1] - p0.elements[1], p1.elements[0] - p0.elements[0]);
             // 角度超出，忽略
             if (angle <= range.ray0.p0p1Angle) {
                 continue;
@@ -250,8 +250,8 @@ namespace lightSeep {
             };
             AddWeightRec(
                 range,
+                p0,
                 p1,
-                p2,
                 weightList,
                 angle
             );
@@ -393,6 +393,7 @@ namespace lightSeep {
                 curr.p2y,
                 curr.p2Power
             );
+            itemList.push(genRange);
         };
     }
 

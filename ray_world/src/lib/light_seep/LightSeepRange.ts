@@ -24,6 +24,11 @@ class lightSeepRange {
     public r0r1p1vec = new CuonVector3();
 
     /**
+     * r0r1p0vec 的右向量
+     */
+    public r0r1p0vecRight = new CuonVector3();
+
+    /**
      * r0r1p1vec 的右向量
      */
     public r0r1p1vecRight = new CuonVector3();
@@ -111,6 +116,7 @@ class lightSeepRange {
         this.r0r1p1vec.elements[0] = this.ray1.p1.pos.elements[0] - this.ray0.p1.pos.elements[0];
         this.r0r1p1vec.elements[1] = this.ray1.p1.pos.elements[1] - this.ray0.p1.pos.elements[1];
 
+        this.r0r1p0vec.GetRight(this.r0r1p0vecRight);
         this.r0r1p1vec.GetRight(this.r0r1p1vecRight);
 
         this.mainDirection.elements[0] = this.ray0.vecp0p1.elements[0] + this.ray1.vecp0p1.elements[0];
@@ -130,45 +136,35 @@ class lightSeepRange {
 
     /**
      * 获取能够贯穿 p2 的起点 p1
-     * @param p2 
      * @param p1 
+     * @param p0 
      */
-    public GetPenetratePos (p2: CuonVector3, p1: CuonVector3) {
-        let p1vecX = this.r0r1p0vec.elements[0];
-        let p1vecY = this.r0r1p0vec.elements[1];
-
-        let p1x = p1.elements[0];
-        let p1y = p1.elements[1];
-        let r1rightX = this.ray0.vecp0p1Right.elements[0];
-        let r1rightY = this.ray0.vecp0p1Right.elements[1];
-        let r1p1x = this.ray0.p0.pos.elements[0];
-        let r1p1y = this.ray0.p0.pos.elements[1];
-        let a1 = ((- p1y * r1rightY + r1p1y * r1rightY) - (p1x * r1rightX - r1p1x * r1rightX)) / (p1vecX * r1rightX + p1vecY * r1rightY);
-
-        let p2x = p2.elements[0];
-        let p2y = p2.elements[1];
-        let r2rightX = this.ray1.vecp0p1Right.elements[0];
-        let r2rightY = this.ray1.vecp0p1Right.elements[1];
-        let r2p1x = this.ray1.p0.pos.elements[0];
-        let r2p1y = this.ray1.p0.pos.elements[1];
-        let a2 = ((- p2y * r2rightY + r2p1y * r2rightY) - (p2x * r2rightX - r2p1x * r2rightX)) / (p1vecX * r2rightX + p1vecY * r2rightY);
-
-        // a1 占比
-        let rate: number;
-
-        if (
-            a1 == 0
-            && a2 == 0
-        )
-        {
-            rate = 0
-        }
-        else {
-            rate = 1 - a2 / (a2 - a1)
+    public GetPenetratePos (p1: CuonVector3, p0: CuonVector3) {
+        if (this.r0r1p0vecLength == 0) {
+            p0.elements[0] = this.ray0.p0.pos.elements[0];
+            p0.elements[1] = this.ray0.p0.pos.elements[1];
+            return;
         };
 
-        p1.elements[0] = this.ray0.p0.pos.elements[0] + p1vecX * rate;
-        p1.elements[1] = this.ray0.p0.pos.elements[1] + p1vecY * rate;
+        let r0pos = CuonVector3.GetIntersection(
+            this.ray0.vecp0p1Right,
+            this.ray0.p0.pos,
+
+            this.r0r1p0vecRight,
+            p1
+        );
+        let r1pos = CuonVector3.GetIntersection(
+            this.ray1.vecp0p1Right,
+            this.ray1.p0.pos,
+
+            this.r0r1p0vecRight,
+            p1
+        );
+        let distance0 = CuonVector3.GetLen(r0pos.elements[0] - p1.elements[0], r0pos.elements[1] - p1.elements[1]);
+        let distance1 = CuonVector3.GetLen(r1pos.elements[0] - p1.elements[0], r1pos.elements[1] - p1.elements[1]);
+        let rate = distance0 / (distance0 + distance1);
+        p0.elements[0] = this.ray0.p0.pos.elements[0] + this.r0r1p0vec.elements[0] * rate;
+        p0.elements[1] = this.ray0.p0.pos.elements[1] + this.r0r1p0vec.elements[1] * rate;
     }
 
     /**

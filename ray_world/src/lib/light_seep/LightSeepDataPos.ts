@@ -8,7 +8,7 @@ class LightSeepDataPos {
     /**
      * 交点信息
      */
-    public rayPoint: LightSeepRangeRayPoint;
+    public rayPoint: LightSeepRangeRayPoint = new LightSeepRangeRayPoint();
 }
 
 namespace LightSeepDataPos {
