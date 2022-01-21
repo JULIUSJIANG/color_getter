@@ -132,16 +132,30 @@ class Component extends React.Component {
             -root.store.getState().cameraY,
             0
         );
-        perfAnalyse.Rec(`DrawBgGrid`);
-        this.DrawBgGrid();
-        perfAnalyse.Rec(`DrawBlock`);
-        this.DrawBlock();
-        perfAnalyse.Rec(`DrawLightPoint`);
-        this.DrawLightPoint();
-        perfAnalyse.Rec(`DrawLightArea`);
-        this.DrawLightArea();
+        
+        if (root.store.getState().drawBgGrid) {
+            perfAnalyse.Rec(`DrawBgGrid`);
+            this.DrawBgGrid();
+        };
+        if (root.store.getState().drawBlock) {
+            perfAnalyse.Rec(`DrawBlock`);
+            this.DrawBlock();
+        };
+        if (root.store.getState().drawLightPoint) {
+            perfAnalyse.Rec(`DrawLightPoint`);
+            this.DrawLightPoint();
+        };
+        if (root.store.getState().drawLightArea) {
+            perfAnalyse.Rec(`DrawLightArea`);
+            this.DrawLightArea();
+        };
+        if (root.store.getState().drawSeepData) {
+            perfAnalyse.Rec(`DrawSeepData`);
+            this.DrawSeepData();
+        };
         perfAnalyse.Rec(`DrawTouch`);
         this.DrawTouch();
+
         perfAnalyse.Rec(`End`);
         perfAnalyse.Catch();
     }
@@ -400,25 +414,6 @@ class Component extends React.Component {
      * 绘制光照范围
      */
     DrawLightArea () {
-        let rectList: LightSeepRect[] = [];
-        // 取得所有格子的集合
-        for (let xI = 0; xI < root.store.getState().blockXRec.length; xI++) {
-            let xRec = root.store.getState().blockXRec[xI];
-            for (let yI = 0; yI < xRec.yCollect.length; yI++) {
-                let yRec = xRec.yCollect[yI];
-                let rect = new LightSeepRect();
-                rect.LoadData(
-                    1,
-                    (xRec.gridX + 0.5) * config.rectSize,
-                    (yRec.gridY + 0.5) * config.rectSize,
-                    0, 
-                    config.rectSize,
-                    config.rectSize
-                );
-                rectList.push(rect);
-            };
-        };
-
         // 穷举所有光照范围
         for (let xI = 0; xI < root.store.getState().lightXRec.length; xI++) {
             let xRec = root.store.getState().lightXRec[xI];
@@ -450,24 +445,80 @@ class Component extends React.Component {
                         0
                     );
 
-                    if (root.store.getState().drawArea) {
-                        // 绘制区域
-                        this.DrawByElementData(
-                            [
-                                seepRange.pList[0].elements[0], seepRange.pList[0].elements[1], 0, ...config.lightRayColor,
-                                seepRange.pList[1].elements[0], seepRange.pList[1].elements[1], 0, ...config.lightRayColor,
-                                seepRange.pList[2].elements[0], seepRange.pList[2].elements[1], 0, ...config.lightRayColor,
-                                seepRange.pList[3].elements[0], seepRange.pList[3].elements[1], 0, ...config.lightRayColor
-                            ],
-                            [
-                                0, 1,
-                                1, 2,
-                                2, 3,
-                                3, 0
-                            ],
-                            WebGLRenderingContext.LINES
-                        );
-                    };
+                    // 绘制区域
+                    this.DrawByElementData(
+                        [
+                            seepRange.pList[0].elements[0], seepRange.pList[0].elements[1], 0, ...config.lightRayColor,
+                            seepRange.pList[1].elements[0], seepRange.pList[1].elements[1], 0, ...config.lightRayColor,
+                            seepRange.pList[2].elements[0], seepRange.pList[2].elements[1], 0, ...config.lightRayColor,
+                            seepRange.pList[3].elements[0], seepRange.pList[3].elements[1], 0, ...config.lightRayColor
+                        ],
+                        [
+                            0, 1,
+                            1, 2,
+                            2, 3,
+                            3, 0
+                        ],
+                        WebGLRenderingContext.LINES
+                    );
+                };
+            };
+        };
+    }
+
+    /**
+     * 绘制渗透数据
+     */
+    DrawSeepData () {
+        let rectList: LightSeepRect[] = [];
+        // 取得所有格子的集合
+        for (let xI = 0; xI < root.store.getState().blockXRec.length; xI++) {
+            let xRec = root.store.getState().blockXRec[xI];
+            for (let yI = 0; yI < xRec.yCollect.length; yI++) {
+                let yRec = xRec.yCollect[yI];
+                let rect = new LightSeepRect();
+                rect.LoadData(
+                    1,
+                    (xRec.gridX + 0.5) * config.rectSize,
+                    (yRec.gridY + 0.5) * config.rectSize,
+                    0, 
+                    config.rectSize,
+                    config.rectSize
+                );
+                rectList.push(rect);
+            };
+        };
+
+        // 穷举所有光照范围
+        for (let xI = 0; xI < root.store.getState().lightXRec.length; xI++) {
+            let xRec = root.store.getState().lightXRec[xI];
+            for (let yI = 0; yI < xRec.yCollect.length; yI++) {
+                let yRec = xRec.yCollect[yI];
+                let posX = (xRec.gridX + 0.5) * config.rectSize;
+                let posY = (yRec.gridY + 0.5) * config.rectSize;
+                for (let areaI = 0; areaI < config.lightArea.length; areaI++) {
+                    let area = config.lightArea[areaI];
+                    let r0angle = area[0];
+                    let r1angle = area[1];
+
+                    let seepRange = new lightSeepRange();
+                    seepRange.LoadData(
+                        posX,
+                        posY,
+                        config.lightDistance,
+
+                        config.lightDistance * Math.cos(r0angle) + posX,
+                        config.lightDistance * Math.sin(r0angle) + posY,
+                        0,
+
+                        posX,
+                        posY,
+                        config.lightDistance,
+
+                        config.lightDistance * Math.cos(r1angle) + posX,
+                        config.lightDistance * Math.sin(r1angle) + posY,
+                        0
+                    );
 
                     // 过滤出有交集的方块集合
                     let hittedRect = rectList.filter((rect) => {
@@ -483,26 +534,30 @@ class Component extends React.Component {
 
                     // 得到绘制数据
                     let drawData: number[] = [];
-                    vertexList.forEach(( val ) => {
-                        let drawData = val.vertextList.map(( vertex ) => {
-                            return [vertex.pos.elements[0], vertex.pos.elements[1], 0, ...config.lightAreaColor];
+                    let vexData: number[] = [];
+                    vertexList.forEach(( val, index ) => {
+                        let dataOffset = 4 * index;
+                        val.vertextList.forEach(( vertex ) => {
+                            let pointData = [vertex.pos.elements[0], vertex.pos.elements[1], 0, ...config.lightAreaColor];
+                            pointData[pointData.length - 1] = Math.max(config.lightMinAlpha, vertex.power / config.lightDistance);
+                            drawData.push(...pointData);
                         });
-                        drawData.push(...drawData);
+                        vexData.push(
+                            ...[
+                                0 + dataOffset, 1 + dataOffset,
+                                1 + dataOffset, 2 + dataOffset,
+                                2 + dataOffset, 3 + dataOffset,
+                                3 + dataOffset, 0 + dataOffset
+                            ]
+                        )
                     });
 
-                    if (root.store.getState().drawSeep) {
-                        // 绘制出来
-                        this.DrawByElementData(
-                            drawData,
-                            [
-                                0, 1,
-                                1, 2,
-                                2, 3,
-                                3, 0
-                            ],
-                            WebGLRenderingContext.LINES
-                        );
-                    };
+                    // 绘制出来
+                    this.DrawByElementData(
+                        drawData,
+                        vexData,
+                        WebGLRenderingContext.LINES
+                    );
                 };
             };
         };

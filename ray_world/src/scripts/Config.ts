@@ -5,7 +5,7 @@ namespace config {
     /**
      * 本地存储的时候采用的 key
      */
-    export const storageKey = `data31`;
+    export const storageKey = `data32`;
 
     /**
      * 方块尺寸
@@ -36,6 +36,11 @@ namespace config {
      * 光照距离
      */
     export const lightDistance = rectSize * 6;
+
+    /**
+     * 最低透明度
+     */
+    export const lightMinAlpha = 0.05;
 
     /**
      * 背景颜色
@@ -175,7 +180,7 @@ namespace config {
      * 光范围
      */
     export const lightArea = [
-        [0, Math.PI / 6]
+        [0, Math.PI / 12]
     ]
 };
 

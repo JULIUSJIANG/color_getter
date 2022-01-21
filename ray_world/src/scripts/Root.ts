@@ -3,7 +3,7 @@ import Eventer from '../lib/Eventer';
 import ObjectPool from '../lib/object_pool/ObjectPool';
 import config from './Config';
 import BlockGridXRec from './struct/BlockGridXRec';
-import MainState from './struct/MainState';
+import State from './State';
 import TouchMachine from './touchmachine/TouchMachine';
 
 /**
@@ -19,11 +19,11 @@ namespace root {
      * 事务管理中心
      */
     class RootReducer {
-        private _reduceMap: Map<number, (state: MainState, act: Action<any>) => MainState> = new Map();
-        Regist<T> (type: number, reduce: (state: MainState, act: Action<T>) => MainState) {
+        private _reduceMap: Map<number, (state: State, act: Action<any>) => State> = new Map();
+        Regist<T> (type: number, reduce: (state: State, act: Action<T>) => State) {
             this._reduceMap.set(type, reduce);
         }
-        Reduce (state: MainState, act: Action<any>) {
+        Reduce (state: State, act: Action<any>) {
             if (!this._reduceMap.has(act.type)) {
                 return state;
             };
@@ -51,9 +51,9 @@ namespace root {
      */
     class RootAction<T> {
         type: number;
-        action: (state: MainState, eff: T) => MainState
+        action: (state: State, eff: T) => State
         constructor(
-            action: (state: MainState, eff: T) => MainState
+            action: (state: State, eff: T) => State
         ) 
         {
             this.type = ++id;
@@ -83,7 +83,7 @@ namespace root {
     /**
      * 进行数据初始化
      */
-     export const reducerInit = new RootAction<MainState> (
+     export const reducerInit = new RootAction<State> (
         (state, t) => {
             return t;
         }
@@ -299,13 +299,52 @@ namespace root {
     );
 
     /**
-     * 设置区域绘制许可
+     * 设置绘制背景许可
      */
-    export const reducerSetDrawArea = new RootAction<boolean> (
+     export const reducerSetDrawBgGrid = new RootAction<boolean>(
         (state, val) => {
             return {
                 ...state,
-                drawArea: val,
+                drawBgGrid: val,
+                version: state.version + 1
+            };
+        }
+    );
+
+    /**
+     * 设置绘制方块许可
+     */
+     export const reducerSetDrawBlock = new RootAction<boolean>(
+        (state, val) => {
+            return {
+                ...state,
+                drawBlock: val,
+                version: state.version + 1
+            };
+        }
+    );
+
+    /**
+     * 设置绘制光点许可
+     */
+     export const reducerSetDrawLightPoint = new RootAction<boolean>(
+        (state, val) => {
+            return {
+                ...state,
+                drawLightPoint: val,
+                version: state.version + 1
+            };
+        }
+    );
+
+    /**
+     * 设置区域绘制许可
+     */
+    export const reducerSetDrawLightArea = new RootAction<boolean> (
+        (state, val) => {
+            return {
+                ...state,
+                drawLightArea: val,
                 version: state.version + 1
             };
         }
@@ -314,11 +353,11 @@ namespace root {
     /**
      * 设置渗透绘制许可
      */
-    export const reducerSetDrawSeep = new RootAction<boolean>(
+    export const reducerSetDrawSeepData = new RootAction<boolean>(
         (state, val) => {
             return {
                 ...state,
-                drawSeep: val,
+                drawSeepData: val,
                 version: state.version + 1
             };
         }
@@ -382,10 +421,10 @@ namespace root {
 // 读取本地存储的数据
 let storagedData = localStorage.getItem(config.storageKey);
 // 初始化的状态
-let initState: MainState;
+let initState: State;
 // 如果没有存储过，那么创建为默认值
 if (storagedData == null || storagedData == `` || storagedData == `undefined`) {
-    initState = MainState.def;
+    initState = State.def;
 }
 // 否则采用存储值
 else {

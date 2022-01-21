@@ -1,10 +1,10 @@
-import BlockGridXRec from "./BlockGridXRec";
-import LightGridXRec from "./LightGridXRec";
+import BlockGridXRec from "./struct/BlockGridXRec";
+import LightGridXRec from "./struct/LightGridXRec";
 
 /**
  * 全局数据结构
  */
-export default class MainState {
+export default class State {
     /**
      * 版本
      */
@@ -56,19 +56,34 @@ export default class MainState {
     lightXRec: LightGridXRec[];
 
     /**
+     * 绘制背景格子
+     */
+    drawBgGrid: boolean;
+
+    /**
+     * 绘制立体方块
+     */
+    drawBlock: boolean;
+
+    /**
+     * 绘制光点
+     */
+    drawLightPoint: boolean;
+
+    /**
      * 绘制区域
      */
-    drawArea: boolean;
+    drawLightArea: boolean;
 
     /**
      * 绘制渗透数据
      */
-    drawSeep: boolean;
+    drawSeepData: boolean;
 
     /**
      * 默认值
      */
-    public static def: MainState = {
+    public static def: State = {
         version: 0,
         opIndex: 0,
         cameraX: 0,
@@ -79,7 +94,10 @@ export default class MainState {
         isPressed: false,
         blockXRec: [],
         lightXRec: [],
-        drawArea: true,
-        drawSeep: true
+        drawBgGrid: true,
+        drawBlock: true,
+        drawLightPoint: true,
+        drawLightArea: true,
+        drawSeepData: true
     };
 };

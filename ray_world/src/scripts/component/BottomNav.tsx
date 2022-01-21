@@ -9,15 +9,6 @@ import root from "../Root";
  * 底部栏
  */
 class Component extends React.Component {
-    
-    OnCheckBoxAreaChanged (evt: CheckboxChangeEvent) {
-        root.reducerSetDrawArea.Eff(evt.target.checked);
-    }
-
-    OnCheckBoxSeepChanged (evt: CheckboxChangeEvent) {
-        root.reducerSetDrawSeep.Eff(evt.target.checked);
-    }
-
     public override render(): React.ReactNode {
         return (
             <div
@@ -27,8 +18,55 @@ class Component extends React.Component {
                     bottom: "20px"
                 }}
             >
-                <Checkbox checked={root.store.getState().drawArea} onChange={this.OnCheckBoxAreaChanged.bind(this)} style={{color: `white`}}>绘制探照区域</Checkbox>
-                <Checkbox checked={root.store.getState().drawSeep} onChange={this.OnCheckBoxSeepChanged.bind(this)} style={{color: `white`}}>绘制渗透数据</Checkbox>
+                <div>
+                    <Checkbox 
+                        checked={root.store.getState().drawBgGrid} 
+                        onChange={(evt: CheckboxChangeEvent) => root.reducerSetDrawBgGrid.Eff(evt.target.checked)} 
+                        style={{color: `white`}}
+                    >
+                        绘制背景格子
+                    </Checkbox>
+                </div>
+
+                <div>
+                    <Checkbox 
+                        checked={root.store.getState().drawBlock} 
+                        onChange={(evt: CheckboxChangeEvent) => root.reducerSetDrawBlock.Eff(evt.target.checked)} 
+                        style={{color: `white`}}
+                    >
+                        绘制立体方块
+                    </Checkbox>
+                </div>
+
+                <div>
+                    <Checkbox 
+                        checked={root.store.getState().drawLightPoint} 
+                        onChange={(evt: CheckboxChangeEvent) => root.reducerSetDrawLightPoint.Eff(evt.target.checked)} 
+                        style={{color: `white`}}
+                    >
+                        绘制光源亮点
+                    </Checkbox>
+                </div>
+
+                <div>
+                    <Checkbox 
+                        checked={root.store.getState().drawLightArea} 
+                        onChange={(evt: CheckboxChangeEvent) => root.reducerSetDrawLightArea.Eff(evt.target.checked)} 
+                        style={{color: `white`}}
+                    >
+                        绘制探照区域
+                    </Checkbox>
+                </div>
+
+                <div>
+                    <Checkbox 
+                        checked={root.store.getState().drawSeepData} 
+                        onChange={(evt: CheckboxChangeEvent) => root.reducerSetDrawSeepData.Eff(evt.target.checked)} 
+                        style={{color: `white`}}
+                    >
+                        绘制渗透数据
+                    </Checkbox>
+                </div>
             </div>
         )
     }

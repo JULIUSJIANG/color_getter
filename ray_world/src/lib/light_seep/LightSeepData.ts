@@ -66,7 +66,7 @@ namespace LightSeepData {
         seepData.pEnter.rayPoint.LoadData(
             pList[0].elements[0],
             pList[0].elements[1],
-            ray.p0.power + CuonVector3.DotByNumber(
+            ray.p0.power - CuonVector3.DotByNumber(
                 ray.vecp0p1Normalized.elements[0], 
                 ray.vecp0p1Normalized.elements[1],
 
@@ -79,13 +79,15 @@ namespace LightSeepData {
         seepData.pExit.rayPoint.LoadData(
             pList[1].elements[0],
             pList[1].elements[1],
-            ray.p0.power + CuonVector3.DotByNumber(
+            ray.p0.power 
+            - CuonVector3.DotByNumber(
                 ray.vecp0p1Normalized.elements[0], 
                 ray.vecp0p1Normalized.elements[1],
 
                 pList[1].elements[0] - ray.p0.pos.elements[0],
                 pList[1].elements[1] - ray.p0.pos.elements[1]
             )
+            - CuonVector3.GetLen(pList[1].elements[0] - pList[0].elements[0], pList[1].elements[1] - pList[1].elements[1]) * rect.damping
         );
 
         let p0x: number, p0y: number;
@@ -170,8 +172,8 @@ namespace LightSeepData {
             else {
                 // 按照阻尼，还能移动的距离
                 let dampDistance = p1power / ray.p0p1PowerLowSpeed;
-                let p2x = p0x + ray.vecp0p1Normalized.elements[0] * dampDistance;
-                let p2y = p0y + ray.vecp0p1Normalized.elements[1] * dampDistance;
+                let p2x = p1x + ray.vecp0p1Normalized.elements[0] * dampDistance;
+                let p2y = p1y + ray.vecp0p1Normalized.elements[1] * dampDistance;
                 let distance = CuonVector3.GetLen(p2x - ray.p0.pos.elements[0], p2y - ray.p1.pos.elements[1]);
                 // 衰减到超出了范围
                 if (ray.p0p1Distance < distance) {
@@ -183,7 +185,7 @@ namespace LightSeepData {
                     seepData.cacheP2.rayPoint.LoadData(
                         ray.p1.pos.elements[0],
                         ray.p1.pos.elements[1],
-                        p1power
+                        p2Power
                     );
                 }
                 else {

@@ -49,8 +49,14 @@ namespace lightSeep {
         vertextList: LightSeepPart[],
     )
     {
-        // 索引越界，忽略
+        // 没有更多的方块产生影响了
         if (rectList.length <= rectIndex) {
+            let part = new LightSeepPart();
+            part.vertextList[0].LoadDataByRayPoint(range.ray0.p0);
+            part.vertextList[1].LoadDataByRayPoint(range.ray0.p1);
+            part.vertextList[2].LoadDataByRayPoint(range.ray1.p1);
+            part.vertextList[3].LoadDataByRayPoint(range.ray1.p0);
+            vertextList.push(part);
             return;
         };
         // 当前矩形
@@ -82,7 +88,7 @@ namespace lightSeep {
                 rectList,
                 rectIndex + 1,
                 vertextList
-            )
+            );
         });
     }
 
@@ -105,7 +111,6 @@ namespace lightSeep {
             genSeepRange.push(range.Clone());
             return;
         };
-
         // 射线 0 的渗透数据
         let ray0Seep = LightSeepData.Create(
             range.ray0,
@@ -116,7 +121,6 @@ namespace lightSeep {
             range.ray1,
             rect
         );
-
         // 进行数据记录
         ray0Seep.status.analyse[ray1Seep.status.id](
             range,
