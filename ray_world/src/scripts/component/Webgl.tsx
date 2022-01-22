@@ -11,7 +11,7 @@ import perfAnalyse from "../../lib/perf_analyse/PerfAnalyse";
 import ObjectPoolType from "../../lib/object_pool/ObjectPoolType";
 import ObjectPool from "../../lib/object_pool/ObjectPool";
 import LightSeepRect from "../../lib/light_seep/LightSeepRect";
-import lightSeepRange from "../../lib/light_seep/LightSeepRange";
+import LightSeepRange from "../../lib/light_seep/LightSeepRange";
 import lightSeep from "../../lib/light_seep/LightSeep";
 import LightSeepPart from "../../lib/light_seep/LightSeepPart";
 
@@ -426,22 +426,22 @@ class Component extends React.Component {
                     let r0angle = area[0];
 
                     let r1angle = area[1];
-                    let seepRange = new lightSeepRange();
+                    let seepRange = new LightSeepRange();
                     seepRange.LoadData(
                         posX,
                         posY,
-                        config.lightDistance,
+                        config.lightR0distance,
 
-                        config.lightDistance * Math.cos(r0angle) + posX,
-                        config.lightDistance * Math.sin(r0angle) + posY,
+                        config.lightR0distance * Math.cos(r0angle) + posX,
+                        config.lightR0distance * Math.sin(r0angle) + posY,
                         0,
 
                         posX,
                         posY,
-                        config.lightDistance,
+                        config.lightR1distance,
 
-                        config.lightDistance * Math.cos(r1angle) + posX,
-                        config.lightDistance * Math.sin(r1angle) + posY,
+                        config.lightR1distance * Math.cos(r1angle) + posX,
+                        config.lightR1distance * Math.sin(r1angle) + posY,
                         0
                     );
 
@@ -501,22 +501,22 @@ class Component extends React.Component {
                     let r0angle = area[0];
                     let r1angle = area[1];
 
-                    let seepRange = new lightSeepRange();
+                    let seepRange = new LightSeepRange();
                     seepRange.LoadData(
                         posX,
                         posY,
-                        config.lightDistance,
+                        config.lightR0distance,
 
-                        config.lightDistance * Math.cos(r0angle) + posX,
-                        config.lightDistance * Math.sin(r0angle) + posY,
+                        config.lightR0distance * Math.cos(r0angle) + posX,
+                        config.lightR0distance * Math.sin(r0angle) + posY,
                         0,
 
                         posX,
                         posY,
-                        config.lightDistance,
+                        config.lightR1distance,
 
-                        config.lightDistance * Math.cos(r1angle) + posX,
-                        config.lightDistance * Math.sin(r1angle) + posY,
+                        config.lightR1distance * Math.cos(r1angle) + posX,
+                        config.lightR1distance * Math.sin(r1angle) + posY,
                         0
                     );
 
@@ -539,15 +539,14 @@ class Component extends React.Component {
                         let dataOffset = 4 * index;
                         val.vertextList.forEach(( vertex ) => {
                             let pointData = [vertex.pos.elements[0], vertex.pos.elements[1], 0, ...config.lightAreaColor];
-                            pointData[pointData.length - 1] = Math.max(config.lightMinAlpha, vertex.power / config.lightDistance);
+                            pointData[pointData.length - 1] = Math.max(config.lightMinAlpha, vertex.power / 1000);
                             drawData.push(...pointData);
                         });
                         vexData.push(
                             ...[
                                 0 + dataOffset, 1 + dataOffset,
                                 1 + dataOffset, 2 + dataOffset,
-                                2 + dataOffset, 3 + dataOffset,
-                                3 + dataOffset, 0 + dataOffset
+                                2 + dataOffset, 3 + dataOffset
                             ]
                         )
                     });

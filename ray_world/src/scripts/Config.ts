@@ -31,11 +31,6 @@ namespace config {
      * 光源边缘厚度
      */
     export const lightPadding = rectSize / 10;
-    
-    /**
-     * 光照距离
-     */
-    export const lightDistance = rectSize * 6;
 
     /**
      * 最低透明度
@@ -177,11 +172,21 @@ namespace config {
     export const targetPart = null as number;
 
     /**
+     * r0-光照距离
+     */
+    export const lightR0distance = rectSize * 0.3;
+
+    /**
+     * r1-光照距离
+     */
+    export const lightR1distance = rectSize * 4;
+
+    /**
      * 光范围
      */
     export const lightArea = [
-        [0, Math.PI / 12]
-    ]
+        [-Math.PI / 12 * 1, Math.PI / 12 * 1]
+    ];
 };
 
 export default config;

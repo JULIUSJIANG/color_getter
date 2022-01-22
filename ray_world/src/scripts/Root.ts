@@ -448,4 +448,5 @@ function step () {
     window.requestAnimationFrame(step);
 };
 window.requestAnimationFrame(step);
+window[`process`] = {} as any; 
 export default root;

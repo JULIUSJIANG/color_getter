@@ -139,57 +139,51 @@ class LightSeepRect {
         let k = kRight.GetLeft(new CuonVector3());
         k.Normalize();
         posList.length = 0;
-        // 交点集合
-        posList.push(
-            CuonVector3.GetIntersection(
-                kRight,
-                b,
-                this.vecX,
-                this.plb
-            )
+        let p0 = CuonVector3.GetIntersection(
+            kRight,
+            b,
+            this.vecX,
+            this.plb
         );
-        posList.push(
-            CuonVector3.GetIntersection(
-                kRight,
-                b,
-                this.vecY,
-                this.plb
-            )
+        posList.push(p0);
+        let p1 = CuonVector3.GetIntersection(
+            kRight,
+            b,
+            this.vecY,
+            this.plb
         );
-        posList.push(
-            CuonVector3.GetIntersection(
-                kRight,
-                b,
-                this.vecX,
-                this.prt
-            )
+        posList.push(p1);
+        let p2 = CuonVector3.GetIntersection(
+            kRight,
+            b,
+            this.vecX,
+            this.prt
         );
-        posList.push(
-            CuonVector3.GetIntersection(
-                kRight,
-                b,
-                this.vecY,
-                this.prt
-            )
+        posList.push(p2);
+        let p3 = CuonVector3.GetIntersection(
+            kRight,
+            b,
+            this.vecY,
+            this.prt
         );
+        posList.push(p3);
         directionData.clear();
 
         // 计算向量数据
         posList.forEach(( p ) => {
             directionData.set(p, CuonVector3.Dot(k, CuonVector3.GetP1P2(b, p)));
         });
-    
+
         // 从近到远排序
         posList.sort(( pA, pB ) => {
             return directionData.get(pA) - directionData.get(pB);
         });
 
-        
         // 只取中间 2 个点
         posList.shift();
         posList.pop();
 
-        return this.pList;
+        return posList;
     }
 }
 

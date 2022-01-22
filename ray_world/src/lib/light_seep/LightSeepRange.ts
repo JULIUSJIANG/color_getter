@@ -4,7 +4,7 @@ import LightSeepRangeRay from "./LightSeepRangeRay";
 /**
  * 光束，射线 1 、2 按照与 x 轴的逆时针夹角从小到大排序
  */
-class lightSeepRange {
+class LightSeepRange {
     /**
      * 射线 0
      */
@@ -135,6 +135,32 @@ class lightSeepRange {
     }
 
     /**
+     * 反转
+     * @param reverse 
+     * @returns 
+     */
+    public Reverse (reverse = new LightSeepRange()) {
+        reverse.LoadData(
+            this.ray1.p0.pos.elements[0],
+            this.ray1.p0.pos.elements[1],
+            this.ray1.p0.power,
+
+            this.ray1.p1.pos.elements[0],
+            this.ray1.p1.pos.elements[1],
+            this.ray1.p1.power,
+
+            this.ray0.p0.pos.elements[0],
+            this.ray0.p0.pos.elements[1],
+            this.ray0.p0.power,
+
+            this.ray0.p1.pos.elements[0],
+            this.ray0.p1.pos.elements[1],
+            this.ray0.p1.power
+        );
+        return reverse;
+    }
+
+    /**
      * 获取能够贯穿 p2 的起点 p1
      * @param p1 
      * @param p0 
@@ -172,9 +198,9 @@ class lightSeepRange {
      * @param container 
      * @returns 
      */
-    public Clone (container: lightSeepRange = null) {
+    public Clone (container: LightSeepRange = null) {
         if (container == null) {
-            container = new lightSeepRange();
+            container = new LightSeepRange();
         };
         container.LoadData(
             this.ray0.p0.pos.elements[0],
@@ -198,4 +224,4 @@ namespace lightSeepRange {
 
 }
 
-export default lightSeepRange;
+export default LightSeepRange;

@@ -120,8 +120,9 @@ namespace LightSeepData {
         let p1x: number, p1y: number, p1power: number;
         // 成功贯穿
         let through = false;
+
         // 在光束范围内够着方块了
-        if (directionData.get(pList[1]) <= ray.p0p1Distance) {
+        if (directionData.get(pList[0]) < ray.p0p1Distance) {
             p1x = pList[1].elements[0];
             p1y = pList[1].elements[1];
             // 获取这个点的强度
