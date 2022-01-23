@@ -4,6 +4,7 @@ import LightSeepPart from "./LightSeepPart";
 import LightSeepRect from "./LightSeepRect";
 import CuonVector3 from "../webgl/CuonVector3";
 import LightSeepRangeRay from "./LightSeepRangeRay";
+import root from "../../scripts/Root";
 
 /**
  * 射线状态
@@ -18,7 +19,7 @@ class LightSeepDataStatus {
     /**
      * 具体的解析内容
      */
-    analyse: ((range: LightSeepRange, rect: LightSeepRect, vertextList: LightSeepPart[], genSeepRange: LightSeepRange[], ray0Seep: LightSeepData, ray1Seep: LightSeepData) => void)[];
+    private analyse: ((range: LightSeepRange, rect: LightSeepRect, vertextList: LightSeepPart[], genSeepRange: LightSeepRange[], ray0Seep: LightSeepData, ray1Seep: LightSeepData) => void)[];
 
     public constructor (
         id: number,
@@ -29,6 +30,42 @@ class LightSeepDataStatus {
         this.analyse = analyse;
         // 记录起来
         LightSeepDataStatus.instMap.set(id, this);
+    }
+    
+    /**
+     * 进行解析
+     * @param range 
+     * @param rect 
+     * @param vertextList 
+     * @param genSeepRange 
+     * @param ray0Seep 
+     * @param ray1Seep 
+     */
+    public static Analyse (
+        range: LightSeepRange, 
+        rect: LightSeepRect, 
+        vertextList: LightSeepPart[], 
+        genSeepRange: LightSeepRange[], 
+        ray0Seep: LightSeepData, 
+        ray1Seep: LightSeepData
+    ) 
+    {
+        if (ray0Seep.status.id < ray1Seep.status.id) {
+            range = range.Reverse();
+            [ray0Seep, ray1Seep] = [ray1Seep, ray0Seep];
+        };
+        if (root.store.getState().logSeepData) {
+            console.error(`ray0Seep.status.id[${ray0Seep.status.id}]`, ray0Seep);
+            console.error(`ray1Seep.status.id[${ray1Seep.status.id}]`, ray1Seep);
+        };
+        ray0Seep.status.analyse[ray1Seep.status.id](
+            range,
+            rect,
+            vertextList,
+            genSeepRange,
+            ray0Seep,
+            ray1Seep
+        );
     }
 }
 
@@ -53,28 +90,6 @@ namespace LightSeepDataStatus {
                 part1.vertextList[2].LoadDataByRayPoint(range.ray1.p1);
                 part1.vertextList[2].LoadDataByRayPoint(range.ray1.p0);
                 vertextList.push(part1);
-            },
-            // 受限于方块之中
-            (range: LightSeepRange, rect: LightSeepRect, vertextList: LightSeepPart[], genSeepRange: LightSeepRange[], ray0Seep: LightSeepData, ray1Seep: LightSeepData) => {
-                return block.analyse[0](
-                    range.Reverse(),
-                    rect,
-                    vertextList,
-                    genSeepRange,
-                    ray1Seep,
-                    ray0Seep
-                );
-            },
-            // 成功穿透
-            (range: LightSeepRange, rect: LightSeepRect, vertextList: LightSeepPart[], genSeepRange: LightSeepRange[], ray0Seep: LightSeepData, ray1Seep: LightSeepData) => {
-                return through.analyse[0](
-                    range.Reverse(),
-                    rect,
-                    vertextList,
-                    genSeepRange,
-                    ray1Seep,
-                    ray0Seep
-                );
             }
         ]
     );
@@ -139,26 +154,6 @@ namespace LightSeepDataStatus {
             },
             // 受限于方块之中
             (range: LightSeepRange, rect: LightSeepRect, vertextList: LightSeepPart[], genSeepRange: LightSeepRange[], ray0Seep: LightSeepData, ray1Seep: LightSeepData) => {
-                return through.analyse[1](
-                    range.Reverse(),
-                    rect,
-                    vertextList,
-                    genSeepRange,
-                    ray1Seep,
-                    ray0Seep
-                );
-            },
-            // 成功穿透
-            (range: LightSeepRange, rect: LightSeepRect, vertextList: LightSeepPart[], genSeepRange: LightSeepRange[], ray0Seep: LightSeepData, ray1Seep: LightSeepData) => {
-                let rate = ray0Seep.pExit.rayPoint.power / (ray0Seep.pExit.rayPoint.power - ray1Seep.pExit.rayPoint.power);
-                let splitedP1X = (ray1Seep.pExit.rayPoint.pos.elements[0] - ray0Seep.pExit.rayPoint.pos.elements[0]) * rate + ray0Seep.pExit.rayPoint.pos.elements[0];
-                let splitedP1Y = (ray1Seep.pExit.rayPoint.pos.elements[1] - ray0Seep.pExit.rayPoint.pos.elements[1]) * rate + ray0Seep.pExit.rayPoint.pos.elements[1];
-                let splitedP1Power = 0;
-
-                let splitedP0X = (ray1Seep.cacheP0.rayPoint.pos.elements[0] - ray0Seep.cacheP0.rayPoint.pos.elements[0]) * rate + ray0Seep.cacheP0.rayPoint.pos.elements[0];
-                let splitedP0Y = (ray1Seep.cacheP0.rayPoint.pos.elements[1] - ray0Seep.cacheP0.rayPoint.pos.elements[1]) * rate + ray0Seep.cacheP0.rayPoint.pos.elements[1];
-                let splitedP0Power = (ray1Seep.cacheP0.rayPoint.power - ray0Seep.cacheP0.rayPoint.power) * rate + ray0Seep.cacheP0.rayPoint.power;
-
                 let part1 = new LightSeepPart();
                 part1.vertextList[0].LoadDataByRayPoint(range.ray0.p0);
                 part1.vertextList[1].LoadDataByRayPoint(ray0Seep.cacheP0.rayPoint);
@@ -169,43 +164,9 @@ namespace LightSeepDataStatus {
                 let part2 = new LightSeepPart();
                 part2.vertextList[0].Set(part1.vertextList[1]);
                 part2.vertextList[1].LoadDataByRayPoint(ray0Seep.cacheP1.rayPoint);
-                part2.vertextList[2].LoadData(
-                    splitedP1X,
-                    splitedP1Y,
-                    splitedP1Power
-                );
-                part2.vertextList[3].LoadData(
-                    splitedP0X,
-                    splitedP0Y,
-                    splitedP0Power
-                );
+                part2.vertextList[2].LoadDataByRayPoint(ray1Seep.cacheP1.rayPoint);
+                part2.vertextList[3].Set(part1.vertextList[2]);
                 vertextList.push(part2);
-
-                let part3 = new LightSeepPart();
-                part3.vertextList[0].Set(part2.vertextList[3]);
-                part3.vertextList[1].Set(part2.vertextList[2]);
-                part3.vertextList[2].LoadDataByRayPoint(ray1Seep.cacheP1.rayPoint);
-                part3.vertextList[3].LoadDataByRayPoint(ray1Seep.cacheP0.rayPoint);
-                vertextList.push(part3);
-                let genRange = new LightSeepRange();
-                genRange.LoadData(
-                    part3.vertextList[1].pos.elements[0],
-                    part3.vertextList[1].pos.elements[1],
-                    part3.vertextList[1].power,
-
-                    part3.vertextList[1].pos.elements[0],
-                    part3.vertextList[1].pos.elements[1],
-                    part3.vertextList[1].power,
-
-                    ray1Seep.cacheP1.rayPoint.pos.elements[0],
-                    ray1Seep.cacheP1.rayPoint.pos.elements[1],
-                    ray1Seep.cacheP1.rayPoint.power,
-
-                    ray1Seep.cacheP2.rayPoint.pos.elements[0],
-                    ray1Seep.cacheP2.rayPoint.pos.elements[1],
-                    ray1Seep.cacheP2.rayPoint.power
-                );
-                genSeepRange.push(genRange);
             }
         ]
     );

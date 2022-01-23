@@ -1,4 +1,5 @@
 import CuonVector3 from "../webgl/CuonVector3";
+import LightSeepAngleArea from "./LightSeepAngleArea";
 import LightSeepRangeRay from "./LightSeepRangeRay";
 
 /**
@@ -52,6 +53,11 @@ class LightSeepRange {
      * 形状集合
      */
     public pList: CuonVector3[];
+
+    /**
+     * 角度范围集合
+     */
+    public angleAreaList: LightSeepAngleArea[] = [];
 
     public constructor () {
         this.pList = [
@@ -132,6 +138,32 @@ class LightSeepRange {
 
         this.r0r1p0vecLength = Math.sqrt(this.r0r1p0vec.elements[0] ** 2 + this.r0r1p0vec.elements[1] ** 2);
         this.r0r1p1vecLength = Math.sqrt(this.r0r1p1vec.elements[0] ** 2 + this.r0r1p1vec.elements[1] ** 2);
+
+        let minAngle = Math.min(this.ray0.p0p1Angle, this.ray1.p0p1Angle);
+        let maxAngle = Math.max(this.ray0.p0p1Angle, this.ray1.p0p1Angle);
+        // 角度差大于 180，必定 1 正 1 负
+        if (Math.PI < Math.abs(this.ray0.p0p1Angle - this.ray1.p0p1Angle)) {
+            this.angleAreaList = [
+                new LightSeepAngleArea(maxAngle, Math.PI),
+                new LightSeepAngleArea(-Math.PI, minAngle)
+            ];
+        }
+        // 否则视为正常角度
+        else {
+            this.angleAreaList = [
+                new LightSeepAngleArea(minAngle, maxAngle)
+            ];
+        };
+    }
+
+    /**
+     * 检查是否在范围以内
+     * @param angle 
+     */
+    public CheckInArea (angle: number) {
+        return this.angleAreaList.some(( area ) => {
+            return area.from <= angle && angle <= area.to;
+        });
     }
 
     /**

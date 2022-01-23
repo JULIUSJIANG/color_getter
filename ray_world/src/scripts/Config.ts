@@ -35,7 +35,7 @@ namespace config {
     /**
      * 最低透明度
      */
-    export const lightMinAlpha = 0.05;
+    export const lightMinAlpha = 0.02;
 
     /**
      * 背景颜色
@@ -174,19 +174,28 @@ namespace config {
     /**
      * r0-光照距离
      */
-    export const lightR0distance = rectSize * 0.3;
+    export const lightR0distance = rectSize * 5;
 
     /**
      * r1-光照距离
      */
-    export const lightR1distance = rectSize * 4;
+    export const lightR1distance = rectSize * 5;
 
     /**
      * 光范围
      */
     export const lightArea = [
-        [-Math.PI / 12 * 1, Math.PI / 12 * 1]
+        [- Math.PI, -Math.PI * 11 / 12]
     ];
 };
+
+// config.lightArea.length = 0;
+// const unitCount = 8;
+// const unitAngle = 2 * Math.PI / unitCount;
+// for (let i = 0; i < unitCount; i++) {
+//     let curr = i * unitAngle;
+//     let next = (i + 1) * unitAngle;
+//     config.lightArea.push([curr, next]);
+// };
 
 export default config;

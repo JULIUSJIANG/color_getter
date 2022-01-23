@@ -4,6 +4,7 @@ import LightSeepPart from "./LightSeepPart";
 import LightSeepRange from "./LightSeepRange";
 import LightSeepRect from "./LightSeepRect";
 import LightSeepPartVertext from "./LightSeepPartVertext";
+import LightSeepDataStatus from "./LightSeepDataStatus";
 
 /**
  * 渗透型光照模型
@@ -69,10 +70,11 @@ namespace lightSeep {
             rectList[rectIndex],
             splited
         );
+        console.error(`splited`, splited);
         // 渗透后的子光束
         let genSeepRange: LightSeepRange[] = [];
         // 每个子探照区域都对数据进行填充
-        splited.forEach((subRange) => {
+        splited.forEach((subRange, index) => {
             // 用每个切割后的光束填充数据
             GetVertexForRectOnce(
                 subRange,
@@ -106,8 +108,9 @@ namespace lightSeep {
         genSeepRange: LightSeepRange[]
     )
     {
+        let hasIns = CuonVector3.CheckHasIntersection(range.pList, rect.pList);
         // 该探照区域与该方块无交集
-        if (!CuonVector3.CheckHasIntersection(range.pList, rect.pList)) {
+        if (!hasIns) {
             genSeepRange.push(range.Clone());
             return;
         };
@@ -121,15 +124,14 @@ namespace lightSeep {
             range.ray1,
             rect
         );
-
         // 进行数据记录
-        ray0Seep.status.analyse[ray1Seep.status.id](
+        LightSeepDataStatus.Analyse(
             range,
             rect,
             vertextList,
             genSeepRange,
             ray0Seep,
-            ray1Seep,
+            ray1Seep
         );
     }
 

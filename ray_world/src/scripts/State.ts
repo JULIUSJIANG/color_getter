@@ -81,6 +81,11 @@ export default class State {
     drawSeepData: boolean;
 
     /**
+     * 打印渗透数据
+     */
+    logSeepData: boolean;
+
+    /**
      * 默认值
      */
     public static def: State = {
@@ -98,6 +103,7 @@ export default class State {
         drawBlock: true,
         drawLightPoint: true,
         drawLightArea: true,
-        drawSeepData: true
+        drawSeepData: true,
+        logSeepData: false
     };
 };

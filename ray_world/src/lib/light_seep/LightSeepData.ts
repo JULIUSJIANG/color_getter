@@ -62,32 +62,31 @@ namespace LightSeepData {
         // 渗透数据
         let seepData = new LightSeepData();
 
-        // 加载入射数据
+        let dotValP0 = CuonVector3.DotByNumber(
+            ray.vecp0p1Normalized.elements[0], 
+            ray.vecp0p1Normalized.elements[1],
+
+            pList[0].elements[0] - ray.p0.pos.elements[0],
+            pList[0].elements[1] - ray.p0.pos.elements[1]
+        );
         seepData.pEnter.rayPoint.LoadData(
             pList[0].elements[0],
             pList[0].elements[1],
-            ray.p0.power - CuonVector3.DotByNumber(
-                ray.vecp0p1Normalized.elements[0], 
-                ray.vecp0p1Normalized.elements[1],
-
-                pList[0].elements[0] - ray.p0.pos.elements[0],
-                pList[0].elements[1] - ray.p0.pos.elements[1]
-            )
+            ray.p0.power - dotValP0 * ray.p0p1PowerLowSpeed
         );
 
+        let dotValP1 = CuonVector3.DotByNumber(
+            ray.vecp0p1Normalized.elements[0], 
+            ray.vecp0p1Normalized.elements[1],
+
+            pList[1].elements[0] - pList[0].elements[0],
+            pList[1].elements[1] - pList[0].elements[1]
+        )
         // 加载出射数据
         seepData.pExit.rayPoint.LoadData(
             pList[1].elements[0],
             pList[1].elements[1],
-            ray.p0.power 
-            - CuonVector3.DotByNumber(
-                ray.vecp0p1Normalized.elements[0], 
-                ray.vecp0p1Normalized.elements[1],
-
-                pList[1].elements[0] - ray.p0.pos.elements[0],
-                pList[1].elements[1] - ray.p0.pos.elements[1]
-            )
-            - CuonVector3.GetLen(pList[1].elements[0] - pList[0].elements[0], pList[1].elements[1] - pList[1].elements[1]) * rect.damping
+            seepData.pEnter.rayPoint.power - dotValP1 * (ray.p0p1PowerLowSpeed + rect.damping)
         );
 
         let p0x: number, p0y: number;
@@ -132,7 +131,8 @@ namespace LightSeepData {
                 // 进行距离回退
                 p1x += p1power / (ray.p0p1PowerLowSpeed + rect.damping) * ray.vecp0p1Normalized.elements[0];
                 p1y += p1power / (ray.p0p1PowerLowSpeed + rect.damping) * ray.vecp0p1Normalized.elements[1];
-            
+                p1power = 0;
+
                 // 受限于方块以内
                 seepData.status = LightSeepDataStatus.block;
             }

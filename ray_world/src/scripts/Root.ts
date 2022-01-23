@@ -364,6 +364,19 @@ namespace root {
     );
 
     /**
+     * 设置打印渗透数据
+     */
+     export const reducerSetLogSeepData = new RootAction<boolean>(
+        (state, val) => {
+            return {
+                ...state,
+                logSeepData: val,
+                version: state.version + 1
+            };
+        }
+    );
+
+    /**
      * 事件派发器-帧变化
      */
     export const evterFrame = new Eventer();
@@ -428,7 +441,12 @@ if (storagedData == null || storagedData == `` || storagedData == `undefined`) {
 }
 // 否则采用存储值
 else {
-    initState = JSON.parse(storagedData)
+    initState = JSON.parse(storagedData);
+    for (let key in State.def) {
+        if ((initState as any)[key] == null) {
+            (initState as any)[key] = (State.def as any)[key];
+        };
+    };
 };
 // 更正一些特殊的状态
 initState.disableWebgl = false;
@@ -449,4 +467,5 @@ function step () {
 };
 window.requestAnimationFrame(step);
 window[`process`] = {} as any; 
+window["root" as any] = root as any;
 export default root;

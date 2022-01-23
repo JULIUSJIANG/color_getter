@@ -10,9 +10,12 @@ class CuonVector3 {
      */
     public elements: Float32Array;
 
-    public constructor () {
+    public constructor (x = 0, y = 0, z = 0) {
         var v = new Float32Array(3);
         this.elements = v;
+        this.elements[0] = x;
+        this.elements[1] = y;
+        this.elements[2] = z;
     }
 
     /**
@@ -82,7 +85,7 @@ class CuonVector3 {
         // 如果集合里面所有点在右向量的投影均大于等于 0，那么确实全部都在右侧
         if (posList.every((pos) => {
             let dot = CuonVector3.Dot(right, pos);
-            return 0 <= dot;
+            return -0.01 < dot;
         })) 
         {
             return true;
@@ -139,7 +142,7 @@ namespace CuonVector3 {
         p1y: number    
     ) 
     {
-        return p0x * p1x + p0y + p1y;
+        return p0x * p1x + p0y * p1y;
     }
 
     /**

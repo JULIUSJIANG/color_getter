@@ -1,5 +1,5 @@
 import React from "react";
-import { Radio, RadioChangeEvent} from 'antd';
+import { Button, Radio, RadioChangeEvent} from 'antd';
 import { connect } from "react-redux";
 import Checkbox from "antd/lib/checkbox/Checkbox";
 import {CheckboxChangeEvent} from "antd/lib/checkbox/Checkbox";
@@ -66,6 +66,24 @@ class Component extends React.Component {
                     >
                         绘制渗透数据
                     </Checkbox>
+                </div>
+
+                <div>
+                    <Checkbox 
+                        checked={root.store.getState().logSeepData} 
+                        onChange={(evt: CheckboxChangeEvent) => root.reducerSetLogSeepData.Eff(evt.target.checked)} 
+                        style={{color: `white`}}
+                    >
+                        打印渗透数据
+                    </Checkbox>
+                </div>
+
+                <div>
+                    <Button
+                        onClick={() => root.reducerSetCameraPos.Eff([0, 0])}
+                    >
+                        重置相机位置
+                    </Button>
                 </div>
             </div>
         )
