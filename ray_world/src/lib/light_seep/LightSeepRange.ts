@@ -57,6 +57,11 @@ class LightSeepRange {
         let r0Angle = Math.atan2(r0p1y - r0p0y, r0p1x - r0p0x);
         let r1Angle = Math.atan2(r1p1y - r1p0y, r1p1x - r1p0x);
 
+        // 俩个角度都能表示 x 轴负方向，但是只取小的那个
+        if (r0Angle == Math.PI) {
+            r0Angle = -Math.PI;
+        };
+
         // 位置重合的话，取另一边的角度作为自己的角度
         if (r0p1y == r0p0y && r0p1x == r0p0x) {
             r0Angle = r1Angle;

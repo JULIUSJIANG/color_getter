@@ -1,3 +1,5 @@
+import utilMath from "../lib/UtilMath";
+
 /**
  * 全局环境的配置
  */
@@ -185,17 +187,17 @@ namespace config {
      * 光范围
      */
     export const lightArea = [
-        [- Math.PI, -Math.PI * 11 / 12]
+        [- Math.PI, -Math.PI * 3 / 4]
     ];
 };
 
-// config.lightArea.length = 0;
-// const unitCount = 8;
-// const unitAngle = 2 * Math.PI / unitCount;
-// for (let i = 0; i < unitCount; i++) {
-//     let curr = i * unitAngle;
-//     let next = (i + 1) * unitAngle;
-//     config.lightArea.push([curr, next]);
-// };
+config.lightArea.length = 0;
+const unitCount = 8;
+const unitAngle = 2 * Math.PI / unitCount;
+for (let i = 0; i < unitCount; i++) {
+    let curr = i * unitAngle;
+    let next = (i + 1) * unitAngle;
+    config.lightArea.push([curr, next]);
+};
 
 export default config;
