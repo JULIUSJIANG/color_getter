@@ -1,7 +1,7 @@
 import CuonVector3 from "../webgl/CuonVector3";
 import LightSeepDataPos from "./LightSeepDataPos";
 import LightSeepDataStatus from "./LightSeepDataStatus";
-import LightSeepRangeRay from "./LightSeepRangeRay";
+import LightSeepRangePartRay from "./LightSeepRangePartRay";
 import LightSeepRect from "./LightSeepRect";
 
 /**
@@ -41,7 +41,7 @@ namespace LightSeepData {
      * @param rect 
      */
     export function Create (
-        ray: LightSeepRangeRay, 
+        ray: LightSeepRangePartRay, 
         rect: LightSeepRect    
     ) 
     {

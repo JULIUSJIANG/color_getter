@@ -3,7 +3,7 @@ import CuonVector3 from "../webgl/CuonVector3";
 /**
  * 光点
  */
-class LightSeepRangeRayPoint {
+class LightSeepRangePartRayPoint {
     /**
      * 位置
      */
@@ -35,4 +35,4 @@ namespace LightSeepRangeRayPoint {
 
 }
 
-export default LightSeepRangeRayPoint;
+export default LightSeepRangePartRayPoint;

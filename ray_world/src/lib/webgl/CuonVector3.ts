@@ -52,7 +52,7 @@ class CuonVector3 {
      * 获取右向量
      * @returns 
      */
-    public GetRight (v: CuonVector3) {
+    public GetRight (v: CuonVector3 = new CuonVector3()) {
         return rightMat4.multiplyVector3(
             this, 
             v
@@ -268,6 +268,26 @@ namespace CuonVector3 {
     export function GetLenPow2 (x: number, y: number) {
         return x ** 2 + y ** 2;
     }
+
+    /**
+     * 向量-左
+     */
+    export const left = new CuonVector3(-1, 0);
+
+    /**
+     * 向量-右
+     */
+    export const right = new CuonVector3(1, 0);
+
+    /**
+     * 向量-下
+     */
+    export const bottom = new CuonVector3(0, -1);
+
+    /**
+     * 向量-上
+     */
+    export const top = new CuonVector3(0, 1);
 }
 
 // 用于向右偏转的矩阵

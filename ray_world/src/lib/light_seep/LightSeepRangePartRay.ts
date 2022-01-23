@@ -1,18 +1,18 @@
 import CuonVector3 from "../webgl/CuonVector3";
-import LightSeepRangeRayPoint from "./LightSeepRangeRayPoint";
+import LightSeepRangePartRayPoint from "./LightSeepRangePartRayPoint";
 
 /**
  * 射线，点 1 为射线起始点，点 2 为射线终点
  */
-class LightSeepRangeRay {
+class LightSeepRangePartRay {
     /**
      * 点 0
      */
-    public p0 = new LightSeepRangeRayPoint();
+    public p0 = new LightSeepRangePartRayPoint();
     /**
      * 点 1
      */
-    public p1 = new LightSeepRangeRayPoint();
+    public p1 = new LightSeepRangePartRayPoint();
 
     /**
      * 向量 p0 p1
@@ -99,4 +99,4 @@ namespace LightSeepRangeRay {
 
 }
 
-export default LightSeepRangeRay;
+export default LightSeepRangePartRay;

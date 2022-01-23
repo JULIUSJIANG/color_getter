@@ -1,10 +1,10 @@
 import CuonVector3 from "../webgl/CuonVector3";
 import LightSeepData from "./LightSeepData";
 import LightSeepPart from "./LightSeepPart";
-import LightSeepRange from "./LightSeepRange";
+import LightSeepRangePart from "./LightSeepRangePart";
 import LightSeepRect from "./LightSeepRect";
-import LightSeepPartVertext from "./LightSeepPartVertext";
 import LightSeepDataStatus from "./LightSeepDataStatus";
+import LightSeepRange from "./LightSeepRange";
 
 /**
  * 渗透型光照模型
@@ -27,12 +27,16 @@ namespace lightSeep {
             range.mainDirection,
             rectList
         );
-        GetVertexForRectList(
-            range,
-            rectList,
-            0,
-            vertextList
-        );
+        // 提取每个部分的渗透数据
+        for (let partIndex = 0; partIndex < range.partList.length; partIndex++) {
+            let part = range.partList[partIndex];
+            GetVertexForRectList(
+                part,
+                rectList,
+                0,
+                vertextList
+            );
+        };
     }
 
     /**
@@ -44,7 +48,7 @@ namespace lightSeep {
      * @returns 
      */
     function GetVertexForRectList (
-        range: LightSeepRange,
+        range: LightSeepRangePart,
         rectList: LightSeepRect[],
         rectIndex: number,
         vertextList: LightSeepPart[],
@@ -63,16 +67,15 @@ namespace lightSeep {
         // 当前矩形
         let currRect = rectList[rectIndex];
         // 切割后的子探照区域
-        let splited: LightSeepRange[] = [];
+        let splited: LightSeepRangePart[] = [];
         // 先用方块切割光束
         SplitLightRange(
             range,
             rectList[rectIndex],
             splited
         );
-        console.error(`splited`, splited);
         // 渗透后的子光束
-        let genSeepRange: LightSeepRange[] = [];
+        let genSeepRange: LightSeepRangePart[] = [];
         // 每个子探照区域都对数据进行填充
         splited.forEach((subRange, index) => {
             // 用每个切割后的光束填充数据
@@ -102,10 +105,10 @@ namespace lightSeep {
      * @param genSeepRange 
      */
     function GetVertexForRectOnce (
-        range: LightSeepRange,
+        range: LightSeepRangePart,
         rect: LightSeepRect,
         vertextList: LightSeepPart[],
-        genSeepRange: LightSeepRange[]
+        genSeepRange: LightSeepRangePart[]
     )
     {
         let hasIns = CuonVector3.CheckHasIntersection(range.pList, rect.pList);
@@ -141,7 +144,7 @@ namespace lightSeep {
      * @param rect 
      * @param itemList 
      */
-    function SplitLightRange (range: LightSeepRange, rect: LightSeepRect, itemList: LightSeepRange[]) {
+    function SplitLightRange (range: LightSeepRangePart, rect: LightSeepRect, itemList: LightSeepRangePart[]) {
         if (range.r0r1p0vecLength == 0) {
             SplitLightRangeByAngle(
                 range,
@@ -237,7 +240,7 @@ namespace lightSeep {
      * @param rect 
      * @param itemList 
      */
-    function SplitLightRangeByAngle (range: LightSeepRange, rect: LightSeepRect, itemList: LightSeepRange[]) {
+    function SplitLightRangeByAngle (range: LightSeepRangePart, rect: LightSeepRect, itemList: LightSeepRangePart[]) {
         let weightList: WeightRec[] = [];
         for (let pIndex = 0; pIndex < rect.pList.length; pIndex++) {
             let p1 = rect.pList[pIndex];
@@ -276,7 +279,7 @@ namespace lightSeep {
      * @param rect 
      * @param itemList 
      */
-    function SplitLightRangeByP1 (range: LightSeepRange, rect: LightSeepRect, itemList: LightSeepRange[]) {
+    function SplitLightRangeByP1 (range: LightSeepRangePart, rect: LightSeepRect, itemList: LightSeepRangePart[]) {
         let weightList: WeightRec[] = [];
         let maxDistance = range.r0r1p0vecLength;
         for (let pIndex = 0; pIndex < rect.pList.length; pIndex++) {
@@ -317,7 +320,7 @@ namespace lightSeep {
      * @param weight 
      */
     function AddWeightRec (
-        range: LightSeepRange,
+        range: LightSeepRangePart,
         p1: CuonVector3,
         p2: CuonVector3,
         angleRecList: WeightRec[],
@@ -355,7 +358,7 @@ namespace lightSeep {
      * @param range 
      * @param weightList 
      */
-    function CreateLightRange (range: LightSeepRange, weightList: WeightRec[], itemList: LightSeepRange[]) {
+    function CreateLightRange (range: LightSeepRangePart, weightList: WeightRec[], itemList: LightSeepRangePart[]) {
         weightList.sort((a, b) => {
             return a.weight - b.weight;
         });
@@ -384,7 +387,7 @@ namespace lightSeep {
         for (let rayRecIndex = 1; rayRecIndex < rayRecList.length; rayRecIndex++) {
             let pre = rayRecList[rayRecIndex - 1];
             let curr = rayRecList[rayRecIndex];
-            let genRange = new LightSeepRange();
+            let genRange = new LightSeepRangePart();
             genRange.LoadData(
                 pre.p1x,
                 pre.p1y,

@@ -1,5 +1,5 @@
 import CuonVector3 from "../webgl/CuonVector3";
-import LightSeepRangeRayPoint from "./LightSeepRangeRayPoint";
+import LightSeepRangePartRayPoint from "./LightSeepRangePartRayPoint";
 
 /**
  * 顶点数据
@@ -36,7 +36,7 @@ class LightSeepPartVertext {
      * @param rayPoint 
      */
     public LoadDataByRayPoint (
-        rayPoint: LightSeepRangeRayPoint
+        rayPoint: LightSeepRangePartRayPoint
     )
     {
         this.LoadData(

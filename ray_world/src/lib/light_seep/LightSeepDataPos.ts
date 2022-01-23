@@ -1,5 +1,5 @@
 import CuonVector3 from "../webgl/CuonVector3";
-import LightSeepRangeRayPoint from "./LightSeepRangeRayPoint";
+import LightSeepRangePartRayPoint from "./LightSeepRangePartRayPoint";
 
 /**
  * 关键的光渗透点
@@ -8,7 +8,7 @@ class LightSeepDataPos {
     /**
      * 交点信息
      */
-    public rayPoint: LightSeepRangeRayPoint = new LightSeepRangeRayPoint();
+    public rayPoint: LightSeepRangePartRayPoint = new LightSeepRangePartRayPoint();
 }
 
 namespace LightSeepDataPos {
