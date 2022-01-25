@@ -162,6 +162,7 @@ class LightSeepRangePart {
             r1pos.elements[0] - r0pos.elements[0],
             r1pos.elements[1] - r0pos.elements[1]
         );
+        let r0r1vecLength = CuonVector3.GetLen(r0r1vec.elements[0], r0r1vec.elements[1]);
 
         let r0p1vec = new CuonVector3(
             p1.elements[0] - r0pos.elements[0],
@@ -174,7 +175,7 @@ class LightSeepRangePart {
 
             r0r1vec.elements[0],
             r0r1vec.elements[1]
-        ) / this.r0r1p0vecLength;
+        ) / r0r1vecLength;
 
         p0.elements[0] = this.ray0.p0.pos.elements[0] + len * this.r0r1p0vec.elements[0];
         p0.elements[1] = this.ray0.p0.pos.elements[1] + len * this.r0r1p0vec.elements[1];

@@ -68,12 +68,14 @@ namespace lightSeep {
         let currRect = rectList[rectIndex];
         // 切割后的子探照区域
         let splited: LightSeepRangePart[] = [];
+
         // 先用方块切割光束
         SplitLightRange(
             range,
             rectList[rectIndex],
             splited
         );
+
         // 渗透后的子光束
         let genSeepRange: LightSeepRangePart[] = [];
         // 每个子探照区域都对数据进行填充

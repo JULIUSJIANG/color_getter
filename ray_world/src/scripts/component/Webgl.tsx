@@ -68,45 +68,6 @@ class Component extends React.Component {
             this.DrawFrameBottom.bind(this),
             this.DrawFrameTop.bind(this)
         );
-
-        let light = new LightSeepRangePart();
-        light.LoadData(
-            300,
-            50,
-            150,
-
-            450,
-            50,
-            0,
-
-            300,
-            72,
-            148,
-
-            448,
-            84,
-            0
-        );
-        let rect = new LightSeepRect();
-        rect.LoadData(
-            1,
-
-            450,
-            50,
-
-            0,
-
-            100,
-            100
-        );
-        // 切割后的子探照区域
-        let splited: LightSeepRangePart[] = [];
-        // 先用方块切割光束
-        lightSeep.SplitLightRange(
-            light,
-            rect,
-            splited
-        );
     }
 
     /**
