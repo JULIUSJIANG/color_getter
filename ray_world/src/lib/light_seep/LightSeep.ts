@@ -144,7 +144,7 @@ namespace lightSeep {
      * @param rect 
      * @param itemList 
      */
-    function SplitLightRange (range: LightSeepRangePart, rect: LightSeepRect, itemList: LightSeepRangePart[]) {
+    export function SplitLightRange (range: LightSeepRangePart, rect: LightSeepRect, itemList: LightSeepRangePart[]) {
         if (range.r0r1p0vecLength == 0) {
             SplitLightRangeByAngle(
                 range,
@@ -281,15 +281,15 @@ namespace lightSeep {
      */
     function SplitLightRangeByP1 (range: LightSeepRangePart, rect: LightSeepRect, itemList: LightSeepRangePart[]) {
         let weightList: WeightRec[] = [];
-        let maxDistance = range.r0r1p0vecLength;
+        let maxDistance = range.r0r1p0vecLength ** 2;
         for (let pIndex = 0; pIndex < rect.pList.length; pIndex++) {
-            let p2 = rect.pList[pIndex];
-            let p1 = new CuonVector3();
+            let p1 = rect.pList[pIndex];
+            let p0 = new CuonVector3();
             range.GetPenetratePos(
-                p2,
-                p1
+                p1,
+                p0
             );
-            let distance = (p1.elements[0] - range.ray0.p0.pos.elements[0]) * range.r0r1p0vec.elements[0] + (p1.elements[1] - range.ray0.p0.pos.elements[1]) * range.r0r1p0vec.elements[1];
+            let distance = (p0.elements[0] - range.ray0.p0.pos.elements[0]) * range.r0r1p0vec.elements[0] + (p0.elements[1] - range.ray0.p0.pos.elements[1]) * range.r0r1p0vec.elements[1];
             if (distance <= 0) {
                 continue;
             };
@@ -298,8 +298,8 @@ namespace lightSeep {
             };
             AddWeightRec(
                 range,
+                p0,
                 p1,
-                p2,
                 weightList,
                 distance
             );
@@ -421,11 +421,11 @@ namespace lightSeep {
         rectList.sort(( rectA, rectB ) => {
             let ableA = rectA.FindSplit(rectB, _vec3);
             if (ableA) {
-                return CuonVector3.Dot(_vec3, _right);
+                return -CuonVector3.Dot(_vec3, _right);
             };
             let ableB = rectB.FindSplit(rectA, _vec3);
             if (ableB) {
-                return -CuonVector3.Dot(_vec3, _right);
+                return CuonVector3.Dot(_vec3, _right);
             };
             return CuonVector3.Dot(vec, rectA.pos) - CuonVector3.Dot(vec, rectB.pos);
         });

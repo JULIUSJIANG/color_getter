@@ -1,4 +1,5 @@
 import utilMath from "../lib/UtilMath";
+import CuonVector3 from "../lib/webgl/CuonVector3";
 
 /**
  * 全局环境的配置
@@ -37,7 +38,7 @@ namespace config {
     /**
      * 最低透明度
      */
-    export const lightMinAlpha = 0.02;
+    export const lightMinAlpha = 0.1;
 
     /**
      * 背景颜色
@@ -187,14 +188,27 @@ namespace config {
      * 光范围
      */
     export const lightArea = [
-        [- Math.PI, -Math.PI * 3 / 4]
+        [0, Math.PI / 36]
     ];
+
+    /**
+     * r0p0 偏移
+     */
+    export const r0p0offset = new CuonVector3(0, 0);
+
+    /**
+     * r1p0 偏移
+     */
+    export const r1p0offset = new CuonVector3(0, 0);
 };
 
 config.lightArea.length = 0;
-const unitCount = 8;
+const unitCount = 34;
 const unitAngle = 2 * Math.PI / unitCount;
 for (let i = 0; i < unitCount; i++) {
+    if (i != 0) {
+        continue;
+    };
     let curr = i * unitAngle;
     let next = (i + 1) * unitAngle;
     config.lightArea.push([curr, next]);

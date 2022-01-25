@@ -14,6 +14,7 @@ import LightSeepRect from "../../lib/light_seep/LightSeepRect";
 import LightSeepRange from "../../lib/light_seep/LightSeepRange";
 import lightSeep from "../../lib/light_seep/LightSeep";
 import LightSeepPart from "../../lib/light_seep/LightSeepPart";
+import LightSeepRangePart from "../../lib/light_seep/LightSeepRangePart";
 
 /**
  * 绘制-主内容
@@ -66,6 +67,45 @@ class Component extends React.Component {
             this.DrawFrameRight.bind(this),
             this.DrawFrameBottom.bind(this),
             this.DrawFrameTop.bind(this)
+        );
+
+        let light = new LightSeepRangePart();
+        light.LoadData(
+            300,
+            50,
+            150,
+
+            450,
+            50,
+            0,
+
+            300,
+            72,
+            148,
+
+            448,
+            84,
+            0
+        );
+        let rect = new LightSeepRect();
+        rect.LoadData(
+            1,
+
+            450,
+            50,
+
+            0,
+
+            100,
+            100
+        );
+        // 切割后的子探照区域
+        let splited: LightSeepRangePart[] = [];
+        // 先用方块切割光束
+        lightSeep.SplitLightRange(
+            light,
+            rect,
+            splited
         );
     }
 
@@ -132,7 +172,7 @@ class Component extends React.Component {
             -root.store.getState().cameraY,
             0
         );
-        
+
         if (root.store.getState().drawBgGrid) {
             perfAnalyse.Rec(`DrawBgGrid`);
             this.DrawBgGrid();
@@ -428,20 +468,20 @@ class Component extends React.Component {
                     let r1angle = area[1];
                     let seepRange = new LightSeepRange();
                     seepRange.LoadData(
-                        posX,
-                        posY,
+                        posX + config.r0p0offset.elements[0],
+                        posY + config.r0p0offset.elements[1],
                         config.lightR0distance,
 
-                        config.lightR0distance * Math.cos(r0angle) + posX,
-                        config.lightR0distance * Math.sin(r0angle) + posY,
+                        config.lightR0distance * Math.cos(r0angle) + posX + config.r0p0offset.elements[0],
+                        config.lightR0distance * Math.sin(r0angle) + posY + config.r0p0offset.elements[1],
                         0,
 
-                        posX,
-                        posY,
+                        posX + config.r1p0offset.elements[0],
+                        posY + config.r1p0offset.elements[1],
                         config.lightR1distance,
 
-                        config.lightR1distance * Math.cos(r1angle) + posX,
-                        config.lightR1distance * Math.sin(r1angle) + posY,
+                        config.lightR1distance * Math.cos(r1angle) + posX + config.r1p0offset.elements[0],
+                        config.lightR1distance * Math.sin(r1angle) + posY + config.r1p0offset.elements[1],
                         0
                     );
 
@@ -503,20 +543,20 @@ class Component extends React.Component {
 
                     let seepRange = new LightSeepRange();
                     seepRange.LoadData(
-                        posX,
-                        posY,
+                        posX + config.r0p0offset.elements[0],
+                        posY + config.r0p0offset.elements[1],
                         config.lightR0distance,
 
-                        config.lightR0distance * Math.cos(r0angle) + posX,
-                        config.lightR0distance * Math.sin(r0angle) + posY,
+                        config.lightR0distance * Math.cos(r0angle) + posX + config.r0p0offset.elements[0],
+                        config.lightR0distance * Math.sin(r0angle) + posY + config.r0p0offset.elements[1],
                         0,
 
-                        posX,
-                        posY,
+                        posX + config.r1p0offset.elements[0],
+                        posY + config.r1p0offset.elements[1],
                         config.lightR1distance,
 
-                        config.lightR1distance * Math.cos(r1angle) + posX,
-                        config.lightR1distance * Math.sin(r1angle) + posY,
+                        config.lightR1distance * Math.cos(r1angle) + posX + config.r1p0offset.elements[0],
+                        config.lightR1distance * Math.sin(r1angle) + posY + config.r1p0offset.elements[1],
                         0
                     );
 
@@ -1083,8 +1123,8 @@ class Component extends React.Component {
                         this.gl.enable(WebGLRenderingContext.BLEND);
                         this.gl.blendFunc(WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA);
                     }}
-                    width={window.innerWidth}
-                    height={window.innerHeight}
+                    width={window.innerWidth * 2}
+                    height={window.innerHeight * 2}
                     style={{
                         width: "100%",
                         height: "100%",

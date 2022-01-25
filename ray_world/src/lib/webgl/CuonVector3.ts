@@ -212,7 +212,7 @@ namespace CuonVector3 {
 
     let _mat = new CuonMatrix4();
 
-    let _vec3 = new CuonVector4();
+    let _vec4 = new CuonVector4();
 
     /**
      * 获取直线 1 与直线 2 的交点
@@ -240,13 +240,13 @@ namespace CuonVector3 {
         _mat.elements[2] = 0;       _mat.elements[6] = 0;       _mat.elements[10] = 1;  _mat.elements[14] = 0;
         _mat.elements[3] = 0;       _mat.elements[7] = 0;       _mat.elements[11] = 0;  _mat.elements[15] = 1;
 
-        _vec3.elements[0] = k1ry * b1y + k1rx * b1x;
-        _vec3.elements[1] = k2ry * b2y + k2rx * b2x;
-        _vec3.elements[2] = 1;
-        _vec3.elements[3] = 1;
+        _vec4.elements[0] = k1ry * b1y + k1rx * b1x;
+        _vec4.elements[1] = k2ry * b2y + k2rx * b2x;
+        _vec4.elements[2] = 1;
+        _vec4.elements[3] = 1;
 
         _mat.invert();
-        _mat.multiplyVector4(_vec3, p);
+        _mat.multiplyVector4(_vec4, p);
 
         return p;
     }
@@ -258,6 +258,29 @@ namespace CuonVector3 {
      */
     export function GetLen (x: number, y: number) {
         return Math.sqrt(GetLenPow2(x, y));
+    }
+
+    const _vec3 = new CuonVector3();
+
+    /**
+     * 获取方向为导向的长度
+     * @param vecX 
+     * @param vecY 
+     * @param dirX 
+     * @param dirY 
+     */
+    export function GetDirectionLen (
+        vecX: number,
+        vecY: number,
+        dirX: number,
+        dirY: number
+    ) 
+    {
+        _vec3.elements[0] = dirX;
+        _vec3.elements[1] = dirY;
+        _vec3.elements[2] = 0;
+        _vec3.Normalize();
+        return _vec3.elements[0] * vecX + _vec3.elements[1] * vecY;
     }
 
     /**
