@@ -44,9 +44,9 @@ namespace config {
      * 背景颜色
      */
     export const bgColor = [
-        0.16862745098039217,
-        0.16862745098039217,
-        0.16862745098039217,
+        0,
+        0,
+        0,
         1
     ];
 
@@ -54,9 +54,9 @@ namespace config {
      * 格子颜色
      */
     export const gridColor = [
-        bgColor[0] * 2,
-        bgColor[1] * 2,
-        bgColor[2] * 2,
+        0.2,
+        0.2,
+        0.2,
         1
     ];
 
@@ -104,9 +104,9 @@ namespace config {
      * 方块的边缘颜色
      */
     export const blockPaddingColor = [
-        0,
-        0,
-        0,
+        0.1,
+        0.1,
+        0.1,
         1
     ];
 
@@ -114,57 +114,48 @@ namespace config {
      * 方块主体颜色
      */
     export const blockBgColor = [
-        0.2,
-        0.2,
-        0.2,
+        0.1,
+        0.1,
+        0.1,
         1
     ];
 
     /**
      * 光源主体颜色
      */
-    export const lightBgColor = [
-        1,
-        1,
-        1,
+    export const lightBlockBgColor = [
+        0,
+        0,
+        0,
         1
     ];
 
     /**
      * 光源边缘颜色
      */
-    export const lightPaddingColor = [
-        0,
-        0,
+    export const lightBlockPaddingColor = [
+        1,
+        1,
+        1,
+        1
+    ];
+
+    /**
+     * 光的插值区域颜色，考虑渗透
+     */
+    export const lightPartColor = [
+        1,
+        1,
         0,
         1
     ];
 
     /**
-     * 光源区域颜色
+     * 光的范围颜色，不考虑碰撞
      */
     export const lightAreaColor = [
         1,
-        1,
-        1,
-        0.3
-    ];
-
-    /**
-     * 光的射线颜色
-     */
-    export const lightRayColor = [
-        1,
         0,
-        0,
-        0.2
-    ];
-
-    /**
-     * 光的射线颜色
-     */
-    export const lightSplitedColor = [
-        1,
         1,
         1
     ];
@@ -203,12 +194,9 @@ namespace config {
 };
 
 config.lightArea.length = 0;
-const unitCount = 34;
+const unitCount = 8;
 const unitAngle = 2 * Math.PI / unitCount;
 for (let i = 0; i < unitCount; i++) {
-    if (i != 0) {
-        continue;
-    };
     let curr = i * unitAngle;
     let next = (i + 1) * unitAngle;
     config.lightArea.push([curr, next]);

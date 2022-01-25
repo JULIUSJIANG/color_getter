@@ -396,7 +396,7 @@ class Component extends React.Component {
                     xRec.gridX,
                     yRec.gridY,
                     0,
-                    config.lightPaddingColor,
+                    config.lightBlockPaddingColor,
                     (config.rectSize - config.lightSize) / 2
                 );
 
@@ -404,7 +404,7 @@ class Component extends React.Component {
                     xRec.gridX,
                     yRec.gridY,
                     0,
-                    config.lightBgColor,
+                    config.lightBlockBgColor,
                     (config.rectSize - config.lightSize) / 2 + config.lightPadding
                 );
             };
@@ -449,10 +449,10 @@ class Component extends React.Component {
                     // 绘制区域
                     this.DrawByElementData(
                         [
-                            seepRange.pList[0].elements[0], seepRange.pList[0].elements[1], 0, ...config.lightRayColor,
-                            seepRange.pList[1].elements[0], seepRange.pList[1].elements[1], 0, ...config.lightRayColor,
-                            seepRange.pList[2].elements[0], seepRange.pList[2].elements[1], 0, ...config.lightRayColor,
-                            seepRange.pList[3].elements[0], seepRange.pList[3].elements[1], 0, ...config.lightRayColor
+                            seepRange.pList[0].elements[0], seepRange.pList[0].elements[1], 0, ...config.lightAreaColor,
+                            seepRange.pList[1].elements[0], seepRange.pList[1].elements[1], 0, ...config.lightAreaColor,
+                            seepRange.pList[2].elements[0], seepRange.pList[2].elements[1], 0, ...config.lightAreaColor,
+                            seepRange.pList[3].elements[0], seepRange.pList[3].elements[1], 0, ...config.lightAreaColor
                         ],
                         [
                             0, 1,
@@ -539,8 +539,8 @@ class Component extends React.Component {
                     vertexList.forEach(( val, index ) => {
                         let dataOffset = 4 * index;
                         val.vertextList.forEach(( vertex ) => {
-                            let pointData = [vertex.pos.elements[0], vertex.pos.elements[1], 0, ...config.lightAreaColor];
-                            pointData[pointData.length - 1] = Math.max(config.lightMinAlpha, vertex.power / 1000);
+                            let pointData = [vertex.pos.elements[0], vertex.pos.elements[1], 0, ...config.lightPartColor];
+                            pointData[pointData.length - 1] = Math.max(config.lightMinAlpha, vertex.power / ((config.lightR0distance +config.lightR1distance) / 2));
                             drawData.push(...pointData);
                         });
                         vexData.push(
