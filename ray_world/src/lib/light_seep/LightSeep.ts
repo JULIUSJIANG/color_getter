@@ -1,6 +1,6 @@
 import CuonVector3 from "../webgl/CuonVector3";
 import LightSeepData from "./LightSeepData";
-import LightSeepPart from "./LightSeepPart";
+import LightSeepDraw from "./LightSeepDraw";
 import LightSeepRangePart from "./LightSeepRangePart";
 import LightSeepRect from "./LightSeepRect";
 import LightSeepDataStatus from "./LightSeepDataStatus";
@@ -19,7 +19,7 @@ namespace lightSeep {
     export function GetVertext (
         range: LightSeepRange,
         rectList: LightSeepRect[],
-        vertextList: LightSeepPart[]
+        vertextList: LightSeepDraw[]
     )
     {
         // 先进行排序，越近的越早发生影响
@@ -51,12 +51,12 @@ namespace lightSeep {
         range: LightSeepRangePart,
         rectList: LightSeepRect[],
         rectIndex: number,
-        vertextList: LightSeepPart[],
+        vertextList: LightSeepDraw[],
     )
     {
         // 没有更多的方块产生影响了
         if (rectList.length <= rectIndex) {
-            let part = new LightSeepPart();
+            let part = new LightSeepDraw();
             part.vertextList[0].LoadDataByRayPoint(range.ray0.p0);
             part.vertextList[1].LoadDataByRayPoint(range.ray0.p1);
             part.vertextList[2].LoadDataByRayPoint(range.ray1.p1);
@@ -109,7 +109,7 @@ namespace lightSeep {
     function GetVertexForRectOnce (
         range: LightSeepRangePart,
         rect: LightSeepRect,
-        vertextList: LightSeepPart[],
+        vertextList: LightSeepDraw[],
         genSeepRange: LightSeepRangePart[]
     )
     {
@@ -421,14 +421,6 @@ namespace lightSeep {
     export function SortByDistance (vec: CuonVector3, rectList: LightSeepRect[]) {
         vec.GetRight(_right);
         rectList.sort(( rectA, rectB ) => {
-            let ableA = rectA.FindSplit(rectB, _vec3);
-            if (ableA) {
-                return -CuonVector3.Dot(_vec3, _right);
-            };
-            let ableB = rectB.FindSplit(rectA, _vec3);
-            if (ableB) {
-                return CuonVector3.Dot(_vec3, _right);
-            };
             return CuonVector3.Dot(vec, rectA.pos) - CuonVector3.Dot(vec, rectB.pos);
         });
     }

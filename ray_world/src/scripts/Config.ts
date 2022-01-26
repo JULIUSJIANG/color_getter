@@ -179,7 +179,7 @@ namespace config {
      * 光范围
      */
     export const lightArea = [
-        [0, Math.PI / 36]
+        [0, 0]
     ];
 
     /**
@@ -197,6 +197,9 @@ config.lightArea.length = 0;
 const unitCount = 8;
 const unitAngle = 2 * Math.PI / unitCount;
 for (let i = 0; i < unitCount; i++) {
+    if (i != 0 ) {
+        continue;
+    };
     let curr = i * unitAngle;
     let next = (i + 1) * unitAngle;
     config.lightArea.push([curr, next]);

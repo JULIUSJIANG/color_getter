@@ -13,7 +13,7 @@ import ObjectPool from "../../lib/object_pool/ObjectPool";
 import LightSeepRect from "../../lib/light_seep/LightSeepRect";
 import LightSeepRange from "../../lib/light_seep/LightSeepRange";
 import lightSeep from "../../lib/light_seep/LightSeep";
-import LightSeepPart from "../../lib/light_seep/LightSeepPart";
+import LightSeepDraw from "../../lib/light_seep/LightSeepDraw";
 import LightSeepRangePart from "../../lib/light_seep/LightSeepRangePart";
 
 /**
@@ -526,7 +526,7 @@ class Component extends React.Component {
                         return CuonVector3.CheckHasIntersection(rect.pList, seepRange.pList);
                     });
 
-                    let vertexList: LightSeepPart[] = [];
+                    let vertexList: LightSeepDraw[] = [];
                     lightSeep.GetVertext(
                         seepRange,
                         hittedRect,

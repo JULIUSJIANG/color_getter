@@ -4,7 +4,7 @@ import LightSeepRangePartRayPoint from "./LightSeepRangePartRayPoint";
 /**
  * 顶点数据
  */
-class LightSeepPartVertext {
+class LightSeepDrawVertext {
     /**
      * 位置
      */
@@ -50,7 +50,7 @@ class LightSeepPartVertext {
      * 设置实质的内容
      * @param data 
      */
-    public Set (data: LightSeepPartVertext) {
+    public Set (data: LightSeepDrawVertext) {
         this.LoadData(
             data.pos.elements[0],
             data.pos.elements[1],
@@ -63,4 +63,4 @@ namespace LightSeepVertext {
 
 }
 
-export default LightSeepPartVertext;
+export default LightSeepDrawVertext;

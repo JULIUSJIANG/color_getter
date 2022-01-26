@@ -47,15 +47,6 @@ class LightSeepRangePart {
       * 形状集合
       */
      public pList: CuonVector3[];
- 
-     public constructor () {
-         this.pList = [
-             this.ray0.p0.pos,
-             this.ray0.p1.pos,
-             this.ray1.p1.pos,
-             this.ray1.p0.pos
-         ];
-    }
 
     /**
      * 加载数据
@@ -129,6 +120,48 @@ class LightSeepRangePart {
 
         this.r0r1p0vecLength = Math.sqrt(this.r0r1p0vec.elements[0] ** 2 + this.r0r1p0vec.elements[1] ** 2);
         this.r0r1p1vecLength = Math.sqrt(this.r0r1p1vec.elements[0] ** 2 + this.r0r1p1vec.elements[1] ** 2);
+
+        // 起点位置重合的话
+        if (this.r0r1p0vecLength == 0) {
+            // 被翻转过了
+            if (this.ray1.p0p1Angle < this.ray0.p0p1Angle) {
+                this.pList = [
+                    this.ray1.p0.pos,
+                    this.ray1.p1.pos,
+                    this.ray0.p1.pos,
+                    this.ray0.p0.pos
+                ];
+            }
+            // 正常情况
+            else {
+                this.pList = [
+                    this.ray0.p0.pos,
+                    this.ray0.p1.pos,
+                    this.ray1.p1.pos,
+                    this.ray1.p0.pos
+                ];
+            };
+        }
+        else {
+            // 正常情况
+            if (0 < CuonVector3.Dot(this.r0r1p0vecRight, this.ray0.vecp0p1)) {
+                this.pList = [
+                    this.ray0.p0.pos,
+                    this.ray0.p1.pos,
+                    this.ray1.p1.pos,
+                    this.ray1.p0.pos
+                ];
+            }
+            // 被翻转过
+            else {
+                this.pList = [
+                    this.ray1.p0.pos,
+                    this.ray1.p1.pos,
+                    this.ray0.p1.pos,
+                    this.ray0.p0.pos
+                ];
+            };
+        };
     }
     
     /**
