@@ -245,7 +245,7 @@ class Component extends React.Component {
 
         this.shapeNumberData.length = 0;
         // 求得顶点数量
-        let dotCount = this.vertexNumberData.length / 6;
+        let dotCount = this.vertexNumberData.length / 7;
         for (let dotI = 0; dotI < dotCount; dotI++) {
             this.shapeNumberData.push(dotI);
         };
